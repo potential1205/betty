@@ -140,7 +140,7 @@
 # 3. 컨설턴트님, 코치님과의 미팅
 
 # 4. Solidity 학습
-![CryptoZombies](https://lab.ssafy.com/s12-blochain-transaction-sub1/S12P21A609/-/blob/study/%EC%98%88%EC%84%B8%EB%A6%BC/assets/cryptozombies.png)
+![CryptoZombies](https://lab.ssafy.com/s12-blochain-transaction-sub1/S12P21A609/-/raw/study/%EC%98%88%EC%84%B8%EB%A6%BC/assets/cryptozombies.png)
 
 </details>
 

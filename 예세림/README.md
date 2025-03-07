@@ -2,6 +2,7 @@
 
 <details>
 <summary> 2025-03-04(화) </summary>
+
 1. 타 블록체인 서비스 분석
 
 - 지문 기반 DID 서비스 활용 타당성 검토
@@ -13,13 +14,17 @@
 
 2. 아이디어 회의
 
-3.  컨설턴트님, 코치님과의 미팅
+3. 컨설턴트님, 코치님과의 미팅
+
+4. Solidity 학습
+![CryptoZombies](https://lab.ssafy.com/s12-blochain-transaction-sub1/S12P21A609/-/blob/study/%EC%98%88%EC%84%B8%EB%A6%BC/assets/cryptozombies.png)
+
 </details>
 
 <details>
 <summary> 2025-03-05(수) </summary>
 
-# 1. 아이디어 회의의
+# 1. 아이디어 회의
 ## 1-1. 동네 스포츠 선수들을 위한 경기 내역 조회 및 매칭 플랫폼
 
 - 아이디어 구체화

@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 public class GameResponse {
 
     private Long id;
-    private LocalDateTime matchStartDateTime;
+    private LocalDateTime gameStartDateTime;
 
     public static GameResponse of(Game game) {
         return GameResponse.builder()
                 .id(game.getId())
-                .matchStartDateTime(game.getMatchStartDateTime())
+                .gameStartDateTime(game.getGameStartDateTime())
                 .build();
     }
 }

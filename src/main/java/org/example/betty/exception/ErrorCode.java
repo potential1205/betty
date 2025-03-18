@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
-    MATCH_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCH_NOT_FOUND_001", "해당하는 Match가 없습니다.");
+    GAME_NOT_FOUND(HttpStatus.NOT_FOUND, "GAME_NOT_FOUND_001", "해당하는 Game이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

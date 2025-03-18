@@ -13,9 +13,9 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
 
     @Override
-    public GameResponse findMatchById(Long gameId) {
+    public GameResponse findGameById(Long gameId) {
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new RuntimeException("해당 id를 가진 Match를 찾을 수 없습니다." ));
+                .orElseThrow(() -> new RuntimeException("해당 id를 가진 Game를 찾을 수 없습니다." ));
 
         return GameResponse.of(game);
     }

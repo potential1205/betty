@@ -13,9 +13,9 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class MatchScraper {
+public class GameScraper {
 
-    public String scrapeMatchData(String gameUrl) {
+    public String scrapeGameData(String gameUrl) {
         WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();

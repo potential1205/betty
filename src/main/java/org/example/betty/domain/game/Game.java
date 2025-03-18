@@ -1,4 +1,4 @@
-package org.example.betty.domain.match;
+package org.example.betty.domain.game;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,5 +18,5 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime matchStartDateTime;
+    private LocalDateTime gameStartDateTime;
 }

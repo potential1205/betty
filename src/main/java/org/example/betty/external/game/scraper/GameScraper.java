@@ -1,4 +1,4 @@
-package org.example.betty.external.match.scraper;
+package org.example.betty.external.game.scraper;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +13,9 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class MatchScraper {
+public class GameScraper {
 
-    public String scrapeMatchData(String gameUrl) {
+    public String scrapeGameData(String gameUrl) {
         WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();

@@ -1,0 +1,22 @@
+package org.example.betty.domain.game.service;
+
+import lombok.RequiredArgsConstructor;
+import org.example.betty.domain.game.Game;
+import org.example.betty.domain.game.dto.resp.GameResponse;
+import org.example.betty.domain.game.repository.GameRepository;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class GameServiceImpl implements GameService {
+
+    private final GameRepository gameRepository;
+
+    @Override
+    public GameResponse findGameById(Long gameId) {
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("해당 id를 가진 Game를 찾을 수 없습니다." ));
+
+        return GameResponse.of(game);
+    }
+}

@@ -1,4 +1,4 @@
-package org.example.betty.external.match.scraper;
+package org.example.betty.external.game.scraper;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.RequiredArgsConstructor;

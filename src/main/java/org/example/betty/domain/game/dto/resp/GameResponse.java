@@ -1,10 +1,10 @@
-package org.example.betty.domain.match.dto.resp;
+package org.example.betty.domain.game.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.betty.domain.match.Game;
+import org.example.betty.domain.game.Game;
 
 import java.time.LocalDateTime;
 

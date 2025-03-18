@@ -1,9 +1,9 @@
-package org.example.betty.domain.match.service;
+package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.betty.domain.match.Game;
-import org.example.betty.domain.match.dto.resp.GameResponse;
-import org.example.betty.domain.match.repository.GameRepository;
+import org.example.betty.domain.game.Game;
+import org.example.betty.domain.game.dto.resp.GameResponse;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.springframework.stereotype.Service;
 
 @Service

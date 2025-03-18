@@ -1,8 +1,8 @@
-package org.example.betty.domain.match.controller;
+package org.example.betty.domain.game.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.betty.domain.match.dto.resp.GameResponse;
-import org.example.betty.domain.match.service.GameService;
+import org.example.betty.domain.game.dto.resp.GameResponse;
+import org.example.betty.domain.game.service.GameService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

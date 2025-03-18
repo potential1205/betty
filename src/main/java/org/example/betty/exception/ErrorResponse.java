@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ErrorResponse {
-    private final String code;
+    private final int code;
     private final String message;
 
     public static ErrorResponse of(ErrorCode errorCode) {

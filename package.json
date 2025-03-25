@@ -1,0 +1,57 @@
+{
+  "name": "kbo-fan-platform",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.0.14",
+    "@types/react-color": "^3.0.13",
+    "@use-gesture/react": "^10.3.1",
+    "framer-motion": "^12.5.0",
+    "react": "^19.0.0",
+    "react-color": "^2.19.3",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.14",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.2.0"
+  },
+  "tailwind": {
+    "content": [
+      "./src/**/*.{js,jsx,ts,tsx}"
+    ],
+    "theme": {
+      "extend": {
+        "colors": {
+          "두산": "#1A1748",
+          "롯데": "#041E42",
+          "키움": "#570514",
+          "KIA": "#EA0029",
+          "LG": "#C30452",
+          "한화": "#FC4E00",
+          "SSG": "#CE0E2D",
+          "삼성": "#074CA1",
+          "NC": "#315288",
+          "KT": "#000000"
+        }
+      }
+    }
+  }
+}

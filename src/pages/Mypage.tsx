@@ -11,6 +11,28 @@ import { formatTeamCode } from './TeamPage';
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen } = useStore();
+  const [showAllCharge, setShowAllCharge] = useState(false);
+  const [showAllBuy, setShowAllBuy] = useState(false);
+  const [showAllSell, setShowAllSell] = useState(false);
+
+  // 거래 유형별 스타일 정의
+  const transactionStyles = {
+    CHARGE: {
+      bg: 'bg-blue-100',
+      text: 'text-blue-600',
+      label: '충전'
+    },
+    BUY: {
+      bg: 'bg-green-100',
+      text: 'text-green-600',
+      label: '매수'
+    },
+    SELL: {
+      bg: 'bg-red-100',
+      text: 'text-red-600',
+      label: '매도'
+    }
+  };
 
   // BTC 금액 포맷팅 함수
   const formatBTC = (btc: number) => btc.toFixed(2);
@@ -25,6 +47,79 @@ const MyPage: React.FC = () => {
     { id: 'TRANSACTIONS', label: '거래내역' },
     { id: 'CHARGE', label: '충전' }
   ];
+
+  const renderTransactionList = (transactions: any[], type: 'BUY' | 'SELL' | 'CHARGE', showAll: boolean, setShowAll: (show: boolean) => void) => {
+    const filteredTransactions = transactions
+      .filter(t => t.type === type)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const displayedTransactions = showAll ? filteredTransactions : filteredTransactions.slice(0, 3);
+
+    if (filteredTransactions.length === 0) return null;
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-['Giants-Bold'] mb-4">
+          {type === 'BUY' ? '매수 내역' : type === 'SELL' ? '매도 내역' : '충전 내역'}
+        </h3>
+        {displayedTransactions.map((transaction) => (
+          <motion.div
+            key={transaction.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                  type === 'BUY' ? 'bg-green-100' :
+                  type === 'SELL' ? 'bg-red-100' :
+                  'bg-blue-100'
+                }`}>
+                  <span className={`text-sm font-['Giants-Bold'] ${
+                    type === 'BUY' ? 'text-green-600' :
+                    type === 'SELL' ? 'text-red-600' :
+                    'text-blue-600'
+                  }`}>
+                    {type === 'BUY' ? '매수' :
+                     type === 'SELL' ? '매도' : '충전'}
+                  </span>
+                </div>
+                <span className="text-sm text-gray-500">{transaction.date}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-['Giants-Bold']">
+                {type === 'CHARGE' 
+                  ? `${transaction.amount.toLocaleString()}원`
+                  : `${formatBTC(transaction.amount)} BTC`}
+              </p>
+              {transaction.tokenName && (
+                <div className="flex items-center text-sm text-gray-500">
+                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+                    <span className="text-xs font-['Giants-Bold'] text-gray-600">
+                      {formatTeamCode(transaction.tokenName)}
+                    </span>
+                  </div>
+                  <span>{transaction.tokenAmount}개</span>
+                  <span className="mx-2">•</span>
+                  <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ))}
+        {filteredTransactions.length > 3 && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="w-full py-3 text-sm font-['Giants-Bold'] text-gray-500 hover:text-black transition-colors"
+          >
+            {showAll ? '접기' : '더보기'}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -80,54 +175,159 @@ const MyPage: React.FC = () => {
 
       case 'TRANSACTIONS':
         return (
-          <div className="space-y-4">
-            {walletInfo.transactions.map((transaction) => (
-              <motion.div
-                key={transaction.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                      transaction.type === 'BUY' ? 'bg-green-100' :
-                      transaction.type === 'SELL' ? 'bg-red-100' :
-                      'bg-blue-100'
-                    }`}>
-                      <span className={`text-sm font-['Giants-Bold'] ${
-                        transaction.type === 'BUY' ? 'text-green-600' :
-                        transaction.type === 'SELL' ? 'text-red-600' :
-                        'text-blue-600'
-                      }`}>
-                        {transaction.type === 'BUY' ? '매수' :
-                         transaction.type === 'SELL' ? '매도' : '충전'}
-                      </span>
-                    </div>
-                    <span className="text-sm text-gray-500">{transaction.date}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-lg font-['Giants-Bold']">
-                    {transaction.type === 'CHARGE' 
-                      ? `${transaction.amount.toLocaleString()}원`
-                      : `${formatBTC(transaction.amount)} BTC`}
-                  </p>
-                  {transaction.tokenName && (
-                    <div className="flex items-center text-sm text-gray-500">
-                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2">
-                        <span className="text-xs font-['Giants-Bold'] text-gray-600">
-                          {formatTeamCode(transaction.tokenName)}
-                        </span>
+          <div className="space-y-6">
+            {/* 충전 내역 */}
+            <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+              <h3 className="text-lg font-['Giants-Bold'] mb-4">충전 내역</h3>
+              <div className="space-y-4">
+                {walletInfo.transactions
+                  .filter(t => t.type === 'CHARGE')
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, showAllCharge ? undefined : 3)
+                  .map((transaction) => (
+                    <motion.div
+                      key={transaction.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full ${transactionStyles.CHARGE.bg} flex items-center justify-center mr-3`}>
+                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
+                            {transactionStyles.CHARGE.label}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">{transaction.date}</p>
+                        </div>
                       </div>
-                      <span>{transaction.tokenAmount}개</span>
-                      <span className="mx-2">•</span>
-                      <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                      <div className="text-right">
+                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
+                          {transaction.amount.toLocaleString()}원
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                {walletInfo.transactions.filter(t => t.type === 'CHARGE').length > 3 && (
+                  <button
+                    onClick={() => setShowAllCharge(!showAllCharge)}
+                    className="w-full py-2 text-sm font-['Giants-Bold'] text-gray-500 hover:text-black transition-colors"
+                  >
+                    {showAllCharge ? '접기' : '더보기'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 매수 내역 */}
+            <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+              <h3 className="text-lg font-['Giants-Bold'] mb-4">매수 내역</h3>
+              <div className="space-y-4">
+                {walletInfo.transactions
+                  .filter(t => t.type === 'BUY')
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, showAllBuy ? undefined : 3)
+                  .map((transaction) => (
+                    <motion.div
+                      key={transaction.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full ${transactionStyles.BUY.bg} flex items-center justify-center mr-3`}>
+                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.BUY.text}`}>
+                            {transactionStyles.BUY.label}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">{transaction.date}</p>
+                          {transaction.tokenName && (
+                            <div className="flex items-center text-xs text-gray-400 mt-0.5">
+                              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mr-1">
+                                <span className="text-xs font-['Giants-Bold'] text-gray-600">
+                                  {formatTeamCode(transaction.tokenName)}
+                                </span>
+                              </div>
+                              <span>{transaction.tokenAmount}개</span>
+                              <span className="mx-1">•</span>
+                              <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.BUY.text}`}>
+                          {formatBTC(transaction.amount)} BTC
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                {walletInfo.transactions.filter(t => t.type === 'BUY').length > 3 && (
+                  <button
+                    onClick={() => setShowAllBuy(!showAllBuy)}
+                    className="w-full py-2 text-sm font-['Giants-Bold'] text-gray-500 hover:text-black transition-colors"
+                  >
+                    {showAllBuy ? '접기' : '더보기'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 매도 내역 */}
+            <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+              <h3 className="text-lg font-['Giants-Bold'] mb-4">매도 내역</h3>
+              <div className="space-y-4">
+                {walletInfo.transactions
+                  .filter(t => t.type === 'SELL')
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, showAllSell ? undefined : 3)
+                  .map((transaction) => (
+                    <motion.div
+                      key={transaction.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full ${transactionStyles.SELL.bg} flex items-center justify-center mr-3`}>
+                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.SELL.text}`}>
+                            {transactionStyles.SELL.label}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">{transaction.date}</p>
+                          {transaction.tokenName && (
+                            <div className="flex items-center text-xs text-gray-400 mt-0.5">
+                              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mr-1">
+                                <span className="text-xs font-['Giants-Bold'] text-gray-600">
+                                  {formatTeamCode(transaction.tokenName)}
+                                </span>
+                              </div>
+                              <span>{transaction.tokenAmount}개</span>
+                              <span className="mx-1">•</span>
+                              <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.SELL.text}`}>
+                          {formatBTC(transaction.amount)} BTC
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                {walletInfo.transactions.filter(t => t.type === 'SELL').length > 3 && (
+                  <button
+                    onClick={() => setShowAllSell(!showAllSell)}
+                    className="w-full py-2 text-sm font-['Giants-Bold'] text-gray-500 hover:text-black transition-colors"
+                  >
+                    {showAllSell ? '접기' : '더보기'}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         );
 

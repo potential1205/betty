@@ -53,18 +53,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String accessToken) {
-        if (accessToken.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ACCESS_TOKEN);
-        }
-
-        String accessTokenBody = accessToken.substring(7).trim();
-
-        String wallet = tokenService.getSubjectFromToken(accessTokenBody);
-
-        if (sessionUtil.isSessionValid(wallet, accessTokenBody)) {
-            sessionUtil.deleteSession(wallet);
-        } else {
-            throw new BusinessException(ErrorCode.INVALID_SESSION);
-        }
+        String walletAddress = sessionUtil.getSession(accessToken);
+        sessionUtil.deleteSession(walletAddress);
     }
 }

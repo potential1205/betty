@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class GameController {
 
-    //private final GameService gameService;
+    private final GameService gameService;
 
-//    @GetMapping("/{gameId}")
-//    public ResponseEntity<GameResponse> getGameById(
-//            @PathVariable("gameId") Long gameId,
-//            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
-//
-//        //GameResponse gameResponse = gameService.findGameById(gameId, accessToken);
-//
-//        return ResponseEntity.ok(gameResponse);
-//    }
+    @GetMapping("/{gameId}")
+    public ResponseEntity<GameResponse> getGameById(
+            @PathVariable("gameId") Long gameId,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
+
+        GameResponse gameResponse = gameService.findGameById(gameId, accessToken);
+
+        return ResponseEntity.ok(gameResponse);
+    }
 }

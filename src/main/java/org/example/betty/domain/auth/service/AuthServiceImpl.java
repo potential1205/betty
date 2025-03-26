@@ -1,43 +1,70 @@
 package org.example.betty.domain.auth.service;
 
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
-import org.example.betty.common.jwt.JwtProvider;
+import lombok.extern.slf4j.Slf4j;
+
+import org.example.betty.common.util.SessionUtil;
+import org.example.betty.common.util.Web3AuthUtil;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
-    private final JwtProvider jwtProvider;
-    private final RedisTemplate<String, String> redis;
+    private final SessionUtil sessionUtil;
+    private final TokenService tokenService;
+    private final Web3AuthService web3AuthService;
 
-    public String login(String idToken)  {
+    @Override
+    public String login(String idToken) {
         try {
-            String address = extractAddress(idToken);
-            String accessToken = jwtProvider.createAccessToken(address);
-            redis.opsForValue().set("session:" + accessToken, "valid", Duration.ofHours(1));
+            JWTClaimsSet claims = web3AuthService.verifyIdToken(idToken);
+
+            @SuppressWarnings("unchecked")
+            String walletAddress = Web3AuthUtil.extractWalletAddress(
+                    (List<Map<String, Object>>)  claims.getClaim("wallets"));
+
+            Date exp = claims.getExpirationTime();
+            Duration ttl = Duration.between(Instant.now(), exp.toInstant());
+
+            if (ttl.isNegative() || ttl.isZero()) {
+                throw new BusinessException(ErrorCode.INVALID_ID_TOKEN);
+            }
+
+            String accessToken = tokenService.generateAccessToken(walletAddress, exp);
+
+            sessionUtil.setSession(walletAddress, accessToken, ttl);
 
             return accessToken;
-
-        } catch (ParseException e) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            throw new BusinessException(ErrorCode.INVALID_ID_TOKEN);
         }
     }
 
-    private String extractAddress(String idToken) throws ParseException {
-        SignedJWT jwt = SignedJWT.parse(idToken);
+    @Override
+    public void logout(String accessToken) {
+        if (accessToken.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ACCESS_TOKEN);
+        }
 
-        List<Map<String, Object>> wallets = (List<Map<String, Object>>) jwt.getJWTClaimsSet().getClaim("wallets");
+        String accessTokenBody = accessToken.substring(7).trim();
 
-        return wallets.get(0).get("address").toString();
+        String wallet = tokenService.getSubjectFromToken(accessTokenBody);
+
+        if (sessionUtil.isSessionValid(wallet, accessTokenBody)) {
+            sessionUtil.deleteSession(wallet);
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_SESSION);
+        }
     }
 }

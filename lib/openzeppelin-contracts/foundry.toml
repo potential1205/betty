@@ -1,0 +1,18 @@
+[profile.default]
+solc_version = '0.8.24'
+evm_version = 'cancun'
+optimizer = true
+optimizer-runs = 200
+src = 'contracts'
+out = 'out'
+libs = ['node_modules', 'lib']
+test = 'test'
+cache_path  = 'cache_forge'
+fs_permissions = [{ access = "read", path = "./test/bin" }]
+rpc_endpoints = { anvil = "http://127.0.0.1:8545" }
+remappings = ["@openzeppelin=lib/openzeppelin-contracts",
+    "forge-std=lib/forge-std/src"]
+
+[fuzz]
+runs = 5000
+max_test_rejects = 150000

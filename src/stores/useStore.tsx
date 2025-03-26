@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { allGames, userTokenDummy, marketNFTs as dummyNFTs, userPixelNFTs } from '../constants/dummy';
+import { allGames, userTokenDummy, marketNFTs as dummyNFTs, userPixelNFTs, walletDummy, Transaction } from '../constants/dummy';
 import { teamColors } from '../constants/colors';
 import { NFT } from '../constants/dummy';
 
@@ -62,6 +62,14 @@ interface AppState {
   listNFTForSale: (nftId: number) => void;
   savedNFTs: NFT[];
   saveNFTToMyPage: (nft: NFT) => void;
+  walletInfo: typeof walletDummy;
+  activeTab: 'ASSETS' | 'TRANSACTIONS' | 'CHARGE';
+  setActiveTab: (tab: 'ASSETS' | 'TRANSACTIONS' | 'CHARGE') => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  updateWalletBalance: (amount: number) => void;
+  updateTokenBalance: (team: string, amount: number, btcValue: number) => void;
+  isChargeModalOpen: boolean;
+  setIsChargeModalOpen: (isOpen: boolean) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -214,4 +222,37 @@ export const useStore = create<AppState>((set, get) => ({
       savedNFTs: [...state.savedNFTs, nft]
     };
   }),
+  walletInfo: walletDummy,
+  activeTab: 'ASSETS',
+  setActiveTab: (tab) => set({ activeTab: tab }),
+  addTransaction: (transaction) => set((state) => ({
+    walletInfo: {
+      ...state.walletInfo,
+      transactions: [
+        {
+          ...transaction,
+          id: state.walletInfo.transactions.length + 1
+        },
+        ...state.walletInfo.transactions
+      ]
+    }
+  })),
+  updateWalletBalance: (amount) => set((state) => ({
+    walletInfo: {
+      ...state.walletInfo,
+      totalBTC: state.walletInfo.totalBTC + amount
+    }
+  })),
+  updateTokenBalance: (team, amount, btcValue) => set((state) => ({
+    walletInfo: {
+      ...state.walletInfo,
+      tokens: state.walletInfo.tokens.map(token =>
+        token.team === team
+          ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
+          : token
+      )
+    }
+  })),
+  isChargeModalOpen: false,
+  setIsChargeModalOpen: (isOpen) => set({ isChargeModalOpen: isOpen }),
 }));

@@ -174,3 +174,67 @@ export const quizData: Quiz[] = [
     answer: 1
   }
 ];
+
+export interface Transaction {
+  id: number;
+  type: 'BUY' | 'SELL' | 'CHARGE';
+  amount: number;
+  tokenAmount?: number;
+  tokenPrice?: number;
+  tokenName?: string;
+  date: string;
+}
+
+export interface WalletInfo {
+  address: string;
+  totalBTC: number;
+  tokens: {
+    team: string;
+    amount: number;
+    btcValue: number;
+  }[];
+  transactions: Transaction[];
+}
+
+export const walletDummy: WalletInfo = {
+  address: "0x1234...5678",
+  totalBTC: 1000, // 100,000원
+  tokens: [
+    {
+      team: "삼성",
+      amount: 5,
+      btcValue: 50 // 10 BTC per token
+    },
+    {
+      team: "두산",
+      amount: 3,
+      btcValue: 30 // 10 BTC per token
+    }
+  ],
+  transactions: [
+    {
+      id: 1,
+      type: 'CHARGE',
+      amount: 100000,
+      date: "2024-01-15 14:30"
+    },
+    {
+      id: 2,
+      type: 'BUY',
+      amount: 50,
+      tokenAmount: 5,
+      tokenPrice: 10,
+      tokenName: "삼성",
+      date: "2024-01-15 15:00"
+    },
+    {
+      id: 3,
+      type: 'SELL',
+      amount: 30,
+      tokenAmount: 3,
+      tokenPrice: 10,
+      tokenName: "두산",
+      date: "2024-01-15 16:30"
+    }
+  ]
+};

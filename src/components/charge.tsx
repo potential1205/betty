@@ -1,19 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useStore } from '../stores/useStore';
 
 interface ChargeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCharge: (amount: number) => void;
 }
 
-const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) => {
+const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
   const [amount, setAmount] = React.useState<number>(0);
   const [customAmount, setCustomAmount] = React.useState<string>('');
+  const { addTransaction, updateWalletBalance } = useStore();
   
-  // BETTY 코인 환율: 1 BETTY = 100원
-  const BETTY_RATE = 100;
-  const amounts = [10000, 30000, 50000, 100000];
+  // 원화를 BTC로 변환하는 함수 (1 BTC = 100원 기준)
+  const convertToBTC = (won: number) => won / 100;
+  
+  // BTC 금액 포맷팅 함수
+  const formatBTC = (btc: number) => btc.toFixed(2);
+  
+  const amounts = [10000, 50000, 100000, 500000];
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -21,8 +26,20 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) 
     setAmount(Number(value));
   };
 
-  // 원화를 BETTY로 변환하는 함수
-  const convertToBETTY = (won: number) => Math.floor(won / BETTY_RATE);
+  const handleCharge = () => {
+    if (amount <= 0) return;
+    
+    const btcAmount = convertToBTC(amount);
+    updateWalletBalance(btcAmount);
+    
+    addTransaction({
+      type: 'CHARGE',
+      amount: amount,
+      date: new Date().toLocaleString()
+    });
+    
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -41,7 +58,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) 
         className="bg-white rounded-xl p-6 w-[90%] max-w-[324px]"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-xl font-['Giants-Bold'] mb-6">BETTY 코인 충전하기</h2>
+        <h2 className="text-xl font-['Giants-Bold'] mb-6">BTC 충전하기</h2>
         
         {/* 금액 선택 버튼들 */}
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -62,7 +79,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) 
                 {value.toLocaleString()}원
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {convertToBETTY(value).toLocaleString()} BETTY
+                {formatBTC(convertToBTC(value))} BTC
               </p>
             </button>
           ))}
@@ -85,16 +102,16 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) 
           </div>
           {customAmount && (
             <p className="text-sm text-gray-500 mt-2 pl-2">
-              ≈ {convertToBETTY(Number(customAmount)).toLocaleString()} BETTY
+              ≈ {formatBTC(convertToBTC(Number(customAmount)))} BTC
             </p>
           )}
         </div>
 
         {/* 선택된 금액 표시 */}
         <div className="bg-gray-100 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-500 mb-1">충전 후 BETTY 코인</p>
+          <p className="text-sm text-gray-500 mb-1">충전 후 BTC</p>
           <p className="text-xl font-['Giants-Bold']">
-            {convertToBETTY(amount).toLocaleString()} BETTY
+            {formatBTC(convertToBTC(amount))} BTC
           </p>
           <p className="text-sm text-gray-500 mt-1">
             {amount.toLocaleString()}원
@@ -110,10 +127,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose, onCharge }) 
             취소
           </button>
           <button
-            onClick={() => {
-              onCharge(convertToBETTY(amount));
-              onClose();
-            }}
+            onClick={handleCharge}
             disabled={amount === 0}
             className={`flex-1 py-3 rounded-full transition-colors
               ${amount > 0 

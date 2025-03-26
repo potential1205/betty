@@ -4,60 +4,159 @@ import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import backBlackImg from '../assets/back_black.png';
 import hamburgerBlackImg from '../assets/hamburger_black.png';
-import { formatTeamCode } from './TeamPage';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
+import { formatTeamCode } from './TeamPage';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { userTokens, myProposals, toggleSidebar, savedNFTs } = useStore();
-  const [showAllNFTs, setShowAllNFTs] = useState(false);
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen } = useStore();
 
-  // 랜덤 문구 배열
-  const greetings = [
-    "야구 보기 좋은 날이네요!",
-    "오늘도 즐거운 경기 되세요!",
-    "승리를 기원합니다!",
-    "오늘은 어떤 경기를 볼까요?",
-    "응원하는 팀의 소식을 확인해보세요!",
-    "새로운 제안을 기다리고 있어요!"
-  ];
-
-  // 랜덤 문구 선택
-  const [randomGreeting] = React.useState(() => 
-    greetings[Math.floor(Math.random() * greetings.length)]
-  );
-
-  // 충전 모달 상태 추가
-  const [isChargeModalOpen, setIsChargeModalOpen] = React.useState(false);
-
-  // 제안 설명 확장 상태 관리를 위한 객체
-  const [expandedProposals, setExpandedProposals] = React.useState<{[key: number]: boolean}>({});
-
-  // 충전 처리 함수
-  const handleCharge = (amount: number) => {
-    console.log('충전 금액:', amount);
-    // TODO: 실제 충전 로직 구현
-  };
+  // BTC 금액 포맷팅 함수
+  const formatBTC = (btc: number) => btc.toFixed(2);
 
   // 컴포넌트 마운트 시 사이드바를 닫힌 상태로 설정
   React.useEffect(() => {
     toggleSidebar(false);
   }, []);
 
-  // 특정 제안의 더보기/접기 토글 함수
-  const toggleProposalExpand = (proposalId: number) => {
-    setExpandedProposals(prev => ({
-      ...prev,
-      [proposalId]: !prev[proposalId]
-    }));
+  const tabs = [
+    { id: 'ASSETS', label: '보유자산' },
+    { id: 'TRANSACTIONS', label: '거래내역' },
+    { id: 'CHARGE', label: '충전' }
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'ASSETS':
+        return (
+          <div className="space-y-6">
+            {/* 총 보유자산 */}
+            <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
+              <p className="text-sm text-gray-400 mb-2">총 보유자산</p>
+              <div className="flex items-baseline">
+                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+                <p className="text-xl text-gray-400 ml-2">BTC</p>
+              </div>
+            </div>
+
+            {/* 보유 팬토큰 */}
+            <div>
+              <h3 className="text-lg font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
+              <div className="space-y-3">
+                {walletInfo.tokens.map((token) => (
+                  <motion.div
+                    key={token.team}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+                            <span className="text-sm font-['Giants-Bold'] text-gray-600">
+                              {formatTeamCode(token.team)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500">{token.team}</p>
+                        </div>
+                        <p className="text-xl font-['Giants-Bold']">{token.amount}개</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500 mb-1">BTC 가치</p>
+                        <div className="flex items-baseline">
+                          <p className="text-xl font-['Giants-Bold'] text-black">{formatBTC(token.btcValue)}</p>
+                          <p className="text-sm text-gray-500 ml-1">BTC</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'TRANSACTIONS':
+        return (
+          <div className="space-y-4">
+            {walletInfo.transactions.map((transaction) => (
+              <motion.div
+                key={transaction.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                      transaction.type === 'BUY' ? 'bg-green-100' :
+                      transaction.type === 'SELL' ? 'bg-red-100' :
+                      'bg-blue-100'
+                    }`}>
+                      <span className={`text-sm font-['Giants-Bold'] ${
+                        transaction.type === 'BUY' ? 'text-green-600' :
+                        transaction.type === 'SELL' ? 'text-red-600' :
+                        'text-blue-600'
+                      }`}>
+                        {transaction.type === 'BUY' ? '매수' :
+                         transaction.type === 'SELL' ? '매도' : '충전'}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">{transaction.date}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-lg font-['Giants-Bold']">
+                    {transaction.type === 'CHARGE' 
+                      ? `${transaction.amount.toLocaleString()}원`
+                      : `${formatBTC(transaction.amount)} BTC`}
+                  </p>
+                  {transaction.tokenName && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+                        <span className="text-xs font-['Giants-Bold'] text-gray-600">
+                          {formatTeamCode(transaction.tokenName)}
+                        </span>
+                      </div>
+                      <span>{transaction.tokenAmount}개</span>
+                      <span className="mx-2">•</span>
+                      <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        );
+
+      case 'CHARGE':
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
+              <p className="text-sm text-gray-400 mb-2">현재 보유 BTC</p>
+              <div className="flex items-baseline">
+                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+                <p className="text-xl text-gray-400 ml-2">BTC</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsChargeModalOpen(true)}
+              className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-4 rounded-2xl font-['Giants-Bold'] hover:from-gray-800 hover:to-black transition-all shadow-lg"
+            >
+              BTC 충전하기
+            </button>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
-  // 표시할 NFT 개수 계산
-  const displayedNFTs = showAllNFTs ? savedNFTs : savedNFTs.slice(0, 4);
-
   return (
-    <div className="relative h-full bg-white text-black">
+    <div className="relative h-full bg-gray-50 text-black">
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <button 
@@ -92,175 +191,37 @@ const MyPage: React.FC = () => {
             }
           `}
         </style>
-        {/* 인사말 섹션 */}
+
+        {/* 지갑 주소 */}
         <div className="mb-8">
-          <h2 className="text-xl font-['Giants-Bold']">안녕하세요,</h2>
-          <p className="text-sm text-gray-500 mt-1">{randomGreeting}</p>
+          <h2 className="text-2xl font-['Giants-Bold']">안녕하세요!</h2>
+          <p className="text-sm text-gray-500 mt-1">{walletInfo.address}</p>
         </div>
 
-        {/* BETTY 코인 섹션 */}
-        <div className="mb-8">
-          <h2 className="text-lg font-['Giants-Bold'] mb-4">BETTY 코인</h2>
-          <div className="bg-gray-100 rounded-xl p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">보유 코인</p>
-                <p className="text-2xl font-['Giants-Bold']">1,234</p>
-              </div>
-              <button 
-                className="bg-black text-white px-6 py-2.5 rounded-full text-sm hover:bg-gray-800 transition-colors"
-                onClick={() => setIsChargeModalOpen(true)}
-              >
-                충전하기
-              </button>
-            </div>
-          </div>
+        {/* 탭 */}
+        <div className="flex space-x-2 mb-6 bg-white p-1 rounded-2xl shadow-sm">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as 'ASSETS' | 'TRANSACTIONS' | 'CHARGE')}
+              className={`flex-1 py-3 rounded-xl text-sm font-['Giants-Bold'] transition-all duration-200
+                ${activeTab === tab.id
+                  ? 'bg-black text-white shadow-md'
+                  : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* 팬토큰 섹션 */}
-        <div>
-          <h2 className="text-lg font-['Giants-Bold'] mb-4">보유 팬토큰</h2>
-          <div className="space-y-3">
-            {userTokens.length > 0 ? (
-              userTokens.map((token) => (
-                <motion.div
-                  key={token.team}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gray-100 rounded-xl p-6"
-                >
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">{formatTeamCode(token.team)}</p>
-                    <p className="text-xl font-['Giants-Bold']">{token.amount}</p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="bg-gray-100 rounded-xl p-6 text-center">
-                <p className="text-gray-500">보유중인 팬토큰이 없습니다</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  거래소에서 팬토큰을 구매해보세요
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 저장한 NFT 섹션 */}
-        <div className="mt-8 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-['Giants-Bold']">저장한 NFT</h2>
-            {savedNFTs.length > 4 && (
-              <button
-                onClick={() => setShowAllNFTs(!showAllNFTs)}
-                className="text-sm text-gray-600 hover:text-black"
-              >
-                {showAllNFTs ? '접기' : '더보기'}
-              </button>
-            )}
-          </div>
-          {savedNFTs.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {displayedNFTs.map((nft) => (
-                <motion.div
-                  key={nft.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gray-100 rounded-xl overflow-hidden"
-                >
-                  <div className="aspect-square relative">
-                    <img
-                      src={nft.image}
-                      alt={nft.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="text-sm font-['Giants-Bold'] mb-1">{nft.name}</h3>
-                    <p className="text-xs text-gray-500">{nft.matchTeams.join(' vs ')}</p>
-                    <p className="text-xs text-gray-400 mt-1">{nft.creator}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-gray-100 rounded-xl p-6 text-center">
-              <p className="text-gray-500">저장한 NFT가 없습니다</p>
-              <p className="text-sm text-gray-400 mt-1">
-                NFT 아카이브에서 마음에 드는 NFT를 저장해보세요
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* 내 제안 섹션 */}
-        <div className="mt-8">
-          <h2 className="text-lg font-['Giants-Bold'] mb-4">내가 제안한 안건</h2>
-          <div className="space-y-3">
-            {myProposals.length > 0 ? (
-              myProposals.map((proposal) => (
-                <motion.div
-                  key={proposal.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gray-100 rounded-xl p-6"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm text-gray-500">{formatTeamCode(proposal.team)}</span>
-                    <span className="text-sm text-gray-500">마감: {proposal.deadline}</span>
-                  </div>
-                  <h3 className="text-lg font-['Giants-Bold'] mb-2">{proposal.title}</h3>
-                  <div className="mb-3">
-                    <p className={`text-sm text-gray-600 ${expandedProposals[proposal.id] ? "whitespace-pre-wrap" : "line-clamp-3"}`}>
-                      {proposal.description}
-                    </p>
-                    {proposal.description.length > 100 && (
-                      <button
-                        onClick={() => toggleProposalExpand(proposal.id)}
-                        className="text-sm text-gray-800 hover:underline mt-2"
-                      >
-                        {expandedProposals[proposal.id] ? '접기' : '더보기'}
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <div>
-                      진행률: {Math.round((proposal.currentVotes / proposal.targetVotes) * 100)}%
-                    </div>
-                    <div>
-                      {proposal.currentVotes} / {proposal.targetVotes} {formatTeamCode(proposal.team)}
-                    </div>
-                  </div>
-                  {/* 진행 상황 바 */}
-                  <div className="w-full h-1.5 bg-gray-200 rounded-full mt-2">
-                    <div
-                      className="h-full bg-black rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${(proposal.currentVotes / proposal.targetVotes) * 100}%` 
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="bg-gray-100 rounded-xl p-6 text-center">
-                <p className="text-gray-500">제안한 안건이 없습니다</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  팀 채널에서 새로운 제안을 해보세요
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 탭 컨텐츠 */}
+        {renderContent()}
       </div>
 
       <Sidebar />
-
-      {/* 충전 모달 추가 */}
       <ChargeModal
         isOpen={isChargeModalOpen}
         onClose={() => setIsChargeModalOpen(false)}
-        onCharge={handleCharge}
       />
     </div>
   );

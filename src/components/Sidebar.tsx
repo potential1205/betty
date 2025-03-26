@@ -26,7 +26,7 @@ const Sidebar: React.FC = () => {
         duration: 0.8,
         ease: "easeInOut"
       }}
-      className="absolute top-0 right-0 w-full h-full bg-black z-50 font-['Giants-Bold']"
+      className="absolute top-0 right-0 w-full h-full bg-[#14532d] z-50 font-['Giants-Bold']"
       style={{
         aspectRatio: '360/743',
         maxHeight: 'min(743px, 100vh)',
@@ -35,36 +35,36 @@ const Sidebar: React.FC = () => {
       <div className="py-6 pl-4">
         <button 
           onClick={() => toggleSidebar(false)} 
-          className="text-white text-2xl mb-8"
+          className="text-white text-3xl mb-8 hover:text-gray-300 transition-colors"
         >×</button>
         <nav className="space-y-0 pl-2">
           <Link 
-            to="/" 
-            className="block text-white text-3xl py-3"
+            to="/home" 
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >홈</Link>
-          <div className="h-[1px] bg-gray-500/50"></div>
+          <div className="h-[1px] bg-green-400/30"></div>
           <Link 
-            to="/distance" 
-            className="block text-white text-3xl py-3"
+            to="/main" 
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
-          >토큰 거래소</Link>
-          <div className="h-[1px] bg-gray-500/50"></div>
+          >메인</Link>
+          <div className="h-[1px] bg-green-400/30"></div>
           <Link 
             to="/my-page" 
-            className="block text-white text-3xl py-3"
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >마이페이지</Link>
-          <div className="h-[1px] bg-gray-500/50"></div>
+          <div className="h-[1px] bg-green-400/30"></div>
           <Link 
             to="/team" 
-            className="block text-white text-3xl py-3"
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >팀채널</Link>
-          <div className="h-[1px] bg-gray-500/50"></div>
+          <div className="h-[1px] bg-green-400/30"></div>
           <Link 
             to="/store" 
-            className="block text-white text-3xl py-3"
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >스토어</Link>
         </nav>

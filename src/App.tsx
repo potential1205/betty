@@ -6,6 +6,7 @@ import TeamPage from './pages/TeamPage';
 import MyPage from './pages/Mypage';
 import Market from './pages/MarketPage';
 import MarketDetail from './pages/MarketDetailPage';
+import LogoScreen from './pages/LogoScreen';
 
 const App: React.FC = () => {
   return (
@@ -22,7 +23,8 @@ const App: React.FC = () => {
           >
             <div className="absolute inset-0">
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<LogoScreen />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/main" element={<MainPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/my-page" element={<MyPage />} />

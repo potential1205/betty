@@ -47,7 +47,7 @@ const Sidebar: React.FC = () => {
             to="/main" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
-          >메인</Link>
+          >경기페이지</Link>
           <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/my-page" 

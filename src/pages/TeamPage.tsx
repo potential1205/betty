@@ -8,7 +8,6 @@ import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
 import SuggestModal from '../components/suggest';
 import ConfirmModal from '../components/confirm';
-import SuggestDetail from '../components/suggestDetail';
 
 interface Proposal {
   id: number;

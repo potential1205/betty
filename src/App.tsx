@@ -4,9 +4,9 @@ import MainPage from './pages/MainPage';
 import './index.css';
 import TeamPage from './pages/TeamPage';
 import MyPage from './pages/Mypage';
-import Market from './pages/MarketPage';
-import MarketDetail from './pages/MarketDetailPage';
 import LogoScreen from './pages/LogoScreen';
+import ArchivePage from './pages/ArchivePage';
+import ArchiveDetailPage from './pages/ArchiveDetailPage';
 
 const App: React.FC = () => {
   return (
@@ -28,8 +28,8 @@ const App: React.FC = () => {
                 <Route path="/main" element={<MainPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/my-page" element={<MyPage />} />
-                <Route path="/store" element={<Market />} />
-                <Route path="/store/:nftId" element={<MarketDetail />} />
+                <Route path="/archive" element={<ArchivePage />} />
+                <Route path="/archive/:artId" element={<ArchiveDetailPage />} />
               </Routes>
             </div>
           </div>

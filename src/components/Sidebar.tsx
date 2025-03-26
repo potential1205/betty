@@ -62,10 +62,10 @@ const Sidebar: React.FC = () => {
           >팀채널</Link>
           <div className="h-[1px] bg-gray-700"></div>
           <Link 
-            to="/store" 
+            to="/archive" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
-          >스토어</Link>
+          >아카이브</Link>
         </nav>
       </div>
     </motion.div>

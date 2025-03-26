@@ -3,20 +3,23 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
-import type { NFT } from '../constants/dummy';
 import Sidebar from '../components/Sidebar';
 
-const MarketDetailPage: React.FC = () => {
+interface PixelArt {
+  id: number;
+  title: string;
+  image: string;
+  description: string;
+  creator: string;
+  createdAt: string;
+  matchTeams: string[];
+}
+
+const ArchiveDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { nft } = location.state as { nft: NFT };
-  const { toggleSidebar, saveNFTToMyPage } = useStore();
-
-  const handleSave = () => {
-    saveNFTToMyPage(nft);
-    alert('NFT가 마이페이지에 저장되었습니다!');
-    navigate('/mypage');
-  };
+  const { art } = location.state as { art: PixelArt };
+  const { toggleSidebar } = useStore();
 
   return (
     <div className="relative h-full bg-black text-white overflow-hidden">
@@ -41,39 +44,36 @@ const MarketDetailPage: React.FC = () => {
       {/* 스크롤 영역 */}
       <div className="h-full pt-16 overflow-y-auto scrollbar-hide">
         <div className="px-6">
-          {/* NFT 이미지 */}
+          {/* 픽셀 아트 이미지 */}
           <div className="aspect-square rounded-xl overflow-hidden mb-4">
             <img
-              src={nft.image}
-              alt={nft.name}
+              src={art.image}
+              alt={art.title}
               className="w-full h-full object-cover"
             />
           </div>
 
-          {/* NFT 정보 */}
+          {/* 픽셀 아트 정보 */}
           <div className="space-y-3">
             <div>
-              <h3 className="text-xl font-['Giants-Bold'] text-white mb-1">{nft.name}</h3>
-              <p className="text-gray-400 text-sm">{nft.matchTeams.join(' vs ')}</p>
+              <h3 className="text-xl font-['Giants-Bold'] text-white mb-1">{art.title}</h3>
+              <p className="text-gray-400 text-sm">{art.matchTeams.join(' vs ')}</p>
             </div>
 
             <div>
               <p className="text-xs text-gray-400 mb-0.5">크리에이터</p>
-              <p className="text-sm text-white">{nft.creator}</p>
+              <p className="text-sm text-white">{art.creator}</p>
             </div>
 
             <div>
               <p className="text-xs text-gray-400 mb-0.5">설명</p>
-              <p className="text-sm text-white whitespace-pre-wrap">{nft.description}</p>
+              <p className="text-sm text-white whitespace-pre-wrap">{art.description}</p>
             </div>
 
-            {/* 저장 버튼 */}
-            <button
-              onClick={handleSave}
-              className="w-full py-3 rounded-lg text-white text-lg font-['Giants-Bold'] mt-4 bg-blue-500 hover:bg-blue-600"
-            >
-              마이페이지에 저장
-            </button>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">생성일</p>
+              <p className="text-sm text-white">{art.createdAt}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -83,4 +83,4 @@ const MarketDetailPage: React.FC = () => {
   );
 };
 
-export default MarketDetailPage;
+export default ArchiveDetailPage; 

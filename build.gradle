@@ -51,6 +51,9 @@ dependencies {
 
     // Redis
     implementation "org.springframework.boot:spring-boot-starter-data-redis"
+
+    // Selenium
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '4.28.1'
 }
 
 tasks.named('test') {

@@ -27,7 +27,7 @@ const App: React.FC = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/main" element={<MainPage />} />
                 <Route path="/team" element={<TeamPage />} />
-                <Route path="/my-page" element={<MyPage />} />
+                <Route path="/my" element={<MyPage />} />
                 <Route path="/archive" element={<ArchivePage />} />
                 <Route path="/archive/:artId" element={<ArchiveDetailPage />} />
               </Routes>

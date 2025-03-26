@@ -11,7 +11,6 @@ const Sidebar: React.FC = () => {
     closed: { x: '120%' },
   };
 
-  // 링크 클릭 시 사이드바를 닫는 함수
   const handleLinkClick = () => {
     toggleSidebar(false);
   };
@@ -26,7 +25,7 @@ const Sidebar: React.FC = () => {
         duration: 0.8,
         ease: "easeInOut"
       }}
-      className="absolute top-0 right-0 w-full h-full bg-[#14532d] z-50 font-['Giants-Bold']"
+      className="absolute top-0 right-0 w-full h-full bg-black z-50 font-['Giants-Bold']"
       style={{
         aspectRatio: '360/743',
         maxHeight: 'min(743px, 100vh)',
@@ -43,25 +42,25 @@ const Sidebar: React.FC = () => {
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >홈</Link>
-          <div className="h-[1px] bg-green-400/30"></div>
+          <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/main" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >메인</Link>
-          <div className="h-[1px] bg-green-400/30"></div>
+          <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/my-page" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >마이페이지</Link>
-          <div className="h-[1px] bg-green-400/30"></div>
+          <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/team" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >팀채널</Link>
-          <div className="h-[1px] bg-green-400/30"></div>
+          <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/store" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"

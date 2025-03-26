@@ -1,6 +1,8 @@
 package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
+
+import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.Game;
 import org.example.betty.domain.game.dto.resp.GameResponse;
 import org.example.betty.domain.game.repository.GameRepository;
@@ -12,10 +14,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
 
+    private final SessionUtil sessionUtil;
     private final GameRepository gameRepository;
 
     @Override
-    public GameResponse findGameById(Long gameId) {
+    public GameResponse findGameById(Long gameId, String accessToken) {
+        sessionUtil.getSession(accessToken);
+
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_FOUND));
 

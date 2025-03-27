@@ -56,11 +56,4 @@ public class AuthServiceImpl implements AuthService {
         String walletAddress = sessionUtil.getSession(accessToken);
         sessionUtil.deleteSession(walletAddress);
     }
-
-    @Override
-    public String checkSession(String accessToken) {
-        String walletAddress = sessionUtil.getSession(accessToken);
-
-        return "안녕하세요," + walletAddress + "님";
-    }
 }

@@ -42,6 +42,16 @@ public class SessionUtil {
         return walletAddress;
     }
 
+    public String getWalletAddress(String accessToken) {
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ACCESS_TOKEN);
+        }
+
+        String accessTokenBody = accessToken.substring(7).trim();
+
+        return tokenService.getSubjectFromToken(accessTokenBody);
+    }
+
     public void deleteSession(String walletAddress) {
         redis1.delete(walletAddress);
     }

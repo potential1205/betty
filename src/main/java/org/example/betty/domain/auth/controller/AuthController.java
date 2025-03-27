@@ -37,15 +37,4 @@ public class AuthController {
         return ResponseEntity.ok()
                 .body(SuccessResponse.of(true));
     }
-
-    @GetMapping("/session")
-    public ResponseEntity<String> checkSession(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
-
-        String checkSessionMessage = authService.checkSession(accessToken);
-
-        return ResponseEntity.ok()
-                .body(checkSessionMessage);
-    }
-
 }

@@ -19,7 +19,7 @@ type TeamColors = {
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice } = useStore();
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice, userTokens } = useStore();
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
@@ -148,7 +148,7 @@ const MyPage: React.FC = () => {
             <div>
               <h3 className="text-base font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
               <div className="space-y-3">
-                {walletInfo.tokens.map((token) => (
+                {userTokens.map((token) => (
                   <motion.div
                     key={token.team}
                     initial={{ opacity: 0, y: 20 }}
@@ -178,7 +178,7 @@ const MyPage: React.FC = () => {
                         <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
                         <div className="flex items-baseline">
                           <p className="text-base font-['Giants-Bold'] text-black">
-                            {formatBTC(token.btcValue)}
+                            {formatBTC(token.amount * bettyPrice)}
                           </p>
                           <p className="text-xs text-gray-500 ml-1">BTC</p>
                         </div>

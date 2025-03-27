@@ -210,16 +210,36 @@ export const useStore = create<AppState>((set, get) => ({
       totalBTC: state.walletInfo.totalBTC + amount
     }
   })),
-  updateTokenBalance: (team, amount, btcValue) => set((state) => ({
-    walletInfo: {
-      ...state.walletInfo,
-      tokens: state.walletInfo.tokens.map(token =>
-        token.team === team
-          ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
-          : token
-      )
-    }
-  })),
+  updateTokenBalance: (team, amount, btcValue) => set((state) => {
+    // 기존 토큰이 있는지 확인
+    const existingToken = state.userTokens.find(token => token.team === team);
+    
+    // 새로운 userTokens 배열 생성
+    const newUserTokens = existingToken
+      ? state.userTokens.map(token =>
+          token.team === team
+            ? { ...token, amount: token.amount + amount }
+            : token
+        )
+      : [...state.userTokens, { team, amount }];
+
+    // 새로운 walletInfo.tokens 배열 생성
+    const newWalletTokens = existingToken
+      ? state.walletInfo.tokens.map(token =>
+          token.team === team
+            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
+            : token
+        )
+      : [...state.walletInfo.tokens, { team, amount, btcValue }];
+
+    return {
+      userTokens: newUserTokens,
+      walletInfo: {
+        ...state.walletInfo,
+        tokens: newWalletTokens
+      }
+    };
+  }),
   nickname: '',
   setNickname: (name) => set({ nickname: name.slice(0, 10) }),
   isChargeModalOpen: false,

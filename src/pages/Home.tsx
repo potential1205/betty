@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import Sidebar from '../components/Sidebar';
-import profileImg from '../assets/profile.png';
+import walletImg from '../assets/wallet.png';
 import hamburgerImg from '../assets/hamburger.png';
 import { teamColors } from '../constants/colors';
 import { useStore } from '../stores/useStore';
@@ -58,7 +58,7 @@ const Home: React.FC = () => {
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <button onClick={() => navigate('/my')} className="w-5 h-5">
-          <img src={profileImg} alt="Profile" className="w-full h-full" />
+          <img src={walletImg} alt="wallet" className="w-full h-full" />
         </button>
         <button onClick={() => toggleSidebar(true)} className="w-5 h-5">
           <img src={hamburgerImg} alt="Menu" className="w-full h-full" />

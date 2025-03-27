@@ -30,14 +30,16 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
 
   const handleNumberClick = (num: string) => {
     if (customAmount.length < 10) {
-      setCustomAmount((prev: string) => prev + num);
-      setAmount(Number((prev: string) => prev + num));
+      const newAmount = customAmount + num;
+      setCustomAmount(newAmount);
+      setAmount(Number(newAmount));
     }
   };
 
   const handleDelete = () => {
-    setCustomAmount((prev: string) => prev.slice(0, -1));
-    setAmount(Number((prev: string) => prev.slice(0, -1)));
+    const newAmount = customAmount.slice(0, -1);
+    setCustomAmount(newAmount);
+    setAmount(Number(newAmount));
   };
 
   const handleCharge = () => {

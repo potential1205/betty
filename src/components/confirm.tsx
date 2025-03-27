@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { formatTeamCode } from '../pages/TeamPage';
+import { formatTeamCode } from '../constants/dummy';
 
 interface ConfirmModalProps {
   isOpen: boolean;

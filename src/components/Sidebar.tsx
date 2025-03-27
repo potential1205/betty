@@ -66,6 +66,12 @@ const Sidebar: React.FC = () => {
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >아카이브</Link>
+          <div className="h-[1px] bg-gray-700"></div>
+          <Link 
+            to="/exchange" 
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
+            onClick={handleLinkClick}
+          >거래소</Link>
         </nav>
       </div>
     </motion.div>

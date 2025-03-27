@@ -7,6 +7,7 @@ import MyPage from './pages/Mypage';
 import LogoScreen from './pages/LogoScreen';
 import ArchivePage from './pages/ArchivePage';
 import ArchiveDetailPage from './pages/ArchiveDetailPage';
+import ExchangePage from './pages/ExchangePage';
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
                 <Route path="/my" element={<MyPage />} />
                 <Route path="/archive" element={<ArchivePage />} />
                 <Route path="/archive/:artId" element={<ArchiveDetailPage />} />
+                <Route path="/exchange" element={<ExchangePage />} />
               </Routes>
             </div>
           </div>

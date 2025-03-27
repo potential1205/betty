@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import { teamColors } from '../constants/colors';
+import { formatTeamName, formatTeamCode } from '../constants/dummy';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
@@ -24,40 +25,6 @@ interface TeamToken {
   team: string;
   amount: number;
 }
-
-// formatTeamName 함수 추가
-const formatTeamName = (team: string) => {
-  const teamNames: { [key: string]: string } = {
-    '두산': '두산',
-    '롯데': '롯데',
-    '키움': '키움',
-    'KIA': 'KIA',
-    'LG': 'LG',
-    '한화': '한화',
-    'SSG': 'SSG',
-    '삼성': '삼성',
-    'NC': 'NC',
-    'KT': 'KT'
-  };
-  return teamNames[team] || team;
-};
-
-// formatTeamCode 함수 추가
-export const formatTeamCode = (team: string) => {
-  const teamCodes: { [key: string]: string } = {
-    '두산': 'DSB',    // 두산 베어스
-    '롯데': 'LTG',    // 롯데 자이언츠
-    '키움': 'KWH',    // 키움 히어로즈
-    'KIA': 'KIA',     // KIA 타이거즈
-    'LG': 'LGT',      // LG 트윈스
-    '한화': 'HHE',    // 한화 이글스
-    'SSG': 'SSG',     // SSG 랜더스
-    '삼성': 'SAL',    // 삼성 라이온즈
-    'NC': 'NCD',      // NC 다이노스
-    'KT': 'KTW'       // KT 위즈
-  };
-  return teamCodes[team] || team;
-};
 
 // 제안 카드 컴포넌트
 const ProposalCard: React.FC<{
@@ -198,13 +165,13 @@ const TeamPage: React.FC = () => {
 
       {/* 스크롤 가능한 컨텐츠 영역 */}
       <div className="h-full overflow-y-auto no-scrollbar">
-        <style jsx global>{`
+        <style>{`
           .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;     /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
           }
           .no-scrollbar::-webkit-scrollbar {
-            display: none;             /* Chrome, Safari, Opera */
+            display: none;
           }
         `}</style>
 

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
-import backBlackImg from '../assets/back_black.png';
-import hamburgerBlackImg from '../assets/hamburger_black.png';
+import { formatTeamCode } from '../constants/dummy';
+import backImg from '../assets/back.png';
+import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
-import { formatTeamCode } from './TeamPage';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -363,14 +363,14 @@ const MyPage: React.FC = () => {
           onClick={() => navigate(-1)} 
           className="w-[12px] h-[12px]"
         >
-          <img src={backBlackImg} alt="Back" className="w-full h-full" />
+          <img src={backImg} alt="Back" className="w-full h-full" />
         </button>
         <div className="w-5 h-5 flex items-center justify-center">
           <button 
             onClick={() => toggleSidebar(true)}
             className="w-5 h-5"
           >
-            <img src={hamburgerBlackImg} alt="Menu" className="w-full h-full" />
+            <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
           </button>
         </div>
       </div>

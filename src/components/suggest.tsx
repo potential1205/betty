@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { formatTeamCode } from '../pages/TeamPage';
+import { formatTeamCode } from '../constants/dummy';
 import { useStore } from '../stores/useStore';
 
 interface SuggestModalProps {

@@ -1,6 +1,7 @@
 package org.example.betty.domain.exchange.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,10 +25,12 @@ public class WalletBalance {
 
     @ManyToOne
     @JoinColumn(name = "wallet_id")
+    @NotNull
     private Wallet wallet;
 
     @ManyToOne
     @JoinColumn(name = "token_id")
+    @NotNull
     private Token token;
 
     @Column(precision = 18, scale = 8)

@@ -29,7 +29,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
   const [mode, setMode] = useState<Mode>('buy');
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { userTokens, bettyBalance, setBettyBalance } = useStore();
+  const { userTokens, bettyBalance, setBettyBalance, bettyPrice } = useStore();
 
   const handleNumberClick = (num: string) => {
     if (amount.length < 10) {
@@ -52,7 +52,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         // BETTY 잔액 감소 및 토큰 증가
         if (bettyBalance < totalPrice) return;
         setBettyBalance(bettyBalance - totalPrice);
-        updateTokenBalance(team, numAmount, totalPrice);
+        // BTC 가치 계산 (1 BETTY = 1 BTC)
+        const btcValue = totalPrice;
+        updateTokenBalance(team, numAmount, btcValue);
         break;
         
       case 'sell':
@@ -60,7 +62,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         const sellPrice = numAmount * (teamTokenPrices.find(t => t.team === selectedToken)?.price || 0);
         if (useTeamToken(selectedToken!, numAmount)) {
           setBettyBalance(bettyBalance + sellPrice);
-          updateTokenBalance(selectedToken!, -numAmount, -sellPrice);
+          // BTC 가치 계산 (1 BETTY = 1 BTC)
+          const sellBtcValue = sellPrice;
+          updateTokenBalance(selectedToken!, -numAmount, -sellBtcValue);
         }
         break;
         
@@ -70,8 +74,10 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         if (bettyBalance < swapPrice) return;
         if (useTeamToken(selectedToken!, numAmount)) {
           setBettyBalance(bettyBalance - swapPrice);
-          updateTokenBalance(selectedToken!, -numAmount, -swapPrice);
-          updateTokenBalance(team, numAmount, swapPrice);
+          // BTC 가치 계산 (1 BETTY = 1 BTC)
+          const swapBtcValue = swapPrice;
+          updateTokenBalance(selectedToken!, -numAmount, -swapBtcValue);
+          updateTokenBalance(team, numAmount, swapBtcValue);
         }
         break;
     }

@@ -80,7 +80,7 @@ export const useStore = create<AppState>((set, get) => ({
   selectedTeam: userTokenDummy[0]?.team || 'bears',
   isSuggestModalOpen: false,
   teams: Object.keys(teamColors),
-  bettyPrice: 0.0001,
+  bettyPrice: 1,
   bettyBalance: 1000,
   setBettyPrice: (price: number) => set({ bettyPrice: price }),
   setBettyBalance: (balance: number) => set({ bettyBalance: balance }),
@@ -214,9 +214,6 @@ export const useStore = create<AppState>((set, get) => ({
     // 기존 토큰이 있는지 확인
     const existingToken = state.userTokens.find(token => token.team === team);
     
-    // BTC 가격 계산 (1 BETTY = 0.0001 BTC 기준)
-    const btcAmount = amount * state.bettyPrice;
-    
     // 새로운 userTokens 배열 생성
     const newUserTokens = existingToken
       ? state.userTokens.map(token =>
@@ -230,17 +227,17 @@ export const useStore = create<AppState>((set, get) => ({
     const newWalletTokens = existingToken
       ? state.walletInfo.tokens.map(token =>
           token.team === team
-            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcAmount }
+            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
             : token
         )
-      : [...state.walletInfo.tokens, { team, amount, btcValue: btcAmount }];
+      : [...state.walletInfo.tokens, { team, amount, btcValue }];
 
     // 거래 내역 추가
     const newTransaction = {
       id: state.walletInfo.transactions.length + 1,
       type: amount > 0 ? 'BUY' : 'SELL',
       date: new Date().toLocaleDateString(),
-      amount: Math.abs(btcAmount),
+      amount: Math.abs(btcValue),
       tokenName: team,
       tokenAmount: Math.abs(amount),
       tokenPrice: state.bettyPrice
@@ -260,7 +257,7 @@ export const useStore = create<AppState>((set, get) => ({
   isChargeModalOpen: false,
   setIsChargeModalOpen: (isOpen) => set({ isChargeModalOpen: isOpen }),
   chargeBetty: (amount: number) => set((state) => {
-    const btcAmount = amount / 100; // 1 BTC = 100원 기준
+    const btcAmount = amount; // 1 BETTY = 1 BTC
     return {
       bettyBalance: state.bettyBalance + amount,
       walletInfo: {

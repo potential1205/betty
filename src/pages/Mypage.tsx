@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
-import { formatTeamCode, formatTeamName, teamColors } from '../constants/dummy';
+import { formatTeamCode, formatTeamName, teamColors, teamTokenPrices } from '../constants/dummy';
 import backImg from '../assets/back_black.png';
 import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
@@ -180,7 +180,7 @@ const MyPage: React.FC = () => {
                           <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
                           <div className="flex items-baseline">
                             <p className="text-base font-['Giants-Bold'] text-black">
-                              {formatBTC(tokenInfo?.btcValue || 0)}
+                              {formatBTC(token.amount * 10)}
                             </p>
                             <p className="text-xs text-gray-500 ml-1">BTC</p>
                           </div>
@@ -283,7 +283,7 @@ const MyPage: React.FC = () => {
                                 <div className="flex items-center space-x-1 min-w-0">
                                   <span className="truncate">{transaction.tokenAmount}개</span>
                                   <span className="mx-1 flex-shrink-0">•</span>
-                                  <span className="truncate">{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                                  <span className="truncate">10 BTC/개</span>
                                 </div>
                               </div>
                             </div>
@@ -292,7 +292,7 @@ const MyPage: React.FC = () => {
                       </div>
                       <div className="text-right ml-3 flex-shrink-0">
                         <p className="text-sm font-['Giants-Bold'] text-black">
-                          {formatBTC(transaction.amount)} BTC
+                          {formatBTC((transaction.tokenAmount || 0) * 10)} BTC
                         </p>
                       </div>
                     </motion.div>
@@ -342,7 +342,7 @@ const MyPage: React.FC = () => {
                                 <div className="flex items-center space-x-1 min-w-0">
                                   <span className="truncate">{transaction.tokenAmount}개</span>
                                   <span className="mx-1 flex-shrink-0">•</span>
-                                  <span className="truncate">{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                                  <span className="truncate">10 BTC/개</span>
                                 </div>
                               </div>
                             </div>
@@ -350,8 +350,8 @@ const MyPage: React.FC = () => {
                         )}
                       </div>
                       <div className="text-right ml-3 flex-shrink-0">
-                        <p className="text-base font-['Giants-Bold'] text-black">
-                          {formatBTC(transaction.amount)} BTC
+                        <p className="text-sm font-['Giants-Bold'] text-black">
+                          {formatBTC((transaction.tokenAmount || 0) * 10)} BTC
                         </p>
                       </div>
                     </motion.div>

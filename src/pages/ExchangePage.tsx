@@ -20,7 +20,7 @@ type TeamColors = {
 
 const ExchangePage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar } = useStore();
+  const { toggleSidebar, bettyPrice } = useStore();
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
 
@@ -43,14 +43,17 @@ const ExchangePage: React.FC = () => {
       ) : (
         <>
           {/* 헤더 */}
-          <div className="flex justify-between items-center p-3 px-4 border-b border-gray-800">
+          <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
             <button 
               onClick={() => navigate(-1)} 
               className="w-[12px] h-[12px]"
             >
               <img src={backImg} alt="Back" className="w-full h-full" />
             </button>
-            <h1 className="text-lg font-['Giants-Bold']">팬토큰 거래소</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-lg font-['Giants-Bold']">팬토큰 거래소</h1>
+              <p className="text-xs text-gray-400 mt-1">BETTY {bettyPrice.toFixed(4)} BTC</p>
+            </div>
             <div className="w-5 h-5 flex items-center justify-center">
               <button 
                 onClick={() => toggleSidebar(true)}
@@ -62,7 +65,7 @@ const ExchangePage: React.FC = () => {
           </div>
 
           {/* 메인 컨텐츠 */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pt-16">
             <style>{`
               ::-webkit-scrollbar {
                 display: none;
@@ -91,7 +94,8 @@ const ExchangePage: React.FC = () => {
                     className={`bg-gray-800/50 rounded-lg p-2.5 cursor-pointer transition-transform hover:scale-[1.01]`}
                     onClick={() => handleTeamClick(token.team)}
                     style={{
-                      borderLeft: `4px solid ${(teamColors as TeamColors)[token.team].bg}`
+                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
                     }}
                   >
                     <div className="flex items-center">
@@ -112,7 +116,7 @@ const ExchangePage: React.FC = () => {
                         </div>
                       </div>
                       <div className="w-[80px] text-right">
-                        <p className={`text-sm ${token.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <p className={`text-sm ${token.change24h >= 0 ? 'text-red-400' : 'text-blue-400'}`}>
                           {token.change24h >= 0 ? '+' : ''}{token.change24h}%
                         </p>
                       </div>

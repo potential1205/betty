@@ -133,30 +133,30 @@ function LogoScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="w-64"
+                className="flex items-center gap-2"
               >
                 <input
                   type="text"
                   value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
+                  onChange={(e) => setNickname(e.target.value.slice(0, 10))}
                   placeholder="닉네임을 입력하세요"
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-colors"
+                  maxLength={10}
+                  className="w-48 px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-colors"
                   style={{
                     boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
                   }}
                   autoFocus
                 />
+                <button
+                  type="submit"
+                  disabled={!nickname.trim()}
+                  className={`bg-blue-950 text-white px-4 py-2 rounded-lg font-['Giants-Bold'] text-sm transition-colors ${
+                    nickname.trim() ? 'hover:bg-blue-900' : 'opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  확인
+                </button>
               </motion.div>
-
-              <button
-                type="submit"
-                disabled={!nickname.trim()}
-                className={`bg-blue-950 text-white px-8 py-3 rounded-full font-['Giants-Bold'] text-lg transition-colors ${
-                  nickname.trim() ? 'hover:bg-blue-900' : 'opacity-50 cursor-not-allowed'
-                }`}
-              >
-                확인
-              </button>
             </motion.form>
           ) : (
             <button

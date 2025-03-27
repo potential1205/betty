@@ -36,6 +36,10 @@ interface AppState {
   selectedTeam: string;
   isSuggestModalOpen: boolean;
   teams: string[];
+  bettyPrice: number;
+  bettyBalance: number;
+  setBettyPrice: (price: number) => void;
+  setBettyBalance: (balance: number) => void;
   setCurrentIndex: (index: number) => void;
   handleNext: () => void;
   handlePrev: () => void;
@@ -63,6 +67,7 @@ interface AppState {
   setNickname: (name: string) => void;
   isChargeModalOpen: boolean;
   setIsChargeModalOpen: (isOpen: boolean) => void;
+  chargeBetty: (amount: number) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -75,6 +80,10 @@ export const useStore = create<AppState>((set, get) => ({
   selectedTeam: userTokenDummy[0]?.team || 'bears',
   isSuggestModalOpen: false,
   teams: Object.keys(teamColors),
+  bettyPrice: 0.0001,
+  bettyBalance: 1000,
+  setBettyPrice: (price: number) => set({ bettyPrice: price }),
+  setBettyBalance: (balance: number) => set({ bettyBalance: balance }),
   setCurrentIndex: (index) => set({ currentIndex: index }),
   handleNext: () => set((state) => ({ 
     currentIndex: state.currentIndex === state.games.length - 1 ? 0 : state.currentIndex + 1 
@@ -212,7 +221,26 @@ export const useStore = create<AppState>((set, get) => ({
     }
   })),
   nickname: '',
-  setNickname: (name) => set({ nickname: name }),
+  setNickname: (name) => set({ nickname: name.slice(0, 10) }),
   isChargeModalOpen: false,
   setIsChargeModalOpen: (isOpen) => set({ isChargeModalOpen: isOpen }),
+  chargeBetty: (amount: number) => set((state) => {
+    const btcAmount = amount / 100; // 1 BTC = 100원 기준
+    return {
+      bettyBalance: state.bettyBalance + amount,
+      walletInfo: {
+        ...state.walletInfo,
+        totalBTC: state.walletInfo.totalBTC + btcAmount,
+        transactions: [
+          {
+            id: state.walletInfo.transactions.length + 1,
+            type: 'CHARGE',
+            date: new Date().toLocaleDateString(),
+            amount: amount
+          },
+          ...state.walletInfo.transactions
+        ]
+      }
+    };
+  }),
 }));

@@ -29,7 +29,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
   const [mode, setMode] = useState<Mode>('buy');
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { userTokens } = useStore();
+  const { userTokens, bettyBalance, setBettyBalance } = useStore();
 
   const handleNumberClick = (num: string) => {
     if (amount.length < 10) {
@@ -43,6 +43,58 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
 
   const handleAction = () => {
     if (!amount) return;
+    
+    const { addTransaction, updateWalletBalance, updateTokenBalance, useTeamToken } = useStore.getState();
+    const numAmount = Number(amount);
+    
+    switch (mode) {
+      case 'buy':
+        // BETTY 잔액 감소 및 토큰 증가
+        if (bettyBalance < totalPrice) return;
+        setBettyBalance(bettyBalance - totalPrice);
+        updateTokenBalance(team, numAmount, totalPrice);
+        addTransaction({
+          type: 'BUY',
+          date: new Date().toLocaleDateString(),
+          amount: totalPrice,
+          tokenName: team,
+          tokenAmount: numAmount,
+          tokenPrice: price
+        });
+        break;
+        
+      case 'sell':
+        // 토큰 감소 및 BETTY 잔액 증가
+        const sellPrice = numAmount * (teamTokenPrices.find(t => t.team === selectedToken)?.price || 0);
+        useTeamToken(selectedToken!, numAmount);
+        setBettyBalance(bettyBalance + sellPrice);
+        addTransaction({
+          type: 'SELL',
+          date: new Date().toLocaleDateString(),
+          amount: sellPrice,
+          tokenName: selectedToken!,
+          tokenAmount: numAmount,
+          tokenPrice: teamTokenPrices.find(t => t.team === selectedToken)?.price || 0
+        });
+        break;
+        
+      case 'swap':
+        // 현재 토큰 감소 및 새로운 토큰 증가
+        const swapPrice = numAmount * price;
+        if (bettyBalance < swapPrice) return;
+        useTeamToken(selectedToken!, numAmount);
+        setBettyBalance(bettyBalance - swapPrice);
+        updateTokenBalance(team, numAmount, swapPrice);
+        addTransaction({
+          type: 'BUY',
+          date: new Date().toLocaleDateString(),
+          amount: swapPrice,
+          tokenName: team,
+          tokenAmount: numAmount,
+          tokenPrice: price
+        });
+        break;
+    }
     
     setShowSuccess(true);
     setTimeout(() => {
@@ -97,7 +149,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
       }}
     >
       {/* 헤더 */}
-      <div className="flex justify-between items-center p-3 px-4 border-b">
+      <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <div className="w-[12px] h-[12px]" />
         <h1 className="text-lg font-['Giants-Bold'] text-gray-800">팬토큰 거래</h1>
         <button 
@@ -121,7 +173,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="h-[calc(100%-56px)] flex flex-col">
+      <div className="h-[calc(100%-56px)] flex flex-col pt-12">
         <div className="flex-1 p-4">
           {/* 모드 선택 */}
           <div className="flex justify-between mb-4">
@@ -264,7 +316,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
               <span className="text-sm text-gray-500">
                 {mode === 'sell' 
                   ? `보유: ${selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0}개`
-                  : '보유: 1,000 BETTY'}
+                  : `보유: ${bettyBalance.toLocaleString()} BETTY`}
               </span>
             </div>
             <div className="flex items-center justify-between mb-2">
@@ -315,9 +367,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
             </button>
             <button
               onClick={handleAction}
-              disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > 1000)}
+              disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)}
               className={`h-11 rounded-lg text-white text-base font-['Giants-Bold'] transition-colors ${
-                !amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > 1000)
+                !amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)
                   ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}

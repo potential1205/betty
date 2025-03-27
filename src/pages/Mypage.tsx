@@ -2,15 +2,24 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
-import { formatTeamCode } from '../constants/dummy';
+import { formatTeamCode, formatTeamName, teamColors } from '../constants/dummy';
 import backImg from '../assets/back_black.png';
 import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
 
+type TeamColor = {
+  bg: string;
+  text: string;
+};
+
+type TeamColors = {
+  [key: string]: TeamColor;
+};
+
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname } = useStore();
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice } = useStore();
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
@@ -137,7 +146,7 @@ const MyPage: React.FC = () => {
 
             {/* 보유 팬토큰 */}
             <div>
-              <h3 className="text-lg font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
+              <h3 className="text-base font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
               <div className="space-y-3">
                 {walletInfo.tokens.map((token) => (
                   <motion.div
@@ -149,20 +158,29 @@ const MyPage: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="flex items-center mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-2">
-                            <span className="text-sm font-['Giants-Bold'] text-gray-600">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                            style={{ backgroundColor: (teamColors as TeamColors)[token.team].bg }}
+                          >
+                            <span className="text-sm font-['Giants-Bold']" style={{ color: (teamColors as TeamColors)[token.team].text }}>
                               {formatTeamCode(token.team)}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-500">{token.team}</p>
+                          <p className="text-sm text-black">
+                            {formatTeamName(token.team)}
+                          </p>
                         </div>
-                        <p className="text-xl font-['Giants-Bold']">{token.amount}개</p>
+                        <p className="text-base text-black">
+                          {token.amount}개
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500 mb-1">BTC 가치</p>
+                        <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
                         <div className="flex items-baseline">
-                          <p className="text-xl font-['Giants-Bold'] text-black">{formatBTC(token.btcValue)}</p>
-                          <p className="text-sm text-gray-500 ml-1">BTC</p>
+                          <p className="text-base font-['Giants-Bold'] text-black">
+                            {formatBTC(token.btcValue)}
+                          </p>
+                          <p className="text-xs text-gray-500 ml-1">BTC</p>
                         </div>
                       </div>
                     </div>
@@ -189,22 +207,31 @@ const MyPage: React.FC = () => {
                       key={transaction.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
-                    >
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full ${transactionStyles.CHARGE.bg} flex items-center justify-center mr-3`}>
-                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
-                            {transactionStyles.CHARGE.label}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">{transaction.date}</p>
+                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                      <div className="flex items-center flex-1 min-w-0">
+                        {transaction.type === 'CHARGE' ? (
+                          <div className={`w-8 h-8 rounded-full ${transactionStyles.CHARGE.bg} flex items-center justify-center mr-3 flex-shrink-0`}>
+                            <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
+                              {transactionStyles.CHARGE.label}
+                            </span>
+                          </div>
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center">
+                            <p className="text-xs text-gray-500 truncate">{transaction.date}</p>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
-                          {transaction.amount.toLocaleString()}원
-                        </p>
+                      <div className="text-right ml-3 flex-shrink-0">
+                        {transaction.type === 'CHARGE' ? (
+                          <p className={`text-sm font-['Giants-Bold'] ${transactionStyles.CHARGE.text}`}>
+                            {transaction.amount.toLocaleString()}원
+                          </p>
+                        ) : transaction.tokenName ? (
+                          <p className="text-sm font-['Giants-Bold'] text-black">
+                            {formatBTC(transaction.amount)} BTC
+                          </p>
+                        ) : null}
                       </div>
                     </motion.div>
                   ))}
@@ -234,30 +261,34 @@ const MyPage: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
                     >
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full ${transactionStyles.BUY.bg} flex items-center justify-center mr-3`}>
-                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.BUY.text}`}>
-                            {transactionStyles.BUY.label}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">{transaction.date}</p>
-                          {transaction.tokenName && (
-                            <div className="flex items-center text-xs text-gray-400 mt-0.5">
-                              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mr-1">
-                                <span className="text-xs font-['Giants-Bold'] text-gray-600">
-                                  {formatTeamCode(transaction.tokenName)}
-                                </span>
-                              </div>
-                              <span>{transaction.tokenAmount}개</span>
-                              <span className="mx-1">•</span>
-                              <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                      <div className="flex items-center flex-1 min-w-0">
+                        {transaction.tokenName && (
+                          <div className="flex items-center">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0"
+                              style={{ backgroundColor: (teamColors as TeamColors)[transaction.tokenName].bg }}
+                            >
+                              <span className="text-sm font-['Giants-Bold']" style={{ color: (teamColors as TeamColors)[transaction.tokenName].text }}>
+                                {formatTeamCode(transaction.tokenName)}
+                              </span>
                             </div>
-                          )}
-                        </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center">
+                                <p className="text-xs text-gray-500 truncate">{transaction.date}</p>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-400 mt-0.5 space-x-1">
+                                <div className="flex items-center space-x-1 min-w-0">
+                                  <span className="truncate">{transaction.tokenAmount}개</span>
+                                  <span className="mx-1 flex-shrink-0">•</span>
+                                  <span className="truncate">{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.BUY.text}`}>
+                      <div className="text-right ml-3 flex-shrink-0">
+                        <p className="text-sm font-['Giants-Bold'] text-black">
                           {formatBTC(transaction.amount)} BTC
                         </p>
                       </div>
@@ -289,30 +320,34 @@ const MyPage: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
                     >
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full ${transactionStyles.SELL.bg} flex items-center justify-center mr-3`}>
-                          <span className={`text-sm font-['Giants-Bold'] ${transactionStyles.SELL.text}`}>
-                            {transactionStyles.SELL.label}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">{transaction.date}</p>
-                          {transaction.tokenName && (
-                            <div className="flex items-center text-xs text-gray-400 mt-0.5">
-                              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mr-1">
-                                <span className="text-xs font-['Giants-Bold'] text-gray-600">
-                                  {formatTeamCode(transaction.tokenName)}
-                                </span>
-                              </div>
-                              <span>{transaction.tokenAmount}개</span>
-                              <span className="mx-1">•</span>
-                              <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                      <div className="flex items-center flex-1 min-w-0">
+                        {transaction.tokenName && (
+                          <div className="flex items-center">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0"
+                              style={{ backgroundColor: (teamColors as TeamColors)[transaction.tokenName].bg }}
+                            >
+                              <span className="text-sm font-['Giants-Bold']" style={{ color: (teamColors as TeamColors)[transaction.tokenName].text }}>
+                                {formatTeamCode(transaction.tokenName)}
+                              </span>
                             </div>
-                          )}
-                        </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center">
+                                <p className="text-xs text-gray-500 truncate">{transaction.date}</p>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-400 mt-0.5 space-x-1">
+                                <div className="flex items-center space-x-1 min-w-0">
+                                  <span className="truncate">{transaction.tokenAmount}개</span>
+                                  <span className="mx-1 flex-shrink-0">•</span>
+                                  <span className="truncate">{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className={`text-base font-['Giants-Bold'] ${transactionStyles.SELL.text}`}>
+                      <div className="text-right ml-3 flex-shrink-0">
+                        <p className="text-base font-['Giants-Bold'] text-black">
                           {formatBTC(transaction.amount)} BTC
                         </p>
                       </div>
@@ -394,7 +429,7 @@ const MyPage: React.FC = () => {
 
         {/* 지갑 주소 */}
         <div className="mb-8">
-          <h2 className="text-2xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
+          <h2 className="text-xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
           <p className="text-sm text-gray-500 mt-1">{walletInfo.address}</p>
         </div>
 
@@ -428,3 +463,4 @@ const MyPage: React.FC = () => {
 };
 
 export default MyPage;
+

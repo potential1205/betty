@@ -1,6 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
+import bettyImg from '../assets/bettycoin.png';
 
 interface ChargeModalProps {
   isOpen: boolean;
@@ -10,7 +11,8 @@ interface ChargeModalProps {
 const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
   const [amount, setAmount] = React.useState<number>(0);
   const [customAmount, setCustomAmount] = React.useState<string>('');
-  const { addTransaction, updateWalletBalance } = useStore();
+  const [showSuccess, setShowSuccess] = React.useState(false);
+  const { chargeBetty, walletInfo } = useStore();
   
   // 원화를 BTC로 변환하는 함수 (1 BTC = 100원 기준)
   const convertToBTC = (won: number) => won / 100;
@@ -26,19 +28,29 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
     setAmount(Number(value));
   };
 
+  const handleNumberClick = (num: string) => {
+    if (customAmount.length < 10) {
+      setCustomAmount((prev: string) => prev + num);
+      setAmount(Number((prev: string) => prev + num));
+    }
+  };
+
+  const handleDelete = () => {
+    setCustomAmount((prev: string) => prev.slice(0, -1));
+    setAmount(Number((prev: string) => prev.slice(0, -1)));
+  };
+
   const handleCharge = () => {
     if (amount <= 0) return;
     
-    const btcAmount = convertToBTC(amount);
-    updateWalletBalance(btcAmount);
-    
-    addTransaction({
-      type: 'CHARGE',
-      amount: amount,
-      date: new Date().toLocaleString()
-    });
-    
-    onClose();
+    chargeBetty(amount);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      setAmount(0);
+      setCustomAmount('');
+      onClose();
+    }, 1500);
   };
 
   if (!isOpen) return null;
@@ -48,96 +60,179 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+      className="fixed inset-0 bg-white z-50"
+      style={{
+        width: '360px',
+        height: '743px',
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        overflow: 'hidden'
+      }}
     >
-      <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.95 }}
-        className="bg-white rounded-xl p-6 w-[90%] max-w-[324px]"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 className="text-xl font-['Giants-Bold'] mb-6">BTC 충전하기</h2>
-        
-        {/* 금액 선택 버튼들 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {amounts.map((value) => (
-            <button
-              key={value}
-              onClick={() => {
-                setAmount(value);
-                setCustomAmount('');
-              }}
-              className={`p-4 rounded-xl text-center transition-colors
-                ${amount === value && !customAmount
-                  ? 'bg-black text-white' 
-                  : 'bg-gray-100 text-black hover:bg-gray-200'}`}
-            >
-              <p className="text-sm mb-1">충전금액</p>
-              <p className="text-lg font-['Giants-Bold']">
-                {value.toLocaleString()}원
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {formatBTC(convertToBTC(value))} BTC
-              </p>
-            </button>
-          ))}
-        </div>
-
-        {/* 직접 입력 필드 */}
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              value={customAmount}
-              onChange={handleCustomAmountChange}
-              placeholder="직접 입력하기"
-              className="w-full p-4 rounded-xl bg-gray-100 text-black placeholder-gray-400
-                focus:outline-none focus:ring-2 focus:ring-black"
+      {/* 헤더 */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
+        <div className="w-[12px] h-[12px]" />
+        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BTC 충전하기</h1>
+        <button 
+          onClick={onClose}
+          className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
+        >
+          <svg
+            className="w-full h-full"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
             />
-            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-              원
-            </span>
+          </svg>
+        </button>
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <div className="h-[calc(100%-56px)] flex flex-col pt-12">
+        <div className="flex-1 p-4 flex flex-col">
+          {/* 현재 보유 BTC */}
+          <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
+            <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
+            <div className="flex items-baseline">
+              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+              <p className="text-sm text-gray-400 ml-1">BTC</p>
+            </div>
           </div>
-          {customAmount && (
-            <p className="text-sm text-gray-500 mt-2 pl-2">
-              ≈ {formatBTC(convertToBTC(Number(customAmount)))} BTC
-            </p>
-          )}
-        </div>
 
-        {/* 선택된 금액 표시 */}
-        <div className="bg-gray-100 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-500 mb-1">충전 후 BTC</p>
-          <p className="text-xl font-['Giants-Bold']">
-            {formatBTC(convertToBTC(amount))} BTC
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            {amount.toLocaleString()}원
-          </p>
-        </div>
+          {/* 금액 선택 버튼들 */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {amounts.map((value) => (
+              <button
+                key={value}
+                onClick={() => {
+                  setAmount(value);
+                  setCustomAmount('');
+                }}
+                className={`p-4 rounded-xl text-center transition-colors
+                  ${amount === value && !customAmount
+                    ? 'bg-black text-white' 
+                    : 'bg-gray-100 text-black hover:bg-gray-200'}`}
+              >
+                <p className="text-sm mb-1">충전금액</p>
+                <p className="text-lg font-['Giants-Bold']">
+                  {value.toLocaleString()}원
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatBTC(convertToBTC(value))} BTC
+                </p>
+              </button>
+            ))}
+          </div>
 
-        {/* 버튼 영역 */}
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-colors"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleCharge}
-            disabled={amount === 0}
-            className={`flex-1 py-3 rounded-full transition-colors
-              ${amount > 0 
-                ? 'bg-black text-white hover:bg-gray-800' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-          >
-            충전하기
-          </button>
+          {/* 직접 입력 필드 */}
+          <div className="bg-gray-100 rounded-lg p-3 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-500">직접 입력하기</span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <input
+                type="text"
+                value={customAmount}
+                onChange={handleCustomAmountChange}
+                placeholder="0"
+                className="text-xl font-['Giants-Bold'] text-gray-800 w-full text-right outline-none bg-transparent"
+              />
+              <span className="text-gray-500 ml-2">원</span>
+            </div>
+            {customAmount && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">BTC 환산</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-800 font-['Giants-Bold']">{formatBTC(convertToBTC(Number(customAmount)))}</span>
+                  <span className="text-gray-500">BTC</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 계산기 */}
+          <div className="grid grid-cols-3 gap-1.5 mt-auto">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+              <button
+                key={num}
+                onClick={() => handleNumberClick(num.toString())}
+                className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+              >
+                {num}
+              </button>
+            ))}
+            <button
+              onClick={handleDelete}
+              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => handleNumberClick('0')}
+              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+            >
+              0
+            </button>
+            <button
+              onClick={handleCharge}
+              disabled={amount === 0}
+              className={`h-11 rounded-lg text-white text-base font-['Giants-Bold'] transition-colors ${
+                amount > 0
+                  ? 'bg-blue-500 hover:bg-blue-600'
+                  : 'bg-gray-300 cursor-not-allowed'
+              }`}
+            >
+              충전하기
+            </button>
+          </div>
         </div>
-      </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white flex items-center justify-center pointer-events-none z-[60]"
+          >
+            <div className="flex flex-col items-center">
+              <svg
+                className="w-16 h-16 sm:w-24 sm:h-24 text-green-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <motion.path
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.5 }}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 13l4 4L21 7"
+                />
+              </svg>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-sm sm:text-base font-['Giants-Bold'] text-gray-800 mt-2 sm:mt-3"
+              >
+                충전되었습니다
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

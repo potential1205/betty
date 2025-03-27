@@ -8,7 +8,11 @@ export const gameData = {
 export const userTokenDummy = [
   {
     team: "삼성",
-    amount: 100
+    amount: 5
+  },
+  {
+    team: "두산",
+    amount: 3
   }
 ];
 

@@ -47,7 +47,7 @@ const Sidebar: React.FC = () => {
             to="/my" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
-          >마이월렛</Link>
+          >월렛</Link>
           <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/exchange" 

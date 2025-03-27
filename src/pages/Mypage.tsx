@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import { formatTeamCode } from '../constants/dummy';
-import backImg from '../assets/back.png';
-import hamburgerImg from '../assets/hamburger.png';
+import backImg from '../assets/back_black.png';
+import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen } = useStore();
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname } = useStore();
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
@@ -394,7 +394,7 @@ const MyPage: React.FC = () => {
 
         {/* 지갑 주소 */}
         <div className="mb-8">
-          <h2 className="text-2xl font-['Giants-Bold']">안녕하세요!</h2>
+          <h2 className="text-2xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
           <p className="text-sm text-gray-500 mt-1">{walletInfo.address}</p>
         </div>
 

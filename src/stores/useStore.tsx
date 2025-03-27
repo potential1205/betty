@@ -59,6 +59,8 @@ interface AppState {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateWalletBalance: (amount: number) => void;
   updateTokenBalance: (team: string, amount: number, btcValue: number) => void;
+  nickname: string;
+  setNickname: (name: string) => void;
   isChargeModalOpen: boolean;
   setIsChargeModalOpen: (isOpen: boolean) => void;
 }
@@ -209,6 +211,8 @@ export const useStore = create<AppState>((set, get) => ({
       )
     }
   })),
+  nickname: '',
+  setNickname: (name) => set({ nickname: name }),
   isChargeModalOpen: false,
   setIsChargeModalOpen: (isOpen) => set({ isChargeModalOpen: isOpen }),
 }));

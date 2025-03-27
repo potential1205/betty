@@ -1,10 +1,24 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../stores/useStore'
+import { useState } from 'react'
 
 const letters = ['B', 'E', 'T', 'T', 'Y']
 
 function LogoScreen() {
   const navigate = useNavigate()
+  const { nickname, setNickname } = useStore()
+  const [showNicknameForm, setShowNicknameForm] = useState(false)
+
+  const handleStart = () => {
+    setShowNicknameForm(true)
+  }
+
+  const handleConfirm = () => {
+    if (nickname.trim()) {
+      navigate('/home')
+    }
+  }
 
   return (
     <motion.div
@@ -105,27 +119,53 @@ function LogoScreen() {
             </span>
           </p>
 
-          <motion.button
-            onClick={() => navigate('/home')}
-            className="bg-blue-950 text-white px-8 py-3 rounded-full font-['Giants-Bold'] text-lg hover:bg-blue-900 transition-colors"
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-              delay: 2.5,
-              duration: 0.5,
-              ease: 'easeOut',
-            }}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: '0 4px 20px rgba(12, 27, 77, 0.3)',
-            }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              boxShadow: '0 4px 15px rgba(12, 27, 77, 0.2)',
-            }}
-          >
-            시작하기
-          </motion.button>
+          {showNicknameForm ? (
+            <motion.form 
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleConfirm()
+              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="w-64"
+              >
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="닉네임을 입력하세요"
+                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-colors"
+                  style={{
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+                  }}
+                  autoFocus
+                />
+              </motion.div>
+
+              <button
+                type="submit"
+                disabled={!nickname.trim()}
+                className={`bg-blue-950 text-white px-8 py-3 rounded-full font-['Giants-Bold'] text-lg transition-colors ${
+                  nickname.trim() ? 'hover:bg-blue-900' : 'opacity-50 cursor-not-allowed'
+                }`}
+              >
+                확인
+              </button>
+            </motion.form>
+          ) : (
+            <button
+              onClick={handleStart}
+              className="bg-blue-950 text-white px-8 py-3 rounded-full font-['Giants-Bold'] text-lg hover:bg-blue-900 transition-colors"
+            >
+              시작하기
+            </button>
+          )}
         </motion.div>
       </div>
     </motion.div>

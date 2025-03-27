@@ -44,16 +44,16 @@ const Sidebar: React.FC = () => {
           >홈</Link>
           <div className="h-[1px] bg-gray-700"></div>
           <Link 
-            to="/main" 
-            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
-            onClick={handleLinkClick}
-          >경기페이지</Link>
-          <div className="h-[1px] bg-gray-700"></div>
-          <Link 
             to="/my" 
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >마이페이지</Link>
+          <div className="h-[1px] bg-gray-700"></div>
+          <Link 
+            to="/exchange" 
+            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
+            onClick={handleLinkClick}
+          >거래소</Link>
           <div className="h-[1px] bg-gray-700"></div>
           <Link 
             to="/team" 
@@ -66,12 +66,6 @@ const Sidebar: React.FC = () => {
             className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
             onClick={handleLinkClick}
           >아카이브</Link>
-          <div className="h-[1px] bg-gray-700"></div>
-          <Link 
-            to="/exchange" 
-            className="block text-white text-3xl py-3 hover:text-gray-300 transition-colors"
-            onClick={handleLinkClick}
-          >거래소</Link>
         </nav>
       </div>
     </motion.div>

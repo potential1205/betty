@@ -53,46 +53,26 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         if (bettyBalance < totalPrice) return;
         setBettyBalance(bettyBalance - totalPrice);
         updateTokenBalance(team, numAmount, totalPrice);
-        addTransaction({
-          type: 'BUY',
-          date: new Date().toLocaleDateString(),
-          amount: totalPrice,
-          tokenName: team,
-          tokenAmount: numAmount,
-          tokenPrice: price
-        });
         break;
         
       case 'sell':
         // 토큰 감소 및 BETTY 잔액 증가
         const sellPrice = numAmount * (teamTokenPrices.find(t => t.team === selectedToken)?.price || 0);
-        useTeamToken(selectedToken!, numAmount);
-        setBettyBalance(bettyBalance + sellPrice);
-        addTransaction({
-          type: 'SELL',
-          date: new Date().toLocaleDateString(),
-          amount: sellPrice,
-          tokenName: selectedToken!,
-          tokenAmount: numAmount,
-          tokenPrice: teamTokenPrices.find(t => t.team === selectedToken)?.price || 0
-        });
+        if (useTeamToken(selectedToken!, numAmount)) {
+          setBettyBalance(bettyBalance + sellPrice);
+          updateTokenBalance(selectedToken!, -numAmount, -sellPrice);
+        }
         break;
         
       case 'swap':
         // 현재 토큰 감소 및 새로운 토큰 증가
         const swapPrice = numAmount * price;
         if (bettyBalance < swapPrice) return;
-        useTeamToken(selectedToken!, numAmount);
-        setBettyBalance(bettyBalance - swapPrice);
-        updateTokenBalance(team, numAmount, swapPrice);
-        addTransaction({
-          type: 'BUY',
-          date: new Date().toLocaleDateString(),
-          amount: swapPrice,
-          tokenName: team,
-          tokenAmount: numAmount,
-          tokenPrice: price
-        });
+        if (useTeamToken(selectedToken!, numAmount)) {
+          setBettyBalance(bettyBalance - swapPrice);
+          updateTokenBalance(selectedToken!, -numAmount, -swapPrice);
+          updateTokenBalance(team, numAmount, swapPrice);
+        }
         break;
     }
     

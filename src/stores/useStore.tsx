@@ -214,6 +214,9 @@ export const useStore = create<AppState>((set, get) => ({
     // 기존 토큰이 있는지 확인
     const existingToken = state.userTokens.find(token => token.team === team);
     
+    // BTC 가격 계산 (1 BETTY = 0.0001 BTC 기준)
+    const btcAmount = amount * state.bettyPrice;
+    
     // 새로운 userTokens 배열 생성
     const newUserTokens = existingToken
       ? state.userTokens.map(token =>
@@ -227,16 +230,28 @@ export const useStore = create<AppState>((set, get) => ({
     const newWalletTokens = existingToken
       ? state.walletInfo.tokens.map(token =>
           token.team === team
-            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
+            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcAmount }
             : token
         )
-      : [...state.walletInfo.tokens, { team, amount, btcValue }];
+      : [...state.walletInfo.tokens, { team, amount, btcValue: btcAmount }];
+
+    // 거래 내역 추가
+    const newTransaction = {
+      id: state.walletInfo.transactions.length + 1,
+      type: amount > 0 ? 'BUY' : 'SELL',
+      date: new Date().toLocaleDateString(),
+      amount: Math.abs(btcAmount),
+      tokenName: team,
+      tokenAmount: Math.abs(amount),
+      tokenPrice: state.bettyPrice
+    };
 
     return {
       userTokens: newUserTokens,
       walletInfo: {
         ...state.walletInfo,
-        tokens: newWalletTokens
+        tokens: newWalletTokens,
+        transactions: [newTransaction, ...state.walletInfo.transactions]
       }
     };
   }),

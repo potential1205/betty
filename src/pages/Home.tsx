@@ -57,7 +57,7 @@ const Home: React.FC = () => {
     <div className="relative h-full overflow-hidden" style={getBackgroundStyle()}>
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
-        <button onClick={() => navigate('/my')} className="w-5 h-5">
+        <button onClick={() => navigate('/my')} className="w-8 h-7">
           <img src={walletImg} alt="wallet" className="w-full h-full" />
         </button>
         <button onClick={() => toggleSidebar(true)} className="w-5 h-5">

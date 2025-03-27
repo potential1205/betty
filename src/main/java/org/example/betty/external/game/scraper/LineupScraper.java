@@ -20,7 +20,7 @@ public class LineupScraper {
      * 당일 경기 라인업 페이지 크롤러
      */
     public void scrapeLineup(String gameId) {
-        String url = "https://m.sports.naver.com/game/" + gameId + "/relay";
+        String url = "https://m.sports.naver.com/game/" + gameId + "/lineup";
         String driverPath = System.getProperty("user.dir") + "/src/main/resources/chromedriver.exe";
         System.setProperty("webdriver.chrome.driver", driverPath);
 
@@ -33,7 +33,6 @@ public class LineupScraper {
             driver.get(url);
             Thread.sleep(2000);
 
-            // TODO: 라인업 데이터 추출 로직 작성
             log.info("라인업 중계 페이지 접속 완료: {}", url);
 
         } catch (Exception e) {

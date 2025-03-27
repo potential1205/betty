@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RedisRelay {
+public class LiveRelayData {
     private String inning;
     private String score;
     private String batter;

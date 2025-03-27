@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedisGameData {
-    private RedisGameInfo gameInfo;
-    private RedisLineup lineup;
-    private RedisRelay relay;
+    private GameBasicInfo gameInfo;
+    private TeamLineup lineup;
+    private LiveRelayData relay;
 }

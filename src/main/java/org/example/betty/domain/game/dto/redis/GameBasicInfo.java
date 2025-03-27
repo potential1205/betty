@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RedisGameInfo {
+public class GameBasicInfo {
     private int season;
     private String gameDate;
     private String startTime;

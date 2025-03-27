@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RedisLineup {
+public class TeamLineup {
     private List<String> home;
     private List<String> away;
 }

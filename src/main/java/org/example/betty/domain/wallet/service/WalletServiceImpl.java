@@ -24,7 +24,7 @@ public class WalletServiceImpl implements WalletService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        return wallet.getWalletAddress();
+        return wallet.getNickname();
     }
 
     @Override

@@ -52,7 +52,6 @@ const ExchangePage: React.FC = () => {
             </button>
             <div className="flex flex-col items-center">
               <h1 className="text-lg font-['Giants-Bold']">팬토큰 거래소</h1>
-              <p className="text-xs text-gray-400 mt-1">BETTY {bettyPrice.toFixed(4)} BTC</p>
             </div>
             <div className="w-5 h-5 flex items-center justify-center">
               <button 

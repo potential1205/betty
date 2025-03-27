@@ -1,75 +1,42 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// ✅ 유동성 풀 컨트랙트: BTC와 팬토큰의 유동성 관리
 contract LiquidityPool {
-    IERC20 public tokenA;
-    IERC20 public tokenB;
-    
-    uint256 public reserveA;
-    uint256 public reserveB;
+    IERC20 public btcToken;
+    IERC20 public fanToken;
 
-    mapping(address => uint256) public liquidity;
+    uint256 public btcReserve;
+    uint256 public fanTokenReserve;
 
-    constructor(address _tokenA, address _tokenB) {
-        tokenA = IERC20(_tokenA);
-        tokenB = IERC20(_tokenB);
+    constructor(address _btcToken, address _fanToken) {
+        btcToken = IERC20(_btcToken);
+        fanToken = IERC20(_fanToken);
     }
 
-    function deposit(uint256 amountA, uint256 amountB) external {
-        require(amountA > 0 && amountB > 0, "Invalid amounts");
+    function addLiquidity(uint256 btcAmount, uint256 fanTokenAmount) external {
+        require(btcAmount > 0 && fanTokenAmount > 0, "Invalid amounts");
 
-        tokenA.transferFrom(msg.sender, address(this), amountA);
-        tokenB.transferFrom(msg.sender, address(this), amountB);
+        btcToken.transferFrom(msg.sender, address(this), btcAmount);
+        fanToken.transferFrom(msg.sender, address(this), fanTokenAmount);
 
-        reserveA += amountA;
-        reserveB += amountB;
-        liquidity[msg.sender] += (amountA + amountB) / 2;
+        btcReserve += btcAmount;
+        fanTokenReserve += fanTokenAmount;
     }
 
-    function withdraw(uint256 amount) external {
-        require(liquidity[msg.sender] >= amount, "Insufficient liquidity");
+    function removeLiquidity(uint256 btcAmount, uint256 fanTokenAmount) external {
+        require(btcAmount <= btcReserve && fanTokenAmount <= fanTokenReserve, "Insufficient reserve");
 
-        uint256 amountA = (amount * reserveA) / totalLiquidity();
-        uint256 amountB = (amount * reserveB) / totalLiquidity();
+        btcToken.transfer(msg.sender, btcAmount);
+        fanToken.transfer(msg.sender, fanTokenAmount);
 
-        liquidity[msg.sender] -= amount;
-        reserveA -= amountA;
-        reserveB -= amountB;
-
-        tokenA.transfer(msg.sender, amountA);
-        tokenB.transfer(msg.sender, amountB);
+        btcReserve -= btcAmount;
+        fanTokenReserve -= fanTokenAmount;
     }
 
-    function swap(address fromToken, uint256 amountIn) external returns (uint256 amountOut) {
-        require(fromToken == address(tokenA) || fromToken == address(tokenB), "Invalid token");
-
-        bool isTokenA = fromToken == address(tokenA);
-        IERC20 inputToken = isTokenA ? tokenA : tokenB;
-        IERC20 outputToken = isTokenA ? tokenB : tokenA;
-        uint256 inputReserve = isTokenA ? reserveA : reserveB;
-        uint256 outputReserve = isTokenA ? reserveB : reserveA;
-
-        require(amountIn > 0, "Invalid swap amount");
-        require(inputReserve > 0 && outputReserve > 0, "Insufficient liquidity");
-
-        uint256 amountInWithFee = (amountIn * 997) / 1000; // 0.3% 수수료
-        amountOut = (amountInWithFee * outputReserve) / (inputReserve + amountInWithFee);
-
-        inputToken.transferFrom(msg.sender, address(this), amountIn);
-        outputToken.transfer(msg.sender, amountOut);
-
-        if (isTokenA) {
-            reserveA += amountIn;
-            reserveB -= amountOut;
-        } else {
-            reserveB += amountIn;
-            reserveA -= amountOut;
-        }
-    }
-
-    function totalLiquidity() public view returns (uint256) {
-        return reserveA + reserveB;
+    function getReserves() external view returns (uint256, uint256) {
+        return (btcReserve, fanTokenReserve);
     }
 }

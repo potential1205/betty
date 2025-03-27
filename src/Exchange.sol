@@ -1,103 +1,77 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "forge-std/console.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./LiquidityPool.sol";
 
-contract Exchange is ERC20 {
-    address public tokenAddress;
+// ✅ 거래소 컨트랙트: 모든 거래 기능 구현 (칼럼명 반영)
+contract Exchange {
+    IERC20 public btcToken;
+    mapping(string => IERC20) public fanTokens;
+    mapping(string => LiquidityPool) public liquidityPools;
 
-    constructor(address token) ERC20("ETH TOKEN LP Token", "lpETHTOKEN") {
-        require(token != address(0), "Token address passed is a null address");
-        tokenAddress = token;
+    constructor(address _btcToken) {
+        btcToken = IERC20(_btcToken);
     }
 
-    function getReserve() public view returns (uint256) {
-        return ERC20(tokenAddress).balanceOf(address(this));
+    function addFanToken(string memory token_name, address tokenAddress, address liquidityPool) external {
+        fanTokens[token_name] = IERC20(tokenAddress);
+        liquidityPools[token_name] = LiquidityPool(liquidityPool);
     }
 
-
-
-    function addLiquidity(uint256 amountOfToken) public payable returns (uint256) {
-    console.log("Starting addLiquidity...");
-    console.log("msg.sender:", msg.sender);
-    console.log("msg.value (ETH):", msg.value);
-    console.log("amountOfToken:", amountOfToken);
-
-    uint256 lpTokensToMint;
-    uint256 ethReserveBalance = address(this).balance;
-    uint256 tokenReserveBalance = getReserve();
-    ERC20 token = ERC20(tokenAddress);
-
-    console.log("ethReserveBalance (before):", ethReserveBalance);
-    console.log("tokenReserveBalance (before):", tokenReserveBalance);
-
-    if (tokenReserveBalance == 0) {
-        console.log("First liquidity provider...");
-        token.transferFrom(msg.sender, address(this), amountOfToken);
-        lpTokensToMint = ethReserveBalance;
-        _mint(msg.sender, lpTokensToMint);
-        console.log("Liquidity added, minted LP tokens:", lpTokensToMint);
-        return lpTokensToMint;
+    // ✅ WON -> BTC 충전 (add)
+    function add(uint256 amount) external payable {
+        require(msg.value == amount, "Incorrect WON amount sent");
+        btcToken.transfer(msg.sender, amount);
     }
 
-    uint256 ethReservePriorToFunctionCall = ethReserveBalance - msg.value;
-    console.log("ethReservePriorToFunctionCall:", ethReservePriorToFunctionCall);
-
-    uint256 minTokenAmountRequired = (msg.value * tokenReserveBalance) / ethReservePriorToFunctionCall;
-    console.log("minTokenAmountRequired:", minTokenAmountRequired);
-
-    require(amountOfToken >= minTokenAmountRequired, "Insufficient token amount");
-    token.transferFrom(msg.sender, address(this), minTokenAmountRequired);
-
-    lpTokensToMint = (totalSupply() * msg.value) / ethReservePriorToFunctionCall;
-    _mint(msg.sender, lpTokensToMint);
-
-    console.log("Liquidity successfully added.");
-    return lpTokensToMint;
-}
-
-    function removeLiquidity(uint256 amountOfLPTokens) public returns (uint256, uint256) {
-        require(amountOfLPTokens > 0, "Amount must be greater than 0");
-
-        uint256 ethReserveBalance = address(this).balance;
-        uint256 lpTokenTotalSupply = totalSupply();
-        uint256 ethToReturn = (ethReserveBalance * amountOfLPTokens) / lpTokenTotalSupply;
-        uint256 tokenToReturn = (getReserve() * amountOfLPTokens) / lpTokenTotalSupply;
-
-        _burn(msg.sender, amountOfLPTokens);
-        payable(msg.sender).transfer(ethToReturn);
-        ERC20(tokenAddress).transfer(msg.sender, tokenToReturn);
-
-        return (ethToReturn, tokenToReturn);
+    // ✅ BTC -> WON 출금 (remove)
+    function remove(uint256 amount) external {
+        require(btcToken.balanceOf(msg.sender) >= amount, "Insufficient BTC balance");
+        btcToken.transferFrom(msg.sender, address(this), amount);
+        payable(msg.sender).transfer(amount);
     }
 
-    function ethToTokenSwap(uint256 minTokensToReceive) public payable {
-        uint256 tokenReserveBalance = getReserve();
-        uint256 tokensToReceive = getOutputAmountFromSwap(msg.value, address(this).balance - msg.value, tokenReserveBalance);
+    // ✅ BTC -> 팬토큰 매수 (buy)
+    function buy(string memory token_name, uint256 amountIn) external {
+        LiquidityPool pool = liquidityPools[token_name];
+        IERC20 fanToken = fanTokens[token_name];
+        
+        require(address(pool) != address(0), "Invalid token_name");
 
-        require(tokensToReceive >= minTokensToReceive, "Tokens received are less than minimum expected");
-        ERC20(tokenAddress).transfer(msg.sender, tokensToReceive);
+        btcToken.transferFrom(msg.sender, address(pool), amountIn);
+        pool.addLiquidity(amountIn, amountIn);
+
+        fanToken.transfer(msg.sender, amountIn);
     }
 
-    function tokenToEthSwap(uint256 tokensToSwap, uint256 minEthToReceive) public {
-        uint256 tokenReserveBalance = getReserve();
-        uint256 ethToReceive = getOutputAmountFromSwap(tokensToSwap, tokenReserveBalance, address(this).balance);
+    // ✅ 팬토큰 -> BTC 매도 (sell)
+    function sell(string memory token_name, uint256 amountIn) external {
+        LiquidityPool pool = liquidityPools[token_name];
+        IERC20 fanToken = fanTokens[token_name];
 
-        require(ethToReceive >= minEthToReceive, "ETH received is less than minimum expected");
+        require(address(pool) != address(0), "Invalid token_name");
 
-        ERC20(tokenAddress).transferFrom(msg.sender, address(this), tokensToSwap);
-        payable(msg.sender).transfer(ethToReceive);
+        fanToken.transferFrom(msg.sender, address(pool), amountIn);
+        pool.removeLiquidity(amountIn, amountIn);
+
+        btcToken.transfer(msg.sender, amountIn);
     }
 
-    function getOutputAmountFromSwap(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve)
-        public pure returns (uint256) {
-        require(inputReserve > 0 && outputReserve > 0, "Reserves must be greater than 0");
+    // ✅ 팬토큰 간 스왑 (swap)
+    function swap(string memory token_from, string memory token_to, uint256 amountIn) external {
+        LiquidityPool fromPool = liquidityPools[token_from];
+        LiquidityPool toPool = liquidityPools[token_to];
+        IERC20 fromToken = fanTokens[token_from];
+        IERC20 toToken = fanTokens[token_to];
 
-        uint256 inputAmountWithFee = inputAmount * 99;
-        uint256 numerator = inputAmountWithFee * outputReserve;
-        uint256 denominator = (inputReserve * 100) + inputAmountWithFee;
+        require(address(fromPool) != address(0), "Invalid source token_name");
+        require(address(toPool) != address(0), "Invalid destination token_name");
 
-        return numerator / denominator;
+        fromToken.transferFrom(msg.sender, address(fromPool), amountIn);
+        fromPool.removeLiquidity(amountIn, amountIn);
+
+        toPool.addLiquidity(amountIn, amountIn);
+        toToken.transfer(msg.sender, amountIn);
     }
 }

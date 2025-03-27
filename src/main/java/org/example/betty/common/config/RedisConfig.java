@@ -10,7 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-
 @Configuration
 public class RedisConfig {
 
@@ -18,21 +17,23 @@ public class RedisConfig {
     private String host;
 
     @Value("${spring.data.redis.port.session}")
-    private int port1;
+    private int port;
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactorySession() {
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(host, port1));
+    public RedisConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(host, port));
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisSession() {
+    public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> tpl = new RedisTemplate<>();
-        tpl.setConnectionFactory(redisConnectionFactorySession());
-        tpl.setKeySerializer(new StringRedisSerializer());
-        tpl.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        tpl.setConnectionFactory(redisConnectionFactory());
+
+        tpl.setKeySerializer(new StringRedisSerializer()); // 키를 문자열로 저장
+        tpl.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 값을 JSON으로 직렬화
         tpl.setHashKeySerializer(new StringRedisSerializer());
         tpl.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+
         tpl.afterPropertiesSet();
         return tpl;
     }

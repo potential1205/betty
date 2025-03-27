@@ -1,4 +1,12 @@
-INSERT INTO team (team_code, team_name, token_code)
+CREATE TABLE teams (
+                       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                       team_code VARCHAR(2) NOT NULL UNIQUE,
+                       team_name VARCHAR(50) NOT NULL,
+                       token_code VARCHAR(3) NOT NULL
+);
+
+
+INSERT INTO teams (team_code, team_name, token_code)
 VALUES
     ('LT', '롯데 자이언츠', 'LGT'),
     ('WO', '키움 히어로즈', 'KWN'),

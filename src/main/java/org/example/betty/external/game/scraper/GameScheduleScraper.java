@@ -20,18 +20,13 @@ import java.util.List;
 public class GameScheduleScraper {
 
     /**
-     * 3월~8월까지 월별 스케줄 크롤링
+     * 월별 경기 일정 크롤러
      */
     public List<GameSchedule> scrapeAllMonthsSchedule() {
         List<GameSchedule> allGames = new ArrayList<>();
 
         for (int month = 3; month <= 8; month++) {
-            String date;
-            if (month == 3) {
-                date = "2025-03-22"; // 정규시즌 개막일
-            } else {
-                date = String.format("2025-%02d-01", month);
-            }
+            String date = String.format("2025-%02d-01", month);
             String url = "https://m.sports.naver.com/kbaseball/schedule/index?category=kbo&date=" + date;
             List<GameSchedule> games = scrapeMonthlySchedule(url);
             allGames.addAll(games);
@@ -41,7 +36,7 @@ public class GameScheduleScraper {
 
 
     /**
-     * 월별 경기 정보 추출
+     * 월별 상세 경기 정보 스크래핑
      */
     public List<GameSchedule> scrapeMonthlySchedule(String url) {
         String driverPath = System.getProperty("user.dir") + "/src/main/resources/chromedriver.exe";
@@ -95,6 +90,12 @@ public class GameScheduleScraper {
     }
 
 
+    /**
+     * 경기일자 조합 메서드
+     * @param season
+     * @param dateText
+     * @return
+     */
     private String convertToFullDate(String season, String dateText) {
         try {
             String[] parts = dateText.split(" ");

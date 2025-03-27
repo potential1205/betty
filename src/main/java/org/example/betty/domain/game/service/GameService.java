@@ -1,7 +1,10 @@
 package org.example.betty.domain.game.service;
 
-import org.example.betty.domain.game.dto.resp.GameResponse;
+import org.example.betty.domain.game.dto.response.GameInfoResponse;
+
+import java.util.List;
 
 public interface GameService {
-//    GameResponse findGameById(Long gameId);
+    List<GameInfoResponse> selectDailyGames();
+    void crawlLiveGameInfo();
 }

@@ -5,14 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "team")
+@Table(name = "teams")
 @Getter
 @NoArgsConstructor
-public class Team {
+public class Teams {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long teamId;
+    private Long id;
 
     @Column(length = 2, nullable = false)
     private String teamCode;

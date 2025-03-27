@@ -3,7 +3,6 @@ pragma solidity ^0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// ✅ 유동성 풀 컨트랙트: BTC와 팬토큰의 유동성 관리
 contract LiquidityPool {
     IERC20 public btcToken;
     IERC20 public fanToken;
@@ -16,27 +15,32 @@ contract LiquidityPool {
         fanToken = IERC20(_fanToken);
     }
 
-    function addLiquidity(uint256 btcAmount, uint256 fanTokenAmount) external {
-        require(btcAmount > 0 && fanTokenAmount > 0, "Invalid amounts");
-
-        btcToken.transferFrom(msg.sender, address(this), btcAmount);
-        fanToken.transferFrom(msg.sender, address(this), fanTokenAmount);
-
-        btcReserve += btcAmount;
-        fanTokenReserve += fanTokenAmount;
+    function setInitialLiquidity(uint256 _btcAmount, uint256 _fanTokenAmount) external {
+        btcReserve = _btcAmount;
+        fanTokenReserve = _fanTokenAmount;
     }
 
-    function removeLiquidity(uint256 btcAmount, uint256 fanTokenAmount) external {
-        require(btcAmount <= btcReserve && fanTokenAmount <= fanTokenReserve, "Insufficient reserve");
+    function buyFanToken(uint256 amountBTCIn, address to) external returns (uint256 fanTokenOut) {
+        uint256 newBtcReserve = btcReserve + amountBTCIn;
+        uint256 newFanTokenReserve = (btcReserve * fanTokenReserve) / newBtcReserve;
 
-        btcToken.transfer(msg.sender, btcAmount);
-        fanToken.transfer(msg.sender, fanTokenAmount);
+        fanTokenOut = fanTokenReserve - newFanTokenReserve;
 
-        btcReserve -= btcAmount;
-        fanTokenReserve -= fanTokenAmount;
+        btcReserve = newBtcReserve;
+        fanTokenReserve = newFanTokenReserve;
+
+        require(fanToken.transfer(to, fanTokenOut), "Fan token transfer failed");
     }
 
-    function getReserves() external view returns (uint256, uint256) {
-        return (btcReserve, fanTokenReserve);
+    function sellFanToken(uint256 amountFanTokenIn, address to) external returns (uint256 btcOut) {
+        uint256 newFanTokenReserve = fanTokenReserve + amountFanTokenIn;
+        uint256 newBtcReserve = (btcReserve * fanTokenReserve) / newFanTokenReserve;
+
+        btcOut = btcReserve - newBtcReserve;
+
+        fanTokenReserve = newFanTokenReserve;
+        btcReserve = newBtcReserve;
+
+        require(btcToken.transfer(to, btcOut), "BTC transfer failed");
     }
 }

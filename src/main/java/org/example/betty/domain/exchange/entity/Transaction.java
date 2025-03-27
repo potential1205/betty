@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.betty.domain.exchange.enums.TransactionStatus;
 import org.example.betty.domain.wallet.entity.Wallet;
 
 import java.math.BigDecimal;
@@ -49,7 +50,7 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_status", length = 10)
     @NotNull
-    private String transactionStatus;
+    private TransactionStatus transactionStatus;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

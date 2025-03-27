@@ -1,5 +1,6 @@
 package org.example.betty.domain.wallet.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class WalletController {
 
     private final WalletService walletService;
 
+    @Operation(summary = "지갑 조회", description = "accessToken을 이용해 현재 로그인된 사용자의 지갑이 등록되어 있는지 확인하고 닉네임을 반환합니다.")
     @GetMapping
     public ResponseEntity<CheckWalletNicknameResponse> retrieveWallet(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
@@ -29,6 +31,7 @@ public class WalletController {
                 .body(CheckWalletNicknameResponse.of(walletNickname));
     }
 
+    @Operation(summary = "지갑 등록", description = "accessToken을 이용해 사용자의 지갑을 등록합니다. 닉네임은 중복될 수 없습니다.")
     @PostMapping
     public ResponseEntity<SuccessResponse> registerWallet(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,

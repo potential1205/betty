@@ -11,7 +11,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamLineup {
-    private List<String> home;
-    private List<String> away;
+public class RedisGameRelay {
+    private String inning;
+    private String score;
+    private String batter;
+    private String pitcher;
+    private String situation;
+    private List<String> playByPlay;
 }

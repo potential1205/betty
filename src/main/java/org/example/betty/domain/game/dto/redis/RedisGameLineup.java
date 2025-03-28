@@ -11,11 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LiveRelayData {
-    private String inning;
-    private String score;
-    private String batter;
-    private String pitcher;
-    private String situation;
-    private List<String> playByPlay;
+public class RedisGameLineup {
+    private List<String> home;
+    private List<String> away;
 }

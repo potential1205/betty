@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.time.LocalDate;
 
-public interface GameRepository extends JpaRepository<Games, Long> {
+public interface GamesRepository extends JpaRepository<Games, Long> {
     List<Games> findByGameDate(LocalDate gameDate);
 }

@@ -7,21 +7,21 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class LineupScraper extends BaseScraper {
+public class GameResultScraper extends BaseScraper {
 
     /**
-     * 당일 경기 라인업 페이지 크롤러
-     * @param gameId 경기 고유 ID (예: 20250326WOHT02025)
+     * 경기 종료 후 결과 크롤링 메서드
+     * @param statizId Statiz 내부 고유 경기 ID (예: 20250025)
      */
-    public void scrapeLineup(String gameId) {
+    public void scrapeResult(String statizId) {
         WebDriver driver = createDriver();
 
         try {
-            String url = "https://m.sports.naver.com/game/" + gameId + "/lineup";
+            String url = "https://statiz.sporki.com/schedule/?m=summary&s_no=" + statizId;
             driver.get(url);
 
         } catch (Exception e) {
-            handleException(e, "LineupScraper - " + gameId);
+            handleException(e, "GameResultScraper - " + statizId);
         } finally {
             quitDriver(driver);
         }

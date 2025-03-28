@@ -3,27 +3,28 @@ package org.example.betty.domain.game.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "game")
+@Table(name = "games")
 @Getter
 @NoArgsConstructor
-public class Game {
+public class Games {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long gameId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id", nullable = false)
-    private Team homeTeam;
+    private Teams homeTeam;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "away_team_id", nullable = false)
-    private Team awayTeam;
+    private Teams awayTeam;
 
     @Column(length = 20)
     private String stadium;
@@ -40,7 +41,7 @@ public class Game {
     @Column(length = 20, nullable = false)
     private String status;
 
-    public Game(Team homeTeam, Team awayTeam, String stadium, int season, LocalDate gameDate, LocalTime startTime, String status) {
+    public Games(Teams homeTeam, Teams awayTeam, String stadium, int season, LocalDate gameDate, LocalTime startTime, String status) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.stadium = stadium;

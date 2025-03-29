@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -19,10 +20,10 @@ import org.springframework.stereotype.Controller;
 public class DisplaySocketController {
 
     private final DisplayService displayService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/updatePixel")
-    @SendTo("/topic/pixelUpdate/{gameId}/{teamId}")
-    public PixelUpdateMessage updatePixel(PixelUpdateMessage message, SimpMessageHeaderAccessor headerAccessor) {
+    public void updatePixel(PixelUpdateMessage message, SimpMessageHeaderAccessor headerAccessor) {
         log.info("pixel 업데이트 요청 도착");
         String walletAddress = (String) headerAccessor.getSessionAttributes().get("walletAddress");
 
@@ -34,7 +35,8 @@ public class DisplaySocketController {
         displayService.updatePixel(message.getGameId(), message.getTeamId(), message.getR(), message.getC(), pixel);
         message.setWalletAddress(walletAddress);
 
-        return message;
+        String destination = "/topic/pixelUpdate/" + message.getGameId() + "/" + message.getTeamId();
+        messagingTemplate.convertAndSend(destination, message);
     }
 
     @MessageMapping("/getBoard/{gameId}/{teamId}")

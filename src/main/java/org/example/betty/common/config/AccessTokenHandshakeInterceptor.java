@@ -31,6 +31,7 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
             attributes.put("walletAddress", walletAddress);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

@@ -1,6 +1,7 @@
 package org.example.betty.domain.display.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.display.dto.Pixel;
 import org.example.betty.domain.display.dto.PixelUpdateMessage;
 import org.example.betty.domain.display.service.DisplayService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class DisplaySocketController {
 
     private final DisplayService displayService;
@@ -21,6 +23,7 @@ public class DisplaySocketController {
     @MessageMapping("/updatePixel")
     @SendTo("/topic/pixelUpdate/{gameId}/{teamId}")
     public PixelUpdateMessage updatePixel(PixelUpdateMessage message, SimpMessageHeaderAccessor headerAccessor) {
+        log.info("pixel 업데이트 요청 도착");
         String walletAddress = (String) headerAccessor.getSessionAttributes().get("walletAddress");
 
         if (walletAddress == null || walletAddress.trim().isEmpty()) {
@@ -37,6 +40,7 @@ public class DisplaySocketController {
     @MessageMapping("/getBoard/{gameId}/{teamId}")
     @SendTo("/topic/board/{gameId}/{teamId}")
     public Pixel[][] getBoard(@DestinationVariable Long gameId, @DestinationVariable Long teamId) {
+        log.info("display 조회 요청 도착");
         return displayService.getDisplay(gameId, teamId);
     }
 }

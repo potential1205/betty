@@ -1,6 +1,7 @@
 package org.example.betty.domain.display.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.S3Util;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.display.entity.Display;
@@ -28,6 +29,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DisplayServiceImpl implements DisplayService{
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -81,11 +83,14 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     public void updatePixel(Long gameId, Long teamId, int r, int c, Pixel pixel) {
+        log.info("updatePixel 진입");
+
         String key = "display" + ":" + gameId + ":" + teamId;
 
         Pixel[][] board = getDisplay(gameId, teamId);
         board[r][c] = pixel;
         redisTemplate.opsForValue().set(key, board);
+        log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
     }
 
     public void handleGameEnd(Long gameId, Long teamId) {

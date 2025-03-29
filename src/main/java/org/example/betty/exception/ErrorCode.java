@@ -13,8 +13,9 @@ public enum ErrorCode {
     INVALID_SESSION(HttpStatus.UNAUTHORIZED, 1005, "유효하지 않은 Session입니다."),
     NOT_FOUND_WALLET(HttpStatus.NOT_FOUND, 1006, "등록되지 않은 지갑입니다."),
     ALREADY_EXIST_WALLET(HttpStatus.NOT_FOUND, 1007, "이미 등록된 지갑입니다."),
-    GAME_NOT_FOUND(HttpStatus.NOT_FOUND, 2001, "해당하는 Game이 없습니다.");
-
+    INVALID_WEBSOCKET_SESSION(HttpStatus.UNAUTHORIZED, 1008, "유효하지 않은 Websocket Session입니다."),
+    GAME_NOT_FOUND(HttpStatus.NOT_FOUND, 2001, "해당하는 Game이 없습니다."),
+    DISPLAY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 3002, "전광판 저장에 실패했습니다.");
 
     private final HttpStatus status;
     private final int code;

@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
@@ -119,6 +120,7 @@ public class DisplayServiceImpl implements DisplayService{
                     .teamId(teamId)
                     .inning(inning)
                     .displayUrl(displayUrl)
+                    .createdAt(LocalDateTime.now())
                     .build();
 
             Display resultDisplay = displayRepository.save(newDisplay);

@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Builder
@@ -31,4 +33,6 @@ public class Display {
 
     @NotNull
     private String displayUrl;
+
+    private LocalDateTime createdAt;
 }

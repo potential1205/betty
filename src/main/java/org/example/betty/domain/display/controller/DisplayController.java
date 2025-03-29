@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/display")
+@RequestMapping("/api/v1/display")
 public class DisplayController {
 
     private final DisplayService displayService;

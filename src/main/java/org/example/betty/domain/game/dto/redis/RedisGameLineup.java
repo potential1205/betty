@@ -12,6 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedisGameLineup {
-    private List<String> home;
-    private List<String> away;
+    private TeamLineup home;
+    private TeamLineup away;
 }

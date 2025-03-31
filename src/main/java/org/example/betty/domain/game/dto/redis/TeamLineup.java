@@ -7,13 +7,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
 @Getter
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class RedisGameData {
-    private RedisGameSchedule gameSchedule;
-    private RedisGameLineup lineup;
-    private List<RedisGameRelay> relay;
+@NoArgsConstructor
+@Builder
+public class TeamLineup {
+    private String starterPitcher;
+    private List<String> starterBatters;
 }
+

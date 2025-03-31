@@ -9,7 +9,7 @@ import java.net.URL;
 
 public abstract class BaseScraper {
 
-    @Value(value = "selenium.remote.url")
+    @Value("${selenium.remote.url}")
     private String url;
 
     /**

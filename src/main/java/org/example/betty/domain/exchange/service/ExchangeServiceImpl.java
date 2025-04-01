@@ -2,6 +2,7 @@ package org.example.betty.domain.exchange.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.betty.common.util.PendingTransactionUtil;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.exchange.dto.req.SwapRequest;
 import org.example.betty.domain.exchange.dto.req.TransactionRequest;
@@ -29,11 +30,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final TransactionRepository transactionRepository;
     private final TokenRepository tokenRepository;
     private final Web3jService web3jService;
+    private final PendingTransactionUtil pendingTransactionUtil;
 
     @Override
     @Transactional
     public TransactionResponse processTransaction(TransactionRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        // PENDING 상태 검증
+        pendingTransactionUtil.throwIfPending(walletAddress);
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
@@ -64,14 +69,18 @@ public class ExchangeServiceImpl implements ExchangeService {
 
     private void handleBlockchainTransaction(Transaction transaction) {
         try {
+            // TODO: 실제 스마트 컨트랙트 호출 시 필요한 파라미터로 대체
             String txHash = web3jService.sendTransaction("contractAddress", BigInteger.ZERO, "encodedFunction").getTransactionHash();
         } catch (Exception e) {
+            // TODO: 실패 처리 로직 추가
             e.printStackTrace();
         }
     }
 
     @Override
     public TransactionResponse processSwap(SwapRequest request, String accessToken) {
+        // TODO: swap 로직 구현
+        // TODO: swap 시에도 pendingTransactionUtil.throwIfPending(walletAddress) 호출 필요
         return null;
     }
 }

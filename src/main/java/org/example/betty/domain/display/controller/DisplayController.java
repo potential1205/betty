@@ -2,6 +2,7 @@ package org.example.betty.domain.display.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.display.dto.DisplayResponse;
 import org.example.betty.domain.display.dto.MyDisplayResponse;
 import org.example.betty.domain.display.entity.Display;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/display")
+@Slf4j
 public class DisplayController {
 
     private final DisplayService displayService;
@@ -25,6 +27,7 @@ public class DisplayController {
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
 
         List<Display> displayList = displayService.getAllDisplayList(accessToken);
+        log.info(displayList.toString());
 
         return ResponseEntity.ok()
                 .body(DisplayResponse.of(displayList));

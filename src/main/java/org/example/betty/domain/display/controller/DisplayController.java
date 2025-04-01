@@ -28,8 +28,6 @@ public class DisplayController {
 
         List<Display> displayList = displayService.getAllDisplayList(accessToken);
 
-        log.info(displayList.toString());
-
         return ResponseEntity.ok()
                 .body(DisplayResponse.of(displayList));
     }

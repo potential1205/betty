@@ -14,7 +14,8 @@ public enum ErrorCode {
     NOT_FOUND_WALLET(HttpStatus.NOT_FOUND, 1006, "등록되지 않은 지갑입니다."),
     ALREADY_EXIST_WALLET(HttpStatus.NOT_FOUND, 1007, "이미 등록된 지갑입니다."),
     GAME_NOT_FOUND(HttpStatus.NOT_FOUND, 2001, "해당하는 Game이 없습니다."),
-    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, 3001, "해당하는 팬토큰이 없습니다.");
+    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, 3001, "해당하는 팬토큰이 없습니다."),
+    TRANSACTION_PENDING_EXISTS(HttpStatus.CONFLICT, 3002, "현재 처리 중인 트랜잭션이 존재합니다.");
 
 
     private final HttpStatus status;

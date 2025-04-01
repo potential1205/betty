@@ -5,6 +5,7 @@ out/
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
+/broadcast/*/14609/
 /broadcast/**/dry-run/
 
 # Docs
@@ -12,3 +13,23 @@ docs/
 
 # Dotenv file
 .env
+
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Editor-based HTTP Client requests
+/httpRequests/
+
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+# IntelliJ IDEA 설정 파일
+.idea/
+*.iml
+
+
+# 민감한 정보가 포함된 파일
+run-*.json
+run-latest.json

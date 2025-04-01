@@ -6,36 +6,47 @@ import "../src/Token.sol";
 import "../src/Exchange.sol";
 import "../src/LiquidityPool.sol";
 
+// 배포 스크립트: BETTY, 팬토큰 10종, 풀 및 등록 + 유동성 세팅 포함
 contract DeployExchange is Script {
     function run() external {
         vm.startBroadcast();
 
-        // ✅ BTC (BETTY) 토큰 배포
-        Token btcToken = new Token("Betty Coin", "BTC", 1000000);
+        // BETTY 토큰 배포
+        Token btcToken = new Token("BTC", 1_000_000);
         console.log("BTC Token deployed at:", address(btcToken));
 
-        // ✅ Exchange 컨트랙트 배포
+        // Exchange 컨트랙트 배포
         Exchange exchange = new Exchange(address(btcToken));
         console.log("Exchange deployed at:", address(exchange));
 
-        // ✅ 팬토큰 예제 배포 (SpringBoot(Web3j)에서 받아오는 방식 가정)
-        Token fanTokenA = new Token("Fan Token A", "DSB", 1000000);
-        Token fanTokenB = new Token("Fan Token B", "LGT", 1000000);
+        // 팬토큰 token_name 목록
+        string[10] memory token_names = ["DSB", "SSG", "LGT", "LTG", "KWH", "NCD", "KTW", "KIA", "SSL", "HWE"];
 
-        console.log("Fan Token A (DSB) deployed at:", address(fanTokenA));
-        console.log("Fan Token B (LGT) deployed at:", address(fanTokenB));
+        uint256 initialBTC = 10_000 * 1e18;
+        uint256 initialFanToken = 1_000 * 1e18;
 
-        // ✅ 유동성 풀 배포
-        LiquidityPool poolA = new LiquidityPool(address(btcToken), address(fanTokenA));
-        LiquidityPool poolB = new LiquidityPool(address(btcToken), address(fanTokenB));
+        for (uint i = 0; i < token_names.length; i++) {
+            string memory token_name = token_names[i];
 
-        console.log("Liquidity Pool A (DSB) deployed at:", address(poolA));
-        console.log("Liquidity Pool B (LGT) deployed at:", address(poolB));
+            // 팬토큰 배포
+            Token fanToken = new Token(token_name, 1_000_000);
 
-        // ✅ 팬토큰 등록
-        exchange.addFanToken("DSB", address(fanTokenA), address(poolA));
-        exchange.addFanToken("LGT", address(fanTokenB), address(poolB));
-        
+            // 유동성 풀 생성
+            LiquidityPool pool = new LiquidityPool(address(btcToken), address(fanToken));
+
+            // 팬토큰 등록
+            exchange.addFanToken(token_name, address(fanToken), address(pool));
+
+            // 초기 유동성 공급
+            btcToken.transfer(address(pool), initialBTC);
+            fanToken.transfer(address(pool), initialFanToken);
+            pool.setInitialLiquidity(initialBTC, initialFanToken);
+
+            // 로그 출력
+            console.log("Fan Token", token_name, "deployed at:", address(fanToken));
+            console.log("Liquidity Pool for", token_name, "deployed at:", address(pool));
+        }
+
         vm.stopBroadcast();
     }
 }

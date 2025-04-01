@@ -49,7 +49,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?")
     public void cacheDailyGames() {
-        LocalDate today = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now().minusDays(2);
 
         List<Games> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
@@ -103,31 +103,31 @@ public class GameCacheServiceImpl implements GameCacheService {
      * 라인업 스케줄링: 경기 시작 30분 전에 실행 or 이미 지났으면 즉시 실행
      */
     private void scheduleLineupJob(Games game) {
-//        String gameId = generateGameId(game);
-//        String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
-//        LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
-//
-//        Runnable task = () -> {
-//            RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
-//            if (lineup != null) {
-//                redisTemplate.opsForHash().put(redisKey, "lineup", lineup);
-//                log.info("[라인업 저장 완료] - gameId: {}", gameId);
-//            } else {
-//                log.warn("[라인업 저장 실패] - gameId: {}", gameId);
-//            }
-//        };
-//
-//        if (executeTime.isBefore(LocalDateTime.now())) {
-//            task.run();
-//            log.info("[즉시 실행] 라인업 크롤링 실행됨 - gameId: {}", gameId);
-//        } else {
-//            taskScheduler.schedule(
-//                    task,
-//                    executeTime.atZone(ZoneId.systemDefault()).toInstant()
-//            );
-//            log.info("[예약 완료] 라인업 크롤링 예약됨 - gameId: {}, 시간: {}", gameId, executeTime);
-//        }
+        String gameId = generateGameId(game);
+        String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
+        LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
+        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+
+        Runnable task = () -> {
+            RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
+            if (lineup != null) {
+                redisTemplate.opsForHash().put(redisKey, "lineup", lineup);
+                log.info("[라인업 저장 완료] - gameId: {}", gameId);
+            } else {
+                log.warn("[라인업 저장 실패] - gameId: {}", gameId);
+            }
+        };
+
+        if (executeTime.isBefore(LocalDateTime.now())) {
+            task.run();
+            log.info("[즉시 실행] 라인업 크롤링 실행됨 - gameId: {}", gameId);
+        } else {
+            taskScheduler.schedule(
+                    task,
+                    executeTime.atZone(ZoneId.systemDefault()).toInstant()
+            );
+            log.info("[예약 완료] 라인업 크롤링 예약됨 - gameId: {}, 시간: {}", gameId, executeTime);
+        }
     }
 
 

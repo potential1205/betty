@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Order(3) // RedisCacheInitRunner 다음 순서
+@Order(3)
 @RequiredArgsConstructor
 public class GameCacheRecoveryRunner implements CommandLineRunner {
 
@@ -22,7 +22,7 @@ public class GameCacheRecoveryRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        LocalDate today = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now().minusDays(2);
         boolean recovered = gameCacheService.recoverTodayGameSchedule(today);
 
         if (recovered) {

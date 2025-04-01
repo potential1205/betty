@@ -7,7 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(5)
+@Order(4)
 @RequiredArgsConstructor
 public class LineupScraperTestRunner implements CommandLineRunner {
 

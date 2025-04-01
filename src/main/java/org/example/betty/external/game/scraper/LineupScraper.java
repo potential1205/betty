@@ -1,71 +1,123 @@
 package org.example.betty.external.game.scraper;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.domain.game.dto.redis.PlayerInfo;
+import org.example.betty.domain.game.dto.redis.RedisGameLineup;
+import org.example.betty.domain.game.dto.redis.TeamLineup;
 import org.example.betty.external.game.scraper.common.BaseScraper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Service
 public class LineupScraper extends BaseScraper {
 
-    /**
-     * 당일 경기 라인업 페이지 크롤러
-     * @param gameId 경기 고유 ID (예: 20250326WOHT02025)
-     */
-    public void scrapeLineup(String gameId) {
-        WebDriver driver = createDriver();
+    public RedisGameLineup scrapeLineup(String gameId) {
+
+        WebDriver driver1 = createDriver(); // 라인업 페이지용
+        WebDriver driver2 = createDriver(); // KBO 선수검색용
 
         try {
             String url = "https://m.sports.naver.com/game/" + gameId + "/lineup";
-            driver.get(url);
+            driver1.get(url);
 
-            // 1. 상위 wrapper에서 시작
-            WebElement lineupWrapper = driver.findElement(By.cssSelector(".lineup_group"));
+            new WebDriverWait(driver1, Duration.ofSeconds(10))
+                    .until(d -> d.findElements(By.cssSelector(".lineup_group")).size() > 0);
 
-            List<WebElement> teamSections = lineupWrapper.findElements(
-                    By.cssSelector(".Lineup_lineup_area__2aNOv .Lineup_lineup_list__1_CNQ")
-            );
+            WebElement lineupWrapper = driver1.findElement(By.cssSelector(".lineup_group"));
+            List<WebElement> teamSections = lineupWrapper.findElements(By.cssSelector(".Lineup_lineup_area__2aNOv"));
 
-            System.out.println("▶ 라인업 영역 수: " + teamSections.size());
+            TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0));
+            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1));
 
-
-//            if (teamSections.size() < 2) {
-//                log.warn("[LineupScraper] 라인업 요소 부족 ({}개) → gameId: {}", teamSections.size(), gameId);
-//                return;
-//            }
-//
-//            // 3. 원정팀 (왼쪽) / 홈팀 (오른쪽)
-//            WebElement awaySection = teamSections.get(0);
-//            WebElement homeSection = teamSections.get(1);
-//
-//            System.out.println("\n▶ 원정팀");
-//            printPlayers(awaySection);
-//
-//            System.out.println("\n▶ 홈팀");
-//            printPlayers(homeSection);
+            return RedisGameLineup.builder()
+                    .away(awayLineup)
+                    .home(homeLineup)
+                    .build();
 
         } catch (Exception e) {
             handleException(e, "LineupScraper - " + gameId);
+            return null;
         } finally {
-            quitDriver(driver);
+            quitDriver(driver1);
+            quitDriver(driver2);
         }
     }
 
-
-
-    // 선수 정보 출력
-    private void printPlayers(WebElement teamElement) {
+    private TeamLineup parseTeamLineup(WebDriver kboDriver, WebElement teamElement) {
         List<WebElement> playerItems = teamElement.findElements(By.cssSelector(".Lineup_lineup_item__32s4M"));
+        List<PlayerInfo> players = new ArrayList<>();
 
         for (WebElement item : playerItems) {
-            String name = item.findElement(By.cssSelector(".lineup_name__jY19m")).getText();
-            String position = item.findElement(By.cssSelector(".lineup_position__265hb")).getText();
-            System.out.println("- " + name + " (" + position + ")");
+            try {
+                String name = item.findElement(By.cssSelector(".Lineup_name__jV19m")).getText();
+                String rawPosition = item.findElement(By.cssSelector(".Lineup_position__265hb")).getText();
+
+                String position = "", handedness = "";
+                String[] posSplit = rawPosition.split(",");
+                if (posSplit.length >= 1) position = posSplit[0].trim();
+                if (posSplit.length >= 2) handedness = posSplit[1].trim();
+
+                String imageUrl = null;
+                List<WebElement> imgs = item.findElements(By.cssSelector("img[src^='https://sports-phinf.pstatic.net']"));
+                if (!imgs.isEmpty()) {
+                    imageUrl = imgs.get(0).getAttribute("src");
+                }
+                if (imageUrl == null || imageUrl.isBlank()) {
+                    imageUrl = getImageFromKBO(kboDriver, name);
+                }
+
+                players.add(PlayerInfo.builder()
+                        .name(name)
+                        .position(position)
+                        .handedness(handedness)
+                        .imageUrl(imageUrl)
+                        .build());
+
+            } catch (Exception e) {
+                System.out.println(" - 요소 파싱 실패");
+            }
         }
+
+        PlayerInfo starterPitcher = players.get(0);
+        List<PlayerInfo> starterBatters = players.subList(1, players.size());
+
+        return new TeamLineup(starterPitcher, starterBatters);
+    }
+
+    private String getImageFromKBO(WebDriver driver, String playerName) {
+        try {
+            driver.get("https://www.koreabaseball.com/player/search.aspx");
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement input = wait.until(d -> d.findElement(By.id("cphContents_cphContents_cphContents_txtSearchPlayerName")));
+            input.clear();
+            input.sendKeys(playerName);
+
+            WebElement searchBtn = driver.findElement(By.id("cphContents_cphContents_cphContents_btnSearch"));
+            searchBtn.click();
+
+            wait.until(d -> d.findElements(By.cssSelector("tbody > tr")).size() > 0);
+
+            WebElement link = driver.findElement(By.cssSelector("tbody > tr > td:nth-child(2) a"));
+            String href = link.getAttribute("href"); // 예: javascript:goDetail('55633')
+            String playerId = href.replaceAll("[^0-9]", "");
+
+            if (!playerId.isEmpty()) {
+                return "https://sports-phinf.pstatic.net/player/kbo/default/" + playerId + ".png?type=w150";
+            }
+
+        } catch (Exception e) {
+            System.out.println(" - KBO 이미지 조회 실패: " + playerName);
+        }
+
+        return "기본 이미지 바꿔놓기";
     }
 }

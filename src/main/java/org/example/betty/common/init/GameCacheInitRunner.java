@@ -9,7 +9,7 @@
 //
 //@Slf4j
 //@Component
-//@Order(3) // Teams: 1, Games: 2 이후!
+//@Order(3)
 //@RequiredArgsConstructor
 //public class GameCacheInitRunner implements CommandLineRunner {
 //

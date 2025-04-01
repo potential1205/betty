@@ -10,9 +10,8 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class TeamLineup {
-    private String starterPitcher;
-    private List<String> starterBatters;
+    private PlayerInfo starterPitcher;
+    private List<PlayerInfo> starterBatters;
 }
 

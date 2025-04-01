@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PlayerInfo;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.TeamLineup;
+import org.example.betty.exception.BusinessException;
+import org.example.betty.exception.ErrorCode;
 import org.example.betty.external.game.scraper.common.BaseScraper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -82,7 +84,7 @@ public class LineupScraper extends BaseScraper {
                         .build());
 
             } catch (Exception e) {
-                System.out.println(" - 요소 파싱 실패");
+                log.warn("[라인업 파싱 실패] 선수 요소 파싱 중 오류 발생: {}", e.getMessage());
             }
         }
 
@@ -115,9 +117,9 @@ public class LineupScraper extends BaseScraper {
             }
 
         } catch (Exception e) {
-            System.out.println(" - KBO 이미지 조회 실패: " + playerName);
+            log.warn("[KBO 사이트에서 이미지 조회 실패] 선수명: {}, 이유: {}", playerName, e.getMessage());
         }
 
-        return "기본 이미지 바꿔놓기";
+        return "선수 기본 이미지로 변경";
     }
 }

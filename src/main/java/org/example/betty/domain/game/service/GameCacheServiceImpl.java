@@ -108,6 +108,9 @@ public class GameCacheServiceImpl implements GameCacheService {
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
         LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
 
+        log.info("[라인업 스케줄 동작 시간] gameId: {}, start: {}, executeTime: {}, now: {}",
+                gameId, gameStartDateTime, executeTime, LocalDateTime.now());
+
         Runnable task = () -> {
             RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
             if (lineup != null) {

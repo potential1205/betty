@@ -54,4 +54,8 @@ public class Transaction {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public void updateTransactionStatus(TransactionStatus transactionStatus) {
+        this.transactionStatus = transactionStatus;
+    }
 }

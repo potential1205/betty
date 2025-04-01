@@ -27,7 +27,6 @@ public class DisplayController {
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
 
         List<Display> displayList = displayService.getAllDisplayList(accessToken);
-        log.info(displayList.toString());
 
         return ResponseEntity.ok()
                 .body(DisplayResponse.of(displayList));

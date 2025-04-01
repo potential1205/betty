@@ -1,10 +1,12 @@
 package org.example.betty.domain.exchange.service;
 
+import org.springframework.stereotype.Service;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
+@Service
 public class Web3jServiceImpl implements Web3jService {
 
     @Override

@@ -22,7 +22,7 @@ public class GameCacheRecoveryRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        LocalDate today = LocalDate.now().minusDays(2);
+        LocalDate today = LocalDate.now();
         boolean recovered = gameCacheService.recoverTodayGameSchedule(today);
 
         if (recovered) {

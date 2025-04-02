@@ -16,8 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -47,9 +49,9 @@ public class GameCacheServiceImpl implements GameCacheService {
 
     @Override
     @Transactional
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-        LocalDate today = LocalDate.now().minusDays(2);
+        LocalDate today = LocalDate.now();
 
         List<Games> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
@@ -72,8 +74,14 @@ public class GameCacheServiceImpl implements GameCacheService {
             hashOps.put(redisKey, "lineup", null);
             hashOps.put(redisKey, "relay", null);
 
-            scheduleLineupJob(game);
-//            scheduleRelayJob(game);
+            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
+            redisTemplate.expireAt(redisKey, expireDate);
+
+
+            if(!"CANCELED".equalsIgnoreCase(game.getStatus())) {
+                scheduleLineupJob(game);
+            }
         }
 
     }

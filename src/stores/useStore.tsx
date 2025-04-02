@@ -4,10 +4,9 @@ import { teamColors } from '../constants/colors';
 
 interface GameData {
   id: number;
-  [team1: string]: number | string;  // 첫 번째 팀 스코어
-  [team2: string]: number | string;  // 두 번째 팀 스코어
   inning: number;  // 회차
-  status: "초" | "말";  // 이닝 상태
+  status: string;  // 이닝 상태
+  [key: string]: number | string | "초" | "말" | undefined; // 모든 팀의 점수를 받을 수 있도록 수정
 }
 
 interface TeamToken {
@@ -241,7 +240,7 @@ export const useStore = create<AppState>((set, get) => ({
       tokenName: team,
       tokenAmount: Math.abs(amount),
       tokenPrice: state.bettyPrice
-    };
+    } as Transaction;
 
     return {
       userTokens: newUserTokens,

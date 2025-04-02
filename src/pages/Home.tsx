@@ -18,7 +18,7 @@ const Home: React.FC = () => {
   );
 
   const bind = useDrag(({ down, movement: [mx], direction: [xDir], velocity }) => {
-    const trigger = velocity.x > 0.2;
+    const trigger = (velocity as any).x > 0.2;
     const dir = xDir < 0 ? 1 : -1;
     if (!down && trigger) {
       dir > 0 ? handlePrev() : handleNext();
@@ -91,6 +91,7 @@ const Home: React.FC = () => {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
+            // @ts-ignore
             onDragEnd={(e, { offset, velocity }) => {
               const swipe = Math.abs(offset.x) * velocity.x;
               const threshold = 10000;

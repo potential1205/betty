@@ -1,4 +1,4 @@
-export const teamColors = {
+const teamColors: { [key: string]: string } = {
   "두산": '#1A1748',
   "롯데": '#041E42',
   "키움": '#570514',
@@ -9,4 +9,6 @@ export const teamColors = {
   "삼성": '#074CA1',
   "NC": '#315288',
   "KT": '#000000'
-} as const;
+};
+
+export { teamColors };

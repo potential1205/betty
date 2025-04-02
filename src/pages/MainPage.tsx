@@ -12,6 +12,15 @@ import { Quiz, quizData } from '../constants/dummy';
 type Tab = 'LIVE-PICK' | 'WINNER' | 'PIXEL';
 type Color = string;
 
+// QuizHistory 타입 정의 추가
+type QuizHistory = {
+  quizId: number;
+  userAnswer: number | null;
+  answeredAt: string;
+  totalVotes: number;
+  optionVotes: number[];
+};
+
 const MainPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('LIVE-PICK');

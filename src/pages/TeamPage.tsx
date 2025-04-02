@@ -188,6 +188,7 @@ const TeamPage: React.FC = () => {
               {getVisibleTeams().map((team) => (
                 <button
                   key={team}
+                  // @ts-ignore
                   onClick={() => setSelectedTeam(team)}
                   className={`px-4 py-2 rounded-full transition-all duration-300
                     ${team === selectedTeam 

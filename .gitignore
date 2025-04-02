@@ -37,3 +37,6 @@ out/
 .vscode/
 
 application.properties
+
+### Wallets ###
+src/main/resources/wallet/keystore.json

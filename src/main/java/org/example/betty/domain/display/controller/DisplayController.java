@@ -3,6 +3,8 @@ package org.example.betty.domain.display.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.common.resp.SuccessResponse;
+import org.example.betty.domain.display.dto.CreateDisplayAccessRequest;
 import org.example.betty.domain.display.dto.DisplayResponse;
 import org.example.betty.domain.display.dto.MyDisplayResponse;
 import org.example.betty.domain.display.entity.Display;
@@ -41,5 +43,26 @@ public class DisplayController {
 
         return ResponseEntity.ok()
                 .body(MyDisplayResponse.of(myDisplayList));
+    }
+
+    @GetMapping("/games/{gameId}/teams/{teamId}/access")
+    public ResponseEntity<SuccessResponse> checkDisplayAccess(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+            @PathVariable Long gameId, @PathVariable Long teamId) {
+
+        displayService.checkDisplayAccess(accessToken, gameId, teamId);
+
+        return ResponseEntity.ok(SuccessResponse.of(true));
+    }
+
+    @PostMapping("/games/{gameId}/teams/{teamId}/access")
+    public ResponseEntity<SuccessResponse> crateDisplayAccess(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+            @PathVariable Long gameId, @PathVariable Long teamId,
+            @RequestBody CreateDisplayAccessRequest request) {
+
+        displayService.createDisplayAccess(accessToken, gameId, teamId, request.getTxHash());
+
+        return ResponseEntity.ok(SuccessResponse.of(true));
     }
 }

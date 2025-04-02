@@ -6,7 +6,9 @@ import org.example.betty.common.util.S3Util;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.display.entity.Display;
 import org.example.betty.domain.display.dto.Pixel;
+import org.example.betty.domain.display.entity.DisplayAccess;
 import org.example.betty.domain.display.entity.WalletsDisplays;
+import org.example.betty.domain.display.repository.DisplayAccessRepository;
 import org.example.betty.domain.display.repository.DisplayRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
@@ -36,6 +38,7 @@ public class DisplayServiceImpl implements DisplayService{
     private final SimpMessagingTemplate messagingTemplate;
     private final S3Util s3Util;
     private final DisplayRepository displayRepository;
+    private final DisplayAccessRepository displayAccessRepository;
     private final WalletRepository walletRepository;
     private final WalletsDisplaysRepository walletsDisplaysRepository;
     private final SessionUtil sessionUtil;
@@ -64,6 +67,23 @@ public class DisplayServiceImpl implements DisplayService{
                 .toList();
 
         return displayRepository.findByIdIn(displayIdList);
+    }
+
+    @Override
+    public void checkDisplayAccess(String accessToken, Long gameId, Long teamId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(wallet.getWalletAddress(),gameId, teamId)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_DISPLAY_ACCESS);
+        }
+    }
+
+    @Override
+    public void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash) {
+
     }
 
     public Pixel[][] getDisplay(Long gameId, Long teamId) {

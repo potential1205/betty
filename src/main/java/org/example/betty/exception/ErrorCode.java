@@ -16,6 +16,7 @@ public enum ErrorCode {
     INVALID_WEBSOCKET_SESSION(HttpStatus.UNAUTHORIZED, 1008, "유효하지 않은 Websocket Session입니다."),
     GAME_NOT_FOUND(HttpStatus.NOT_FOUND, 2001, "해당하는 Game이 없습니다."),
     DISPLAY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 3002, "전광판 저장에 실패했습니다."),
+    NOT_FOUND_DISPLAY_ACCESS(HttpStatus.INTERNAL_SERVER_ERROR, 3003, "전광판 접근 권한이 없습니다"),
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 팬토큰이 없습니다."),
     TRANSACTION_PENDING_EXISTS(HttpStatus.CONFLICT, 4002, "현재 처리 중인 트랜잭션이 존재합니다.");
 

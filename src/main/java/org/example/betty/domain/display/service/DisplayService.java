@@ -14,4 +14,8 @@ public interface DisplayService {
     List<Display> getAllDisplayList(String accessToken);
 
     List<Display> getAllMyDisplayList(String accessToken);
+
+    void checkDisplayAccess(String accessToken, Long gameId, Long teamId);
+
+    void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash);
 }

@@ -9,7 +9,7 @@ import org.web3j.protocol.http.HttpService;
 @Configuration
 public class Web3jConfig {
 
-    @Value("${STADIUM_URL}")
+    @Value("${stadium.url}")
     private String stadiumUrl;
 
     @Bean

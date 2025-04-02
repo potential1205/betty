@@ -1,4 +1,4 @@
 package org.example.betty.domain.game.service;
 
-public class LiveGameScraperService {
+public class GameReadServiceImpl {
 }

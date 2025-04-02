@@ -1,42 +1,29 @@
 package org.example.betty.external.game.scraper;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.external.game.scraper.common.BaseScraper;
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.NoSuchElementException;
 
 @Slf4j
 @Component
-public class LiveGameScraper {
-
-    /**
-     * ChromeDriver 셋업
-     */
-
-    private WebDriver setupDriver() {
-        WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless", "--disable-gpu", "--window-size=1920,1080");
-        return new ChromeDriver(options);
-    }
+public class LiveRelayScraper extends BaseScraper {
 
     /**
      * 실시간 중계 페이지에서 5초마다 크롤링하는 메서드
-     * @param gameId 경기 고유 ID (ex: 20250326WOHT02025)
+     * @param gameId 경기 고유 ID (예: 20250326WOHT02025)
      * @return 실시간 경기 정보 Map
      */
     public Map<String, String> scrapeRelay(String gameId) {
         String url = "https://m.sports.naver.com/game/" + gameId + "/relay";
         Map<String, String> liveData = new HashMap<>();
-        WebDriver driver = setupDriver();
+        WebDriver driver = createDriver();
 
         try {
             driver.get(url);
@@ -52,9 +39,9 @@ public class LiveGameScraper {
             extractPitchResults(driver, liveData, gameId);
 
         } catch (Exception e) {
-            log.error("[{}] 중계 페이지 크롤링 실패: {}", gameId, e.getMessage());
+            handleException(e, "LiveRelayScraper - " + gameId);
         } finally {
-            driver.quit();
+            quitDriver(driver);
         }
 
         return liveData;

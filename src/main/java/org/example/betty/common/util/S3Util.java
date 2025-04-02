@@ -23,20 +23,21 @@ public class S3Util {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public String upload(MultipartFile file) {
-        String key = UUID.randomUUID() + "-" + file.getOriginalFilename();
+    public String upload(byte[] imageBytes, String contentType, Long gameId, Long teamId, int inning) {
+        String key = "display/" + gameId + "/" + teamId + "/" + inning + "/" + UUID.randomUUID() + ".png";
+
         try {
             PutObjectRequest req = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(key)
-                    .contentType(file.getContentType())
+                    .contentType(contentType)
                     .build();
 
-            s3Client.putObject(req, RequestBody.fromBytes(file.getBytes()));
+            s3Client.putObject(req, RequestBody.fromBytes(imageBytes));
             return key;
-        } catch (IOException | S3Exception e) {
+        } catch (S3Exception e) {
             log.error("S3 upload failed for key={} message={}", key, e.getMessage());
-            throw new IllegalStateException("Failed to upload file to S3", e);
+            throw new IllegalStateException("Failed to upload image to S3", e);
         }
     }
 

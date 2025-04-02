@@ -12,16 +12,16 @@ contract ExchangeTest is Test {
     mapping(string => Token) public fanTokens;
     mapping(string => LiquidityPool) public liquidityPools;
 
-    address public user1 = address(1);
+    // 테스트용 실제 지갑 주소로 변경
+    address public user1 = 0x51F290AA31377bD59d722d09233FEb363c09bDc3;
 
-    // 팬토큰 token_name 기준으로 테스트 구성
     string[10] public token_names = ["DSB", "LGT", "KIA", "HWE", "SSL", "SSG", "NCD", "LTG", "KWH", "KTW"];
 
     function setUp() public {
         btc = new Token("BTC", 1_000_000 * 1e18);
         exchange = new Exchange(address(btc));
 
-        // 테스트 유저에게 충분한 BETTY 지급
+        // 실제 테스트 유저에게 충분한 BETTY 지급
         btc.transfer(user1, 20_000 * 1e18); // BETTY 잔고: 20,000
 
         for (uint i = 0; i < token_names.length; i++) {
@@ -44,48 +44,47 @@ contract ExchangeTest is Test {
     function testAll() public {
         vm.startPrank(user1);
 
-        // BETTY 예치: add()
+        // BETTY 예치
         btc.approve(address(exchange), 2_000 * 1e18);
         exchange.add(2_000 * 1e18);
 
-        // 팬토큰 구매: buy(token_name, amount)
+        // 팬토큰 구매
         btc.approve(address(exchange), 100 * 1e18);
         exchange.buy("DSB", 100 * 1e18);
 
-        // 팬토큰 판매: sell(token_name, amount)
+        // 팬토큰 판매
         fanTokens["DSB"].approve(address(exchange), 5 * 1e18);
         exchange.sell("DSB", 5 * 1e18);
 
-        // 팬토큰 스왑: swap(token_from, token_to, amount)
+        // 팬토큰 스왑
         fanTokens["DSB"].approve(address(exchange), 2 * 1e18);
         exchange.swap("DSB", "LGT", 2 * 1e18);
 
-        // BETTY 출금: remove()
+        // BETTY 출금
         exchange.remove(200 * 1e18);
 
         vm.stopPrank();
     }
 
-
-    //Use(팬토큰 소각) 테스트 함수
+    // 팬토큰 사용 (소각) 테스트
     function testUseFanToken() public {
-    vm.startPrank(user1);
+        vm.startPrank(user1);
 
-    // BETTY 100개를 approve 후 DSB 구매
-    btc.approve(address(exchange), 100 * 1e18);
-    exchange.buy("DSB", 100 * 1e18); // 구매 성공
 
-    // DSB 10개 approve
-    fanTokens["DSB"].approve(address(exchange), 10 * 1e18);
+        // BETTY → DSB 구매
+        btc.approve(address(exchange), 100 * 1e18);
+        exchange.buy("DSB", 100 * 1e18);
 
-    // 팬토큰 사용 (10개 소각)
-    exchange.use("DSB", 10 * 1e18);
+        // DSB 토큰 approve
+        fanTokens["DSB"].approve(address(exchange), 10 * 1e18);
 
-    // 남은 DSB 잔고 출력
-    uint256 remaining = fanTokens["DSB"].balanceOf(user1);
-    console.log("Remaining DSB Balance (after burn):", remaining / 1e18, "DSB");
+        // 팬토큰 사용 (소각)
+        exchange.use("DSB", 2 * 1e18);
 
-    vm.stopPrank();
-}
+        // 잔여 DSB 로그 출력
+        uint256 remaining = fanTokens["DSB"].balanceOf(user1);
+        console.log("Remaining DSB Balance (after burn):", remaining / 1e18, "DSB");
 
+        vm.stopPrank();
+    }
 }

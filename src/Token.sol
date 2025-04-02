@@ -3,12 +3,28 @@ pragma solidity ^0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-// 토큰 컨트랙트: 베티코인(BTC) 및 팬토큰 발행
+// 베티코인 및 팬토큰 컨트랙트
 contract Token is ERC20Burnable {
+    string private _name;
+    string private _symbol;
+
     constructor(string memory token_name, uint256 initialSupply)
         ERC20(token_name, token_name)
     {
+        _name = token_name;
+        _symbol = token_name;
         _mint(msg.sender, initialSupply * 10 ** decimals());
     }
 
+    function name() public view override returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view override returns (string memory) {
+        return _symbol;
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 18;
+    }
 }

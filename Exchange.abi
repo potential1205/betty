@@ -1,0 +1,206 @@
+﻿[
+    {
+        "type":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "_btcToken",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "add",
+        "inputs":  [
+                       {
+                           "name":  "amountBTC",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "addFanToken",
+        "inputs":  [
+                       {
+                           "name":  "token_name",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "tokenAddress",
+                           "type":  "address",
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "liquidityPool",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "btcToken",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "contract IERC20"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "buy",
+        "inputs":  [
+                       {
+                           "name":  "token_name",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountBTC",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "fanTokens",
+        "inputs":  [
+                       {
+                           "name":  "",
+                           "type":  "string",
+                           "internalType":  "string"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "contract IERC20"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "liquidityPools",
+        "inputs":  [
+                       {
+                           "name":  "",
+                           "type":  "string",
+                           "internalType":  "string"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "contract LiquidityPool"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "remove",
+        "inputs":  [
+                       {
+                           "name":  "amountBTC",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "sell",
+        "inputs":  [
+                       {
+                           "name":  "token_name",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountFanToken",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "swap",
+        "inputs":  [
+                       {
+                           "name":  "token_from",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "token_to",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountFanToken",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "use",
+        "inputs":  [
+                       {
+                           "name":  "token_name",
+                           "type":  "string",
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amount",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    }
+]

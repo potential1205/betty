@@ -35,4 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
-*.env
+
+application.properties
+
+### Wallets ###
+src/main/resources/wallet/keystore.json

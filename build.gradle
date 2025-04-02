@@ -70,7 +70,26 @@ dependencies {
 
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Web3j
+    implementation 'org.web3j:core:4.9.4'
+    implementation 'org.web3j:codegen:4.9.4' // wrapper 자동 생성기
+    implementation 'org.slf4j:slf4j-simple:1.7.36' // 로그
+    implementation 'org.springframework.boot:spring-boot-starter' // 스프링 사용 시
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+
+
 }
+
+
+//web3j {
+//    generatedPackageName = 'org.example.betty.contract' // wrapper 클래스 생성 패키지
+//    generatedFilesBaseDir = "${projectDir}/src/main/java"
+//    solidity {
+//        sourceDirectory = file("C:/Users/SSAFY/Desktop/BETTY/S12P21A609/contracts")
+//        // file("${projectDir}/contracts"
+//    }
+//}
 
 tasks.named('test') {
     useJUnitPlatform()

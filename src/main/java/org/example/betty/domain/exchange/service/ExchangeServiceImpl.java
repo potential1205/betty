@@ -17,6 +17,7 @@ import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -69,10 +70,15 @@ public class ExchangeServiceImpl implements ExchangeService {
 
     private void handleBlockchainTransaction(Transaction transaction) {
         try {
-            // TODO: 실제 스마트 컨트랙트 호출 시 필요한 파라미터로 대체
-            String txHash = web3jService.sendTransaction("contractAddress", BigInteger.ZERO, "encodedFunction").getTransactionHash();
+            // 실제 컨트랙트 주소와 인코딩된 함수 호출 바인딩 필요
+            TransactionReceipt receipt = web3jService.sendTransaction("contractAddress", BigInteger.ZERO, "encodedFunction");
+            String txHash = receipt.getTransactionHash();
+
+            // TODO: 트랜잭션 성공 처리 및 DB 상태 업데이트
+            System.out.println("Blockchain TX Success: " + txHash);
+
         } catch (Exception e) {
-            // TODO: 실패 처리 로직 추가
+            // TODO: 트랜잭션 실패 처리 로직
             e.printStackTrace();
         }
     }

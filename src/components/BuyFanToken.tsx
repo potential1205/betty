@@ -4,6 +4,29 @@ import { formatTeamCode, formatTeamName, teamColors, teamTokenPrices } from '../
 import bettyImg from '../assets/bettycoin.png';
 import backImg from '../assets/back_black.png';
 import { useStore } from '../stores/useStore';
+import CandleChart from './CandleChart.tsx';
+
+const dummyDailyData = [
+  { time: '2024-04-01', open: 100, high: 108, low: 98, close: 106 },
+  { time: '2024-04-02', open: 106, high: 110, low: 104, close: 108 },
+  { time: '2024-04-03', open: 108, high: 109, low: 102, close: 103 },
+  { time: '2024-04-04', open: 103, high: 112, low: 102, close: 111 },
+];
+
+const dummyHourlyData = [
+  { time: '2024-04-04T00:00:00', open: 103, high: 104, low: 102.5, close: 103.5 },
+  { time: '2024-04-04T01:00:00', open: 103.5, high: 104.2, low: 102.8, close: 103 },
+  { time: '2024-04-04T02:00:00', open: 103, high: 103.5, low: 101.5, close: 102 },
+  { time: '2024-04-04T03:00:00', open: 102, high: 102.2, low: 100.8, close: 101 },
+  { time: '2024-04-04T04:00:00', open: 101, high: 102, low: 100.5, close: 101.2 },
+  { time: '2024-04-04T05:00:00', open: 101.2, high: 103.5, low: 101.1, close: 103 },
+  { time: '2024-04-04T06:00:00', open: 103, high: 106, low: 102.9, close: 105 },
+  { time: '2024-04-04T07:00:00', open: 105, high: 106.5, low: 104.5, close: 106 },
+  { time: '2024-04-04T08:00:00', open: 106, high: 108, low: 105.5, close: 107.8 },
+  { time: '2024-04-04T09:00:00', open: 107.8, high: 110, low: 107.6, close: 109 },
+  { time: '2024-04-04T10:00:00', open: 109, high: 111, low: 108.5, close: 110.5 },
+  { time: '2024-04-04T11:00:00', open: 110.5, high: 112, low: 109.5, close: 111.8 },
+];
 
 type TeamColor = {
   bg: string;
@@ -208,8 +231,8 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
                 <img src={bettyImg} alt="BETTY" className="w-4 h-4" />
               </div>
             </div>
-            <div className="h-32 bg-white rounded-lg flex items-center justify-center">
-              <p className="text-gray-400">차트 구현 예정</p>
+            <div className="h-56 bg-white rounded-lg [-1]">
+              <CandleChart dailyData={dummyDailyData} hourlyData={dummyHourlyData} />
             </div>
           </div>
 
@@ -307,9 +330,11 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
             </div>
             <div className="flex items-center justify-between mb-2">
               <input
-                type="text"
+                type="number"
+                inputMode="numeric"
+                pattern="\d*"
                 value={amount}
-                readOnly
+                onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full text-right outline-none bg-transparent"
               />
@@ -330,27 +355,6 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
 
           {/* 계산기 */}
           <div className="grid grid-cols-3 gap-1.5">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-              <button
-                key={num}
-                onClick={() => handleNumberClick(num.toString())}
-                className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-              >
-                {num}
-              </button>
-            ))}
-            <button
-              onClick={handleDelete}
-              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => handleNumberClick('0')}
-              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-            >
-              0
-            </button>
             <button
               onClick={handleAction}
               disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)}

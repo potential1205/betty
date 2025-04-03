@@ -28,13 +28,13 @@ contract DisplayAccess is Ownable {
     // 액세스 권한 구매
     function purchaseAccess(address tokenAddress, uint256 teamId, uint256 gameId) external {
         bytes32 accessKey = createAccessKey(teamId, gameId, msg.sender);
-        require(!accessRights[accessKey], "이미 액세스 권한이 있습니다");
+        require(!accessRights[accessKey], "Already Approved");
         
         IERC20 token = IERC20(tokenAddress);
         
         // 1 팬토큰 전송 (18 decimals 고려)
         uint256 amount = 1 * 10**18;
-        require(token.transferFrom(msg.sender, address(this), amount), "토큰 전송에 실패했습니다");
+        require(token.transferFrom(msg.sender, address(this), amount), "Failed to transfer token");
         
         // 액세스 권한 부여
         accessRights[accessKey] = true;

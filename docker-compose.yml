@@ -75,4 +75,4 @@ services:
     container_name: selenium
     ports:
       - "8084:4444"
-    shm_size: 1g
+    shm_size: 4g

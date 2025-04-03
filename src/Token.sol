@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
@@ -27,4 +27,8 @@ contract Token is ERC20Burnable {
     function decimals() public pure override returns (uint8) {
         return 18;
     }
+
+    function mint(address to, uint256 amount) public {
+    _mint(to, amount);
+}
 }

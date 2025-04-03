@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
 import "../src/Token.sol";
@@ -43,8 +43,8 @@ contract DeployExchange is Script {
             pool.setInitialLiquidity(initialBTC, initialFanToken);
 
             // 로그 출력
-            console.log("Fan Token", token_name, "deployed at:", address(fanToken));
-            console.log("Liquidity Pool for", token_name, "deployed at:", address(pool));
+             console.log(string.concat(token_name, " Token deployed at:"), address(fanToken));
+             console.log(string.concat(token_name, " Pool deployed at:"), address(pool));
         }
 
         vm.stopBroadcast();

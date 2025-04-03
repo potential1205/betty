@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -12,6 +12,8 @@ contract LiquidityPool {
     uint256 public fanTokenReserve;
 
     constructor(address _btcToken, address _fanToken) {
+        require(_btcToken != address(0), "BTC token address is zero");
+    require(_fanToken != address(0), "Fan token address is zero");
         btcToken = IERC20(_btcToken);
         fanToken = IERC20(_fanToken);
     }
@@ -22,6 +24,12 @@ contract LiquidityPool {
         btcReserve = _btcAmount;
         fanTokenReserve = _fanTokenAmount;
     }
+
+    // 초기화 여부 확인
+    function isInitialized() external view returns (bool) {
+        return (btcReserve > 0 || fanTokenReserve > 0);
+    }
+
 
     // BETTY → 팬토큰 구매
     function buyFanToken(uint256 amountBTCIn, address to) external returns (uint256 fanTokenOut) {

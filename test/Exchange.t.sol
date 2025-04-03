@@ -18,7 +18,7 @@ contract ExchangeTest is Test {
     string[10] public token_names = ["DSB", "LGT", "KIA", "HWE", "SSL", "SSG", "NCD", "LTG", "KWH", "KTW"];
 
     function setUp() public {
-        btc = new Token("BTC", 1_000_000 * 1e18);
+        btc = new Token("BTC", 1_000_000_000 * 1e18); // 총량만 1000배
         exchange = new Exchange(address(btc));
 
         // 실제 테스트 유저에게 충분한 BETTY 지급
@@ -26,7 +26,7 @@ contract ExchangeTest is Test {
 
         for (uint i = 0; i < token_names.length; i++) {
             string memory token_name = token_names[i];
-            Token fanToken = new Token(token_name, 1_000_000 * 1e18);
+            Token fanToken = new Token(token_name, 1_000_000_000 * 1e18); // 총량만 1000배
             LiquidityPool pool = new LiquidityPool(address(btc), address(fanToken));
 
             fanTokens[token_name] = fanToken;
@@ -69,7 +69,6 @@ contract ExchangeTest is Test {
     // 팬토큰 사용 (소각) 테스트
     function testUseFanToken() public {
         vm.startPrank(user1);
-
 
         // BETTY → DSB 구매
         btc.approve(address(exchange), 100 * 1e18);

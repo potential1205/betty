@@ -2,16 +2,14 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
-import "../src/Exchange.sol";
+import "../src/LiquidityPool.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract ExchangeScript is Script {
+contract LiquidityPoolInitScript is Script {
     function run() external {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(privateKey);
-
+        address deployer = vm.addr(privateKey);
         address btcAddress = vm.envAddress("BTC_ADDRESS");
-        Exchange exchange = new Exchange(btcAddress);
-        console.log("Exchange deployed at:", address(exchange));
 
         string[10] memory tokenNames = ["DSB", "LTG", "LGT", "KWH", "NCD", "KTW", "SSG", "KIA", "SSL", "HWE"];
         address[10] memory fanTokenAddresses = [
@@ -26,6 +24,7 @@ contract ExchangeScript is Script {
             vm.envAddress("SSL_ADDRESS"),
             vm.envAddress("HWE_ADDRESS")
         ];
+
         address[10] memory poolAddresses = [
             vm.envAddress("DSB_POOL"),
             vm.envAddress("LTG_POOL"),
@@ -39,10 +38,22 @@ contract ExchangeScript is Script {
             vm.envAddress("HWE_POOL")
         ];
 
+        vm.startBroadcast(privateKey);
+
         for (uint i = 0; i < 10; i++) {
-            exchange.addFanToken(tokenNames[i], fanTokenAddresses[i], poolAddresses[i]);
-            string memory name = tokenNames[i];
-            console.log(string.concat(name, " registered to Exchange"));
+            console.log("Initializing pool for", tokenNames[i]);
+            IERC20 btc = IERC20(btcAddress);
+            IERC20 fan = IERC20(fanTokenAddresses[i]);
+            LiquidityPool pool = LiquidityPool(poolAddresses[i]);
+
+            uint256 btcAmount = 10_000 * 1e18;
+            uint256 fanAmount = 1_000 * 1e18;
+
+            require(btc.transferFrom(deployer, address(pool), btcAmount), "BTC transfer failed");
+            require(fan.transferFrom(deployer, address(pool), fanAmount), "Fan token transfer failed");
+
+            pool.setInitialLiquidity(btcAmount, fanAmount);
+            console.log("Initialized:", tokenNames[i]);
         }
 
         vm.stopBroadcast();

@@ -2,10 +2,7 @@ package org.example.betty.domain.exchange.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.example.betty.domain.wallet.entity.Wallet;
 
 import java.math.BigDecimal;
@@ -14,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "wallet_balances")
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

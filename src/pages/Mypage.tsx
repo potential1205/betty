@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
+import { useUserStore } from '../stores/authStore';
 import { formatTeamCode, formatTeamName, teamColors, teamTokenPrices } from '../constants/dummy';
 import backImg from '../assets/back_black.png';
 import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
+import { Transaction } from '../stores/useStore';
 
 type TeamColor = {
   bg: string;
@@ -57,10 +59,10 @@ const MyPage: React.FC = () => {
     { id: 'CHARGE', label: '충전' }
   ];
 
-  const renderTransactionList = (transactions: any[], type: 'BUY' | 'SELL' | 'CHARGE', showAll: boolean, setShowAll: (show: boolean) => void) => {
+  const renderTransactionList = (transactions: Transaction[], type: 'BUY' | 'SELL' | 'CHARGE', showAll: boolean, setShowAll: (show: boolean) => void) => {
     const filteredTransactions = transactions
-      .filter(t => t.type === type)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .filter(t => t.type === type && t.date)
+      .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
     
     const displayedTransactions = showAll ? filteredTransactions : filteredTransactions.slice(0, 3);
 
@@ -149,7 +151,7 @@ const MyPage: React.FC = () => {
               <h3 className="text-base font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
               <div className="space-y-3">
                 {userTokens.map((token) => {
-                  const tokenInfo = walletInfo.tokens.find(t => t.team === token.team);
+                  const tokenInfo = walletInfo.tokens?.find(t => t.team === token.team);
                   return (
                     <motion.div
                       key={token.team}
@@ -180,7 +182,7 @@ const MyPage: React.FC = () => {
                           <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
                           <div className="flex items-baseline">
                             <p className="text-base font-['Giants-Bold'] text-black">
-                              {formatBTC(token.amount * 10)}
+                              {formatBTC(tokenInfo?.btcValue || 0)}
                             </p>
                             <p className="text-xs text-gray-500 ml-1">BTC</p>
                           </div>
@@ -202,8 +204,8 @@ const MyPage: React.FC = () => {
               <h3 className="text-lg font-['Giants-Bold'] mb-4">충전 내역</h3>
               <div className="space-y-4">
                 {walletInfo.transactions
-                  .filter(t => t.type === 'CHARGE')
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .filter(t => t.type === 'CHARGE' && t.date)
+                  .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
                   .slice(0, showAllCharge ? undefined : 3)
                   .map((transaction) => (
                     <motion.div
@@ -254,8 +256,8 @@ const MyPage: React.FC = () => {
               <h3 className="text-lg font-['Giants-Bold'] mb-4">매수 내역</h3>
               <div className="space-y-4">
                 {walletInfo.transactions
-                  .filter(t => t.type === 'BUY')
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .filter(t => t.type === 'BUY' && t.date)
+                  .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
                   .slice(0, showAllBuy ? undefined : 3)
                   .map((transaction) => (
                     <motion.div
@@ -313,8 +315,8 @@ const MyPage: React.FC = () => {
               <h3 className="text-lg font-['Giants-Bold'] mb-4">매도 내역</h3>
               <div className="space-y-4">
                 {walletInfo.transactions
-                  .filter(t => t.type === 'SELL')
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .filter(t => t.type === 'SELL' && t.date)
+                  .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
                   .slice(0, showAllSell ? undefined : 3)
                   .map((transaction) => (
                     <motion.div
@@ -403,14 +405,12 @@ const MyPage: React.FC = () => {
         >
           <img src={backImg} alt="Back" className="w-full h-full" />
         </button>
-        <div className="w-5 h-5 flex items-center justify-center">
-          <button 
-            onClick={() => toggleSidebar(true)}
-            className="w-5 h-5"
-          >
-            <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
-          </button>
-        </div>
+        <button 
+          onClick={() => toggleSidebar(true)}
+          className="w-5 h-5"
+        >
+          <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
+        </button>
       </div>
 
       {/* 스크롤 가능한 컨텐츠 영역 */}
@@ -432,7 +432,18 @@ const MyPage: React.FC = () => {
 
         {/* 지갑 주소 */}
         <div className="mb-8">
-          <h2 className="text-xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
+            <button
+              onClick={() => {
+                useUserStore.getState().logout();
+                navigate('/');
+              }}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full border border-gray-200 hover:border-red-200"
+            >
+              로그아웃
+            </button>
+          </div>
           <p className="text-sm text-gray-500 mt-1">{walletInfo.address}</p>
         </div>
 
@@ -466,4 +477,3 @@ const MyPage: React.FC = () => {
 };
 
 export default MyPage;
-

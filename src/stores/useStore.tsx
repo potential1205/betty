@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { allGames, userTokenDummy, walletDummy, Transaction } from '../constants/dummy';
-import { teamColors } from '../constants/colors';
+import { allGames, userTokenDummy } from '../constants/dummy';
+import { colors } from '../constants/colors';
 
 interface GameData {
   id: number;
-  inning: number;  // 회차
-  status: string;  // 이닝 상태
-  [key: string]: number | string | "초" | "말" | undefined; // 모든 팀의 점수를 받을 수 있도록 수정
+  inning: number;
+  status: "초" | "말";
+  [key: string]: number | string | undefined;
 }
 
 interface TeamToken {
@@ -23,6 +23,30 @@ interface Proposal {
   currentVotes: number;
   targetVotes: number;
   deadline: string;
+  status: 'pending' | 'approved';
+}
+
+export interface Transaction {
+  id: number;
+  type: 'BUY' | 'SELL' | 'VOTE' | 'CHARGE';
+  team?: string;
+  amount: number;
+  timestamp: string;
+  date?: string;
+  tokenName?: string;
+  tokenAmount?: number;
+  tokenPrice?: number;
+}
+
+interface WalletInfo {
+  totalBTC: number;
+  transactions: Transaction[];
+  tokens?: Array<{
+    team: string;
+    amount: number;
+    btcValue: number;
+  }>;
+  address?: string;
 }
 
 interface AppState {
@@ -56,9 +80,9 @@ interface AppState {
   updateUserTokens: (team: string, amount: number) => void;
   SUGGEST_COST: number;
   VOTE_COST: number;
-  walletInfo: typeof walletDummy;
-  activeTab: 'ASSETS' | 'TRANSACTIONS' | 'CHARGE';
-  setActiveTab: (tab: 'ASSETS' | 'TRANSACTIONS' | 'CHARGE') => void;
+  walletInfo: WalletInfo;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateWalletBalance: (amount: number) => void;
   updateTokenBalance: (team: string, amount: number, btcValue: number) => void;
@@ -69,16 +93,25 @@ interface AppState {
   chargeBetty: (amount: number) => void;
 }
 
+const initialWalletInfo: WalletInfo = {
+  totalBTC: 100,
+  transactions: [],
+  tokens: []
+};
+
 export const useStore = create<AppState>((set, get) => ({
   currentIndex: 0,
   isSidebarOpen: false,
-  games: allGames,
+  games: allGames.map(game => ({
+    ...game,
+    status: game.status as "초" | "말"
+  })),
   userTokens: userTokenDummy,
   myProposals: [],
   proposals: [],
-  selectedTeam: userTokenDummy[0]?.team || 'bears',
+  selectedTeam: Object.keys(colors)[0] || 'bears',
   isSuggestModalOpen: false,
-  teams: Object.keys(teamColors),
+  teams: Object.keys(colors),
   bettyPrice: 1,
   bettyBalance: 1000,
   setBettyPrice: (price: number) => set({ bettyPrice: price }),
@@ -150,10 +183,11 @@ export const useStore = create<AppState>((set, get) => ({
     const tokenSuccess = get().useTeamToken(proposalData.team, get().SUGGEST_COST);
     if (!tokenSuccess) return state;
 
-    const newProposal = {
+    const newProposal: Proposal = {
       ...proposalData,
       id: state.proposals.length + 1,
       currentVotes: 0,
+      status: 'pending' as const
     };
 
     return {
@@ -188,7 +222,7 @@ export const useStore = create<AppState>((set, get) => ({
   })),
   SUGGEST_COST: 3,
   VOTE_COST: 1,
-  walletInfo: walletDummy,
+  walletInfo: initialWalletInfo,
   activeTab: 'ASSETS',
   setActiveTab: (tab) => set({ activeTab: tab }),
   addTransaction: (transaction) => set((state) => ({
@@ -197,7 +231,8 @@ export const useStore = create<AppState>((set, get) => ({
       transactions: [
         {
           ...transaction,
-          id: state.walletInfo.transactions.length + 1
+          id: state.walletInfo.transactions.length + 1,
+          timestamp: new Date().toISOString()
         },
         ...state.walletInfo.transactions
       ]
@@ -210,43 +245,40 @@ export const useStore = create<AppState>((set, get) => ({
     }
   })),
   updateTokenBalance: (team, amount, btcValue) => set((state) => {
-    // 기존 토큰이 있는지 확인
-    const existingToken = state.userTokens.find(token => token.team === team);
-    
-    // 새로운 userTokens 배열 생성
-    const newUserTokens = existingToken
-      ? state.userTokens.map(token =>
-          token.team === team
-            ? { ...token, amount: token.amount + amount }
-            : token
-        )
-      : [...state.userTokens, { team, amount }];
-
-    // 새로운 walletInfo.tokens 배열 생성
-    const newWalletTokens = existingToken
-      ? state.walletInfo.tokens.map(token =>
-          token.team === team
-            ? { ...token, amount: token.amount + amount, btcValue: token.btcValue + btcValue }
-            : token
-        )
-      : [...state.walletInfo.tokens, { team, amount, btcValue }];
-
-    // 거래 내역 추가
-    const newTransaction = {
+    const newTransaction: Transaction = {
       id: state.walletInfo.transactions.length + 1,
       type: amount > 0 ? 'BUY' : 'SELL',
-      date: new Date().toLocaleDateString(),
+      team,
       amount: Math.abs(btcValue),
+      timestamp: new Date().toISOString(),
+      date: new Date().toLocaleDateString(),
       tokenName: team,
       tokenAmount: Math.abs(amount),
       tokenPrice: state.bettyPrice
-    } as Transaction;
+    };
+
+    const newTokens = state.walletInfo.tokens || [];
+    const existingTokenIndex = newTokens.findIndex(t => t.team === team);
+
+    if (existingTokenIndex >= 0) {
+      newTokens[existingTokenIndex] = {
+        ...newTokens[existingTokenIndex],
+        amount: newTokens[existingTokenIndex].amount + amount,
+        btcValue: newTokens[existingTokenIndex].btcValue + btcValue
+      };
+    } else {
+      newTokens.push({ team, amount, btcValue });
+    }
 
     return {
-      userTokens: newUserTokens,
+      userTokens: state.userTokens.map(token =>
+        token.team === team
+          ? { ...token, amount: token.amount + amount }
+          : token
+      ),
       walletInfo: {
         ...state.walletInfo,
-        tokens: newWalletTokens,
+        tokens: newTokens,
         transactions: [newTransaction, ...state.walletInfo.transactions]
       }
     };
@@ -256,21 +288,20 @@ export const useStore = create<AppState>((set, get) => ({
   isChargeModalOpen: false,
   setIsChargeModalOpen: (isOpen) => set({ isChargeModalOpen: isOpen }),
   chargeBetty: (amount: number) => set((state) => {
-    const btcAmount = amount; // 1 BETTY = 1 BTC
+    const newTransaction: Transaction = {
+      id: state.walletInfo.transactions.length + 1,
+      type: 'CHARGE',
+      amount,
+      timestamp: new Date().toISOString(),
+      date: new Date().toLocaleDateString()
+    };
+
     return {
       bettyBalance: state.bettyBalance + amount,
       walletInfo: {
         ...state.walletInfo,
-        totalBTC: state.walletInfo.totalBTC + btcAmount,
-        transactions: [
-          {
-            id: state.walletInfo.transactions.length + 1,
-            type: 'CHARGE',
-            date: new Date().toLocaleDateString(),
-            amount: amount
-          },
-          ...state.walletInfo.transactions
-        ]
+        totalBTC: state.walletInfo.totalBTC + amount,
+        transactions: [newTransaction, ...state.walletInfo.transactions]
       }
     };
   }),

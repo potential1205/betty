@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
-import { teamColors } from '../constants/colors';
+import { colors } from '../constants/colors';
 import { formatTeamName, formatTeamCode } from '../constants/dummy';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
@@ -19,6 +19,7 @@ interface Proposal {
   currentVotes: number;
   targetVotes: number;
   deadline: string;
+  status: 'pending' | 'approved';
 }
 
 interface TeamToken {
@@ -33,7 +34,7 @@ const ProposalCard: React.FC<{
   onVote: (proposalId: number) => void;
 }> = ({ proposal, userTokens, onVote }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);  // 더보기 상태 관리
+  const [isExpanded, setIsExpanded] = useState(false);
   const userTeamTokens = userTokens.find(token => token.team === proposal.team)?.amount || 0;
   const progress = (proposal.currentVotes / proposal.targetVotes) * 100;
   const teamCode = formatTeamCode(proposal.team);
@@ -80,7 +81,7 @@ const ProposalCard: React.FC<{
         <span>진행률: {Math.round(progress)}%</span>
       </div>
 
-      {isCompleted ? (
+      {proposal.status === 'approved' ? (
         <div className="w-full py-3 rounded-full bg-green-400/20 text-green-400 text-center text-sm">
           구단 검토 예정인 제안입니다
         </div>
@@ -130,16 +131,18 @@ const TeamPage: React.FC = () => {
     toggleSidebar(false);
   }, []);
 
-  const teams = Object.keys(teamColors);
+  const teams = Object.keys(colors);
   const currentIndex = teams.indexOf(selectedTeam);
 
   // 투표 핸들러
   const handleVote = (proposalId: number) => {
     const proposal = proposals.find(p => p.id === proposalId);
     if (proposal) {
+      const newVotes = proposal.currentVotes + 1;
       updateProposal(proposalId, {
-        currentVotes: proposal.currentVotes + 1
-      });
+        currentVotes: newVotes,
+        status: newVotes >= proposal.targetVotes ? 'approved' : 'pending'
+      } as Partial<Proposal>);
     }
   };
 
@@ -223,7 +226,7 @@ const TeamPage: React.FC = () => {
             </div>
 
             {/* 제안하기 버튼 - 텍스트만 있는 버전 */}
-            {(userTokens.find(token => token.team === selectedTeam)?.amount || 0) > 0 && (
+            {(userTokens.find(token => token.team === selectedTeam)?.amount || 0) >= 3 && (
               <div className="pl-6">
                 <button
                   onClick={() => toggleSuggestModal(true)}

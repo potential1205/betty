@@ -21,6 +21,8 @@ public class Proposal {
     @Id
     private Long id;
 
+    private Long teamId;
+
     private String title;
 
     private String content;

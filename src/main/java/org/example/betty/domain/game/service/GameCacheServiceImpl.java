@@ -3,7 +3,7 @@ package org.example.betty.domain.game.service;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.dto.redis.RedisGameData;
-import org.example.betty.domain.game.entity.Games;
+import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GamesRepository;
 import org.example.betty.external.game.scraper.LineupScraper;
 import org.example.betty.external.game.scraper.LiveRelayScraper;
@@ -54,9 +54,9 @@ public class GameCacheServiceImpl implements GameCacheService {
         String redisKey = REDIS_GAME_PREFIX + today;
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
 
-        List<Games> todayGames = gameRepository.findByGameDate(today);
+        List<Game> todayGames = gameRepository.findByGameDate(today);
 
-        for (Games game : todayGames) {
+        for (Game game : todayGames) {
             String gameId = generateGameId(game);
 
             RedisGameSchedule gameSchedule = RedisGameSchedule.builder()
@@ -86,7 +86,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     /**
      * 라인업 스케줄링: 경기 시작 30분 전에 실행 or 이미 지났으면 즉시 실행
      */
-    private void scheduleLineupJob(Games game) {
+    private void scheduleLineupJob(Game game) {
         String gameId = generateGameId(game);
         LocalDateTime executeTime = LocalDateTime.of(game.getGameDate(), game.getStartTime().minusMinutes(30));
 
@@ -107,13 +107,13 @@ public class GameCacheServiceImpl implements GameCacheService {
      * 실시간 경기 중계 스케줄링: 경기 시작 시간에 예약
      * (구현 내용은 복잡도 때문에 추후 추가)
      */
-    private void scheduleRelayJob(Games game) {
+    private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
 
         log.info("[예약 예정] 중계 크롤링 예약됨 - gameId: {}", gameId);
     }
 
-    private String generateGameId(Games game) {
+    private String generateGameId(Game game) {
         return game.getGameDate().format(GAME_ID_DATE_FORMAT)
                 + game.getAwayTeam().getTeamCode()
                 + game.getHomeTeam().getTeamCode()

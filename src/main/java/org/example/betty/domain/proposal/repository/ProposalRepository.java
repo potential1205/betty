@@ -9,5 +9,5 @@ import java.util.List;
 public interface ProposalRepository extends JpaRepository<Proposal, Long> {
     List<Proposal> findAllByTeamId(Long teamId);
 
-    Proposal findByTeamIdAndProposalId(Long teamId, Long proposalId);
+    Proposal findByIdAndTeamId(Long proposalId, Long teamId);
 }

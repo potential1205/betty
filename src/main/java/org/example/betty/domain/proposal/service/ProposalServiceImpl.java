@@ -40,7 +40,7 @@ public class ProposalServiceImpl implements ProposalService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
-        Token token = tokenRepository.findByTokenCode(team.getTokenCode())
+        Token token = tokenRepository.findByTokenName(team.getTokenName())
                 .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), token.getId())
@@ -66,6 +66,6 @@ public class ProposalServiceImpl implements ProposalService {
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        return proposalRepository.findByTeamIdAndProposalId(teamId, proposalId);
+        return proposalRepository.findByIdAndTeamId(teamId, proposalId);
     }
 }

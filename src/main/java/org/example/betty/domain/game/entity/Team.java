@@ -21,12 +21,12 @@ public class Team {
     private String teamName;
 
     @Column(length = 3, nullable = false)
-    private String tokenCode;
+    private String tokenName;
 
-    public Team(String teamCode, String teamName, String tokenCode) {
+    public Team(String teamCode, String teamName, String tokenName) {
         this.teamCode = teamCode;
         this.teamName = teamName;
-        this.tokenCode = tokenCode;
+        this.tokenName = tokenName;
     }
 
 }

@@ -3,7 +3,6 @@ package org.example.betty.domain.proposal.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.example.betty.domain.exchange.dto.resp.TransactionResponse;
 import org.example.betty.domain.proposal.dto.ProposalListResponse;
 import org.example.betty.domain.proposal.dto.ProposalResponse;
 import org.example.betty.domain.proposal.dto.TeamTokenCountResponse;
@@ -25,7 +24,7 @@ public class ProposalController {
     private final ProposalService proposalService;
 
     @Operation(summary = "팀 토큰 개수 조회", description = "현재 사용자가 보유한 팀 토큰 개수를 조회합니다.")
-    @GetMapping("/team/{teamId}")
+    @GetMapping("/team/{teamId}/token/count")
     public ResponseEntity<TeamTokenCountResponse> getTeamTokenCount(
             @PathVariable("teamId") Long teamId,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken) {

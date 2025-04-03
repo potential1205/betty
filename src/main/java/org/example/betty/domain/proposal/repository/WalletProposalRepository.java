@@ -4,4 +4,5 @@ import org.example.betty.domain.proposal.entity.WalletProposals;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WalletProposalRepository extends JpaRepository<WalletProposals, Long> {
+    boolean existsByProposalIdAndWalletId(Long id, Long id1);
 }

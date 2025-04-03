@@ -14,16 +14,16 @@ public class GameResultScraper extends BaseScraper {
      * @param statizId Statiz 내부 고유 경기 ID (예: 20250025)
      */
     public void scrapeResult(String statizId) {
-        WebDriver driver = createDriver();
+//        WebDriver driver = createDriver();
 
-        try {
-            String url = "https://statiz.sporki.com/schedule/?m=summary&s_no=" + statizId;
-            driver.get(url);
-
-        } catch (Exception e) {
-            handleException(e, "GameResultScraper - " + statizId);
-        } finally {
-            quitDriver(driver);
-        }
+//        try {
+//            String url = "https://statiz.sporki.com/schedule/?m=summary&s_no=" + statizId;
+//            driver.get(url);
+//
+//        } catch (Exception e) {
+//            handleException(e, "GameResultScraper - " + statizId);
+//        } finally {
+//            quitDriver(driver);
+//        }
     }
 }

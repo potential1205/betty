@@ -1,6 +1,11 @@
 package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.betty.domain.game.dto.redis.RedisGameLineup;
+import org.example.betty.domain.game.entity.Games;
+import org.example.betty.external.game.scraper.LineupScraper;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -8,9 +13,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LineupAsyncExecutor {
 
-    /**
-     * Runnable task를 비동기(@Async)로 실행
-     */
     @Async
     public void runAsync(Runnable task) {
         task.run();

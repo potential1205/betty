@@ -1,262 +1,120 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useStore } from '../stores/useStore';
-import backImg from '../assets/back.png';
-import hamburgerImg from '../assets/hamburger.png';
-import pencilImg from '../assets/pencil.png';
+import React from 'react';
+import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
-import ColorPicker from '../components/ColorPicker';
-import QuizModal, { QuizHistoryItem } from '../components/QuizModal';
-import { Quiz, quizData } from '../constants/dummy';
-
-type Tab = 'LIVE-PICK' | 'WINNER' | 'PIXEL';
-type Color = string;
-
-// QuizHistory 타입 정의 추가
-type QuizHistory = {
-  quizId: number;
-  userAnswer: number | null;
-  answeredAt: string;
-  totalVotes: number;
-  optionVotes: number[];
-};
+import walletImg from '../assets/wallet.png';
+import hamburgerImg from '../assets/hamburger.png';
+import { colors } from '../constants/colors';
+import { useStore } from '../stores/useStore';
+import { useNavigate } from 'react-router-dom';
 
 const MainPage: React.FC = () => {
+  const { currentIndex, games, handleNext, handlePrev, toggleSidebar } = useStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('LIVE-PICK');
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<Color>('#FFFFFF');
-  const { currentIndex, games, toggleSidebar } = useStore();
   const currentGame = games[currentIndex];
+
   const teamNames = Object.keys(currentGame).filter(key => 
     key !== 'inning' && key !== 'status' && key !== 'id'
   );
 
-  const colors: Color[] = [
-    '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#FF00FF', '#00FFFF', '#808080', '#FFA500'
-  ];
-
-  // 퀴즈 관련 상태 수정
-  const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
-  const [quizHistory, setQuizHistory] = useState<QuizHistory[]>([]);
-  const [currentTime, setCurrentTime] = useState(10);
-
-  // 현재 경기 중인 팀들의 퀴즈만 필터링하는 부분 제거
-  const availableQuizzes = quizData;
-
-  // 컴포넌트 마운트시 랜덤 퀴즈 설정
-  useEffect(() => {
-    if (availableQuizzes.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availableQuizzes.length);
-      setActiveQuiz(availableQuizzes[randomIndex]);
-    }
-  }, []);
-
-  // 현재 선택한 답변을 저장하는 상태 추가
-  const [currentAnswer, setCurrentAnswer] = useState<number | null>(null);
-
-  // 퀴즈 답변 제출 핸들러 수정
-  const handleQuizAnswer = (answer: number) => {
-    if (!activeQuiz) return;
-    setCurrentAnswer(answer);
+  const getBackgroundStyle = () => {
+    const teamA = teamNames[0] as keyof typeof colors;
+    const teamB = teamNames[1] as keyof typeof colors;
+    return {
+      background: `linear-gradient(135deg, 
+        ${colors[teamA]} 0%,
+        ${colors[teamB]} 35%,
+        #ffffff 65%,
+        #ffffff 100%)`
+    };
   };
 
-  // 타임아웃 처리 함수 수정
-  const handleQuizTimeout = () => {
-    if (!activeQuiz) return;
+  const getCardStyle = (index: number) => {
+    const position = (index - currentIndex + games.length) % games.length;
+    const translateX = position === 0 ? 0 : position === 1 ? 240 : position === games.length - 1 ? -240 : -1000;
+    const scale = position === 0 ? 1 : 0.8;
+    const opacity = position === 0 ? 1 : 0.5;
+    const zIndex = position === 0 ? 2 : 1;
 
-    const newHistory: QuizHistory = {
-      quizId: activeQuiz.id,
-      userAnswer: currentAnswer,
-      answeredAt: new Date().toISOString(),
-      totalVotes: 1,
-      optionVotes: activeQuiz.options.map((_, index) => 
-        index === currentAnswer ? 1 : 0
-      ),
+    return {
+      x: translateX,
+      scale,
+      opacity,
+      zIndex,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30
+      }
     };
-
-    setQuizHistory(prev => [newHistory, ...prev]);
-    setCurrentAnswer(null);
-    
-    // 새로운 퀴즈 설정
-    const remainingQuizzes = availableQuizzes.filter(q => q.id !== activeQuiz.id);
-    if (remainingQuizzes.length > 0) {
-      const randomIndex = Math.floor(Math.random() * remainingQuizzes.length);
-      setActiveQuiz(remainingQuizzes[randomIndex]);
-      setCurrentTime(10);
-    } else {
-      setActiveQuiz(null);
-    }
-  };
-
-  // useEffect에서 타이머 처리
-  useEffect(() => {
-    if (currentTime <= 0) {
-      handleQuizTimeout();
-    }
-    
-    const timer = currentTime > 0 && setInterval(() => {
-      setCurrentTime(current => current - 1);
-    }, 1000);
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [currentTime]);
-
-  // 팀 이름 포맷팅 함수
-  const formatTeamName = (team: string) => {
-    const teamNames: { [key: string]: string } = {
-      'bears': '두산',
-      'giants': '롯데',
-      'heroes': '키움',
-      'tigers': 'KIA',
-      'twins': 'LG',
-      'eagles': '한화',
-      'landers': 'SSG',
-      'lions': '삼성',
-      'dinos': 'NC',
-      'wiz': 'KT'
-    };
-    return teamNames[team] || team;
   };
 
   return (
-    <div className="relative h-full bg-black text-white overflow-hidden">
+    <div className="relative h-full overflow-hidden" style={getBackgroundStyle()}>
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-[12px] h-[12px]"
-        >
-          <img src={backImg} alt="Back" className="w-full h-full" />
+        <button onClick={() => navigate('/my')} className="w-8 h-7">
+          <img src={walletImg} alt="wallet" className="w-full h-full" />
         </button>
-        <div className="w-5 h-5 flex items-center justify-center">
-          {activeTab === 'PIXEL' ? (
-            <button 
-              onClick={() => setIsPaletteOpen(true)}
-              className="w-[14px] h-[14px]"
-            >
-              <img src={pencilImg} alt="Pencil" className="w-full h-full" />
-            </button>
-          ) : (
-            <button 
-              onClick={() => toggleSidebar(true)}
-              className="w-5 h-5"
-            >
-              <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
-            </button>
-          )}
-        </div>
+        <button onClick={() => toggleSidebar(true)} className="w-5 h-5">
+          <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
+        </button>
       </div>
 
-      {/* ColorPicker 컴포넌트 */}
-      <ColorPicker 
-        isOpen={isPaletteOpen}
-        onClose={() => setIsPaletteOpen(false)}
-        onSelectColor={setSelectedColor}
-        selectedColor={selectedColor}
-      />
-
-      {/* 상단 매치업 타이틀 */}
-      <div className="pt-16 pb-4 text-center">
+      {/* 매치업 정보 */}
+      <div className="absolute top-13 left-0 right-0 z-10 text-center">
         <div className="text-red-600 text-sm font-['Giants-Bold']">LIVE</div>
-        <h1 className="text-4xl font-['Giants-Bold'] mt-1">
+        <h1 className="text-4xl font-['Giants-Bold'] text-white mt-1">
           {`${teamNames[0]} vs ${teamNames[1]}`}
         </h1>
-        <div className="mt-2">
-          <div className="text-xl font-['Giants-Bold']">
+        <div className="mt-2 text-white">
+          <span className="text-xl font-['Giants-Bold']">
             {currentGame[teamNames[0]]} : {currentGame[teamNames[1]]}
-          </div>
-          <div className="text-xs text-gray-400 mt-0.5">
+          </span>
+          <div className="text-xs mt-0.5 text-gray-300">
             {currentGame.inning}회 {currentGame.status}
           </div>
         </div>
       </div>
 
-      {/* 토글 탭 */}
-      <div className="px-6">
-        <div className="flex rounded-full bg-gray-800/50 p-1">
-          <button
-            onClick={() => setActiveTab('LIVE-PICK')}
-            className={`flex-1 py-3 rounded-full text-sm font-['Pretendard-Regular'] transition-colors
-              ${activeTab === 'LIVE-PICK' ? 'bg-white text-black' : 'text-white'}`}
+      {/* 캐러셀 */}
+      <div className="relative h-full flex items-center justify-center translate-y-[10%]">
+        {games.map((game, index) => (
+          <motion.div
+            key={game.id}
+            className="absolute w-[80%] h-[65%] rounded-2xl"
+            animate={getCardStyle(index)}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(event, info) => {
+              const swipe = Math.abs(info.offset.x) * info.velocity.x;
+              const threshold = 10000;
+              if (swipe < -threshold) {
+                handleNext();
+              } else if (swipe > threshold) {
+                handlePrev();
+              }
+            }}
           >
-            LIVE-PICK
-          </button>
-          <button
-            onClick={() => setActiveTab('WINNER')}
-            className={`flex-1 py-3 rounded-full text-sm font-['Pretendard-Regular'] transition-colors
-              ${activeTab === 'WINNER' ? 'bg-white text-black' : 'text-white'}`}
-          >
-            WINNER
-          </button>
-          <button
-            onClick={() => setActiveTab('PIXEL')}
-            className={`flex-1 py-3 rounded-full text-sm font-['Pretendard-Regular'] transition-colors
-              ${activeTab === 'PIXEL' ? 'bg-white text-black' : 'text-white'}`}
-          >
-            PIXEL
-          </button>
-        </div>
-      </div>
-
-      {/* 컨텐츠 영역 */}
-      <div className="mt-6 px-6 overflow-y-auto h-[calc(100vh-280px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-        {activeTab === 'LIVE-PICK' && (
-          <div className="space-y-4 pb-6"> {/* 하단 여백 추가 */}
-            {/* 활성화된 퀴즈 */}
-            {activeQuiz && (
-              <div className="mb-6">
-                <h2 className="text-lg font-bold mb-3">현재 진행중인 퀴즈</h2>
-                <QuizModal
-                  quiz={activeQuiz}
-                  isActive={true}
-                  onAnswer={handleQuizAnswer}
-                  currentTime={currentTime}
-                  currentAnswer={currentAnswer}
-                />
-              </div>
-            )}
-
-            {/* 퀴즈 히스토리 */}
-            {quizHistory.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold mb-3">이전 퀴즈 결과</h2>
-                {quizHistory.map((history) => {
-                  const quiz = quizData.find(q => q.id === history.quizId);
-                  if (!quiz) return null;
-                  return (
-                    <QuizHistoryItem
-                      key={history.quizId}
-                      quiz={quiz}
-                      history={history}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-        {activeTab === 'WINNER' && (
-          <div>
-            {/* WINNER 컨텐츠 */}
-          </div>
-        )}
-        {activeTab === 'PIXEL' && (
-          <div>
-            {/* PIXEL 컨텐츠 */}
-            <div className="text-sm text-gray-400 mb-2">
-              선택된 색상: <span className="inline-block w-4 h-4 rounded-full align-middle ml-2" style={{ backgroundColor: selectedColor }} />
+            <div className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl 
+              border border-white/20 shadow-lg p-6">
+              {/* 카드 내용 필요 시 여기에 추가 */}
             </div>
-            {/* 여기에 픽셀 그리기 캔버스 추가 예정 */}
-          </div>
-        )}
+          </motion.div>
+        ))}
       </div>
 
-      {/* Sidebar - PIXEL 탭이 아닐 때만 표시 */}
-      {activeTab !== 'PIXEL' && <Sidebar />}
+      {/* 입장 버튼 */}
+      <div className="absolute bottom-12 left-0 right-0 flex justify-center px-12 z-10">
+        <button
+          onClick={() => navigate('/main')}
+          className="w-full h-12 bg-black rounded-[20px] text-white text-lg font-['Pretendard-Regular']"
+        >
+          입장하기
+        </button>
+      </div>
+
+      <Sidebar />
     </div>
   );
 };

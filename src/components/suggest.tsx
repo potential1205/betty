@@ -32,7 +32,8 @@ const SuggestModal: React.FC<SuggestModalProps> = ({ isOpen, onClose, team }) =>
       requiredTokens: SUGGEST_COST, // 고정 비용 3 SSAFY
       currentVotes: 0,
       targetVotes: TARGET_VOTES, // 고정 목표 5표
-      deadline: deadline.toLocaleDateString()
+      deadline: deadline.toLocaleDateString(),
+      status: 'pending'
     });
 
     // 폼 초기화

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../stores/useStore'
+import { useUserStore } from '../stores/authStore'
 import { useState } from 'react'
 
 const letters = ['B', 'E', 'T', 'T', 'Y']
@@ -8,16 +9,64 @@ const letters = ['B', 'E', 'T', 'T', 'Y']
 function LogoScreen() {
   const navigate = useNavigate()
   const { nickname, setNickname } = useStore()
-  const [showNicknameForm, setShowNicknameForm] = useState(false)
+  const { login, isLoading, error } = useUserStore()
+  const [isNicknameSet, setIsNicknameSet] = useState(false)
 
-  const handleStart = () => {
-    setShowNicknameForm(true)
+  const handleNicknameSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (nickname.trim()) {
+      setIsNicknameSet(true)
+    }
   }
 
-  const handleConfirm = () => {
-    if (nickname.trim()) {
-      navigate('/home')
+  const handleLogin = async () => {
+    try {
+      const loginSuccess = await login('google')
+      if (loginSuccess) {
+        navigate('/home')
+      }
+    } catch (error) {
+      console.error('로그인 프로세스 실패:', error)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full" style={{
+        background: 'linear-gradient(145deg, #0c1b4d 0%, #1a237e 100%)'
+      }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex space-x-2"
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                duration: 0.3,
+                delay: i * 0.2,
+                repeat: Infinity,
+                repeatType: "reverse"
+              }}
+              className="w-2 h-2 bg-white rounded-full"
+            />
+          ))}
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-4 text-white text-sm font-['Giants-Bold']"
+        >
+          로딩 중...
+        </motion.p>
+      </div>
+    )
   }
 
   return (
@@ -119,52 +168,52 @@ function LogoScreen() {
             </span>
           </p>
 
-          {showNicknameForm ? (
-            <motion.form 
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleConfirm()
-              }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center gap-4"
+          {!isNicknameSet ? (
+            <motion.div 
+              className="w-full max-w-[240px] flex gap-2 items-center"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex items-center gap-2"
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value.slice(0, 10))}
+                placeholder="닉네임을 입력하세요"
+                maxLength={10}
+                className="flex-1 px-2 py-2 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-100 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-all duration-300 text-sm"
+                style={{
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                }}
+                autoFocus
+              />
+              <button
+                onClick={handleNicknameSubmit}
+                disabled={!nickname.trim()}
+                className={`px-3 py-2 rounded-full font-['Giants-Bold'] text-xs transition-all duration-300 whitespace-nowrap min-w-[50px] ${
+                  nickname.trim() 
+                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:scale-105' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
               >
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value.slice(0, 10))}
-                  placeholder="닉네임을 입력하세요"
-                  maxLength={10}
-                  className="w-48 px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-colors"
-                  style={{
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                  }}
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  disabled={!nickname.trim()}
-                  className={`bg-blue-950 text-white px-4 py-2 rounded-lg font-['Giants-Bold'] text-sm transition-colors ${
-                    nickname.trim() ? 'hover:bg-blue-900' : 'opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  확인
-                </button>
-              </motion.div>
-            </motion.form>
+                시작
+              </button>
+            </motion.div>
           ) : (
             <button
-              onClick={handleStart}
-              className="bg-blue-950 text-white px-8 py-3 rounded-full font-['Giants-Bold'] text-lg hover:bg-blue-900 transition-colors"
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="bg-blue-950 text-white px-4 py-2 rounded-full font-['Giants-Bold'] text-sm hover:bg-blue-900 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              시작하기
+              {isLoading ? '로그인 중...' : 'Google로 로그인'}
             </button>
+          )}
+          
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-red-500 mt-4 text-sm"
+            >
+              {error}
+            </motion.p>
           )}
         </motion.div>
       </div>

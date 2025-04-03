@@ -21,6 +21,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,23 +29,30 @@ public class GameCacheServiceImpl implements GameCacheService {
 
     private final GamesRepository gameRepository;
     private final LineupScraper lineupScraper;
-    private final LiveRelayScraper liveGameScraper;
+    private final LiveRelayScraper liveRelayScraper;
     private final TaskScheduler taskScheduler;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final LineupAsyncExecutor lineupAsyncExecutor;
+    private final RelayAsyncExecutor relayAsyncExecutor;
+
 
     private static final DateTimeFormatter GAME_ID_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final String REDIS_GAME_PREFIX = "games:";
 
     public GameCacheServiceImpl(GamesRepository gameRepository,
                                 LineupScraper lineupScraper,
-                                LiveRelayScraper liveGameScraper,
+                                LiveRelayScraper liveRelayScraper,
                                 TaskScheduler taskScheduler,
-                                RedisTemplate<String, Object> redisTemplate) {
+                                RedisTemplate<String, Object> redisTemplate,
+                                LineupAsyncExecutor lineupAsyncExecutor,
+                                RelayAsyncExecutor relayAsyncExecutor) {
         this.gameRepository = gameRepository;
         this.lineupScraper = lineupScraper;
-        this.liveGameScraper = liveGameScraper;
+        this.liveRelayScraper = liveRelayScraper;
         this.taskScheduler = taskScheduler;
         this.redisTemplate = redisTemplate;
+        this.lineupAsyncExecutor = lineupAsyncExecutor;
+        this.relayAsyncExecutor = relayAsyncExecutor;
     }
 
     @Override
@@ -81,6 +89,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
             if(!"CANCELED".equalsIgnoreCase(game.getStatus())) {
                 scheduleLineupJob(game);
+                scheduleRelayJob(game);
             }
         }
 
@@ -116,8 +125,8 @@ public class GameCacheServiceImpl implements GameCacheService {
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
         LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
 
-        log.info("[라인업 스케줄 동작 시간] gameId: {}, start: {}, executeTime: {}, now: {}",
-                gameId, gameStartDateTime, executeTime, LocalDateTime.now());
+        // 테스트용
+//        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
 
         Runnable task = () -> {
             RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
@@ -128,34 +137,51 @@ public class GameCacheServiceImpl implements GameCacheService {
                 log.warn("[라인업 저장 실패] - gameId: {}", gameId);
             }
         };
-
+        
+        // 예약 시간 지나면 즉시 실행
         if (executeTime.isBefore(LocalDateTime.now())) {
-            task.run();
-            log.info("[즉시 실행] 라인업 크롤링 실행됨 - gameId: {}", gameId);
-        } else {
+            lineupAsyncExecutor.runAsync(task);
+            log.info("[복구-즉시 실행] 라인업 크롤링 - gameId: {}", gameId);
+        } else { // 아니면 예약 실행
             taskScheduler.schedule(
-                    task,
+                    () -> lineupAsyncExecutor.runAsync(task),
                     executeTime.atZone(ZoneId.systemDefault()).toInstant()
             );
-            log.info("[예약 완료] 라인업 크롤링 예약됨 - gameId: {}, 시간: {}", gameId, executeTime);
+            log.info("[라인업 크롤링 예약] gameId: {}, 실행 예정 시각: {}", gameId, executeTime);
         }
     }
 
 
+
     /**
      * 실시간 경기 중계 스케줄링: 경기 시작 시간에 예약
-     * (구현 내용은 복잡도 때문에 추후 추가)
      */
     private void scheduleRelayJob(Games game) {
         String gameId = generateGameId(game);
+        LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
 
-        log.info("[예약 예정] 중계 크롤링 예약됨 - gameId: {}", gameId);
+        // 예약 시간이 지나면 즉시 실행
+        if (gameStartDateTime.isBefore(LocalDateTime.now())) {
+            relayAsyncExecutor.startRelay(gameId);
+            log.info("[즉시 실행] 중계 크롤링 실행됨 - gameId: {}", gameId);
+        } else {
+            // 아니면 예약 실행
+            taskScheduler.schedule(
+                    () -> relayAsyncExecutor.startRelay(gameId),
+                    gameStartDateTime.atZone(ZoneId.systemDefault()).toInstant()
+            );
+            log.info("[예약 완료] 중계 크롤링 예약됨 - gameId: {}, 실행 시각: {}", gameId, gameStartDateTime);
+        }
     }
+
 
     private String generateGameId(Games game) {
-        return game.getGameDate().format(GAME_ID_DATE_FORMAT)
-                + game.getAwayTeam().getTeamCode()
+        // 게임 ID는 'yyyyMMdd+홈팀코드+원정팀코드+시즌' 형식으로 생성
+        return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 + game.getHomeTeam().getTeamCode()
-                + "0" + game.getSeason();
+                + game.getAwayTeam().getTeamCode()
+                + "0" + game.getSeason();  // 시즌을 추가
     }
+
+
 }

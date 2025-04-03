@@ -19,6 +19,8 @@ public class Proposal {
     @Id
     private Long id;
 
+    private Long walletId;
+
     private Long teamId;
 
     private String title;

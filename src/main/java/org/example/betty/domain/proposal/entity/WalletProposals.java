@@ -20,6 +20,8 @@ public class WalletProposals {
     @Id
     private Long id;
 
+    private Long proposalId;
+
     private Long walletId;
 
     private LocalDateTime createdAt;

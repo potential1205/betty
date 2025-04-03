@@ -1,5 +1,7 @@
 package org.example.betty.domain.proposal.service;
 
+import org.example.betty.domain.proposal.dto.req.CreateProposalRequest;
+import org.example.betty.domain.proposal.dto.req.CreateWalletProposalRequest;
 import org.example.betty.domain.proposal.entity.Proposal;
 
 import java.math.BigDecimal;
@@ -11,4 +13,8 @@ public interface ProposalService {
     Proposal getProposal(Long teamId, Long proposalId, String accessToken);
 
     BigDecimal getTeamTokenCount(Long teamId, String accessToken);
+
+    void createProposal(CreateProposalRequest request, String accessToken);
+
+    void createWalletProposal(CreateWalletProposalRequest request, String accessToken);
 }

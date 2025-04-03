@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Table(name = "games")
 @Getter
 @NoArgsConstructor
-public class Games {
+public class Game {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,11 +20,11 @@ public class Games {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id", nullable = false)
-    private Teams homeTeam;
+    private Team homeTeam;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "away_team_id", nullable = false)
-    private Teams awayTeam;
+    private Team awayTeam;
 
     @Column(length = 20)
     private String stadium;
@@ -41,7 +41,7 @@ public class Games {
     @Column(length = 20, nullable = false)
     private String status;
 
-    public Games(Teams homeTeam, Teams awayTeam, String stadium, int season, LocalDate gameDate, LocalTime startTime, String status) {
+    public Game(Team homeTeam, Team awayTeam, String stadium, int season, LocalDate gameDate, LocalTime startTime, String status) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.stadium = stadium;

@@ -1,6 +1,8 @@
-package org.example.betty.domain.display.entity;
+package org.example.betty.domain.proposal.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,23 +16,22 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "displays")
-public class Display {
+@Table(name = "proposals")
+public class Proposal {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    private Long gameId;
-
-    @NotNull
     private Long teamId;
 
-    @NotNull
-    private int inning;
+    private String title;
+
+    private String content;
+
+    private int targetCount;
 
     @NotNull
-    private String displayUrl;
-
     private LocalDateTime createdAt;
+
+    @NotNull
+    private LocalDateTime closedAt;
 }

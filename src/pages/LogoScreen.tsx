@@ -43,6 +43,8 @@ function LogoScreen() {
     const success = await registerNickname(nickname.trim());
     if (success) {
       navigate('/home');
+    } else {
+      setStep('NICKNAME');
     }
   };
 

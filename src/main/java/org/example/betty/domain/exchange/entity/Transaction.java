@@ -40,11 +40,9 @@ public class Transaction {
     private Token tokenTo;
 
     @Column(name = "amount_in", precision = 18, scale = 8)
-    @NotNull
     private BigDecimal amountIn;
 
     @Column(name = "amount_out", precision = 18, scale = 8)
-    @NotNull
     private BigDecimal amountOut;
 
     @Enumerated(EnumType.STRING)

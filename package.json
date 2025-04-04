@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.1.0",
     "@tailwindcss/vite": "^4.0.14",
     "@types/react-color": "^3.0.13",
+    "@types/react-router-dom": "^5.3.3",
     "@use-gesture/react": "^10.3.1",
     "@web3auth/auth-adapter": "^9.7.0",
     "@web3auth/base": "^9.7.0",
@@ -21,7 +23,7 @@
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
     "ethers": "^6.13.5",
-    "framer-motion": "^12.5.0",
+    "framer-motion": "^12.6.3",
     "fs": "^0.0.1-security",
     "lightweight-charts": "^5.0.5",
     "os-browserify": "^0.3.0",
@@ -39,8 +41,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.1",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",

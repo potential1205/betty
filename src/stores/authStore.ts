@@ -4,6 +4,7 @@ import { backendLogin, backendLogout, getNickname, registerNickname } from '../a
 import { initWeb3Auth, web3auth } from '../utils/web3auth';
 import { WALLET_ADAPTERS } from '@web3auth/base';
 import { useWalletStore } from './walletStore';
+import { useStore } from './useStore';
 
 interface UserState {
   walletAddress: string | null;
@@ -44,6 +45,8 @@ export const useUserStore = create<UserState>()(
             console.log('Web3Auth 초기화 시작...');
             await web3auth.init();
             console.log('Web3Auth 초기화 완료');
+          } else {
+            console.log('Web3Auth 이미 연결됨');
           }
           
           set({ isInitialized: true, isLoading: false });
@@ -60,6 +63,30 @@ export const useUserStore = create<UserState>()(
 
       checkNickname: async () => {
         try {
+          // useStore에서 닉네임 확인
+          const { nickname: storeNickname } = useStore.getState();
+          if (storeNickname) {
+            set({
+              nickname: storeNickname,
+              needsNickname: false
+            });
+            return true;
+          }
+
+          // 로컬 스토리지에서 닉네임 확인
+          const storedNickname = localStorage.getItem('user-storage');
+          if (storedNickname) {
+            const parsed = JSON.parse(storedNickname);
+            if (parsed.nickname) {
+              set({
+                nickname: parsed.nickname,
+                needsNickname: false
+              });
+              return true;
+            }
+          }
+
+          // 로컬에 없으면 서버에서 조회
           const response = await getNickname();
           set({
             nickname: response.nickname,

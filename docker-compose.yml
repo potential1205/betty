@@ -70,9 +70,62 @@ services:
       # admin
       ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY}
 
-  selenium:
-    image: selenium/standalone-chrome
-    container_name: selenium
+  selenium-chrome-1:
+    image: selenium/standalone-chrome:134.0-20250323
+    container_name: selenium-chrome-1
     ports:
-      - "8084:4444"
-    shm_size: 4g
+      - "4444:4444"
+      - "5900:5900"
+    shm_size: 1g
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_MAX_INSTANCES=2
+
+  selenium-chrome-2:
+    image: selenium/standalone-chrome:134.0-20250323
+    container_name: selenium-chrome-2
+    ports:
+      - "4445:4444"
+      - "5901:5900"
+    shm_size: 1g
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_MAX_INSTANCES=2
+
+  selenium-chrome-3:
+    image: selenium/standalone-chrome:134.0-20250323
+    container_name: selenium-chrome-3
+    ports:
+      - "4446:4444"
+      - "5902:5900"
+    shm_size: 1g
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_MAX_INSTANCES=2
+
+  selenium-chrome-4:
+    image: selenium/standalone-chrome:134.0-20250323
+    container_name: selenium-chrome-4
+    ports:
+      - "4447:4444"
+      - "5903:5900"
+    shm_size: 1g
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_MAX_INSTANCES=2
+      -
+  selenium-chrome-5:
+    image: selenium/standalone-chrome:134.0-20250323
+    container_name: selenium-chrome-4
+    ports:
+      - "4448:4444"
+      - "5904:5900"
+    shm_size: 1g
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_MAX_INSTANCES=2

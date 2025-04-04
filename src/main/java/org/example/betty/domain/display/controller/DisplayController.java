@@ -65,4 +65,30 @@ public class DisplayController {
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }
+
+    // 테스트용 임시 API
+    @Operation(summary = "게임종료", description = "게임이 종료되어 전광판을 이미지로 저장합니다.")
+    @PostMapping("/games/{gameId}/teams/{teamId}/end")
+    public ResponseEntity<SuccessResponse> gameEnd(
+            @PathVariable Long gameId, @PathVariable Long teamId,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
+
+        displayService.gameEnd(accessToken, gameId, teamId);
+
+        return ResponseEntity.ok()
+                .body(SuccessResponse.of(true));
+    }
+
+    // 테스트용 임시 API
+    @Operation(summary = "이닝종료", description = "이닝이 종료되어 전광판을 이미지로 저장합니다.")
+    @PostMapping("/games/{gameId}/teams/{teamId}/inning/{inning}/end")
+    public ResponseEntity<SuccessResponse> inningEnd(
+            @PathVariable Long gameId, @PathVariable Long teamId, @PathVariable int inning,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
+
+        displayService.inningEnd(accessToken, gameId, teamId, inning);
+
+        return ResponseEntity.ok()
+                .body(SuccessResponse.of(true));
+    }
 }

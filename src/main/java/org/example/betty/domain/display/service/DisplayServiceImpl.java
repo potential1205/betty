@@ -146,6 +146,26 @@ public class DisplayServiceImpl implements DisplayService{
         displayAccessRepository.save(displayAccess);
     }
 
+    @Override
+    public void gameEnd(String accessToken, Long gameId, Long teamId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        handleGameEnd(gameId, teamId);
+    }
+
+    @Override
+    public void inningEnd(String accessToken, Long gameId, Long teamId, int inning) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        handleInningEnd(gameId, teamId, inning);
+    }
+
     public Pixel[][] getDisplay(Long gameId, Long teamId) {
         String key = "display" + ":" + gameId + ":" + teamId;
 

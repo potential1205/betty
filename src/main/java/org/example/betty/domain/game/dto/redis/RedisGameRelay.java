@@ -1,7 +1,6 @@
 package org.example.betty.domain.game.dto.redis;
 
 import lombok.*;
-
 import java.util.List;
 
 @Getter
@@ -11,21 +10,14 @@ import java.util.List;
 @AllArgsConstructor
 public class RedisGameRelay {
 
-    private String inning;                   // 현재 이닝 (예: 3회초)
-    private String score;                    // 현재 점수 (예: LG 2 : 1 KT)
-    private String situation;                // 아웃카운트 + 주자상황 (예: 2사 만루)
-    private String ballCount;                // B-S (예: 2-1)
-    private String result;                   // 현재 타석의 최종 결과 (예: 볼넷, 2루타 등)
-    private List<String> playByPlay;         // 구 단위 텍스트 기록 (스트라이크, 파울, 헛스윙 등)
-    private String teamAtBat;                // 공격 팀 (예: LG)
-    private Integer batterOrder;             // 현재 타순 (1~9)
-    private Boolean isFirstBatterOfInning;   // 이닝 시작 타자 여부
-
-    private List<String> runnerOnBase;       // ["오스틴", "김상수", "장성우"] — 1루~3루 순
-
+    private String inning;                   // 현재 이닝 (예: "5회말")
+    private String teamAtBat;                // 공격 팀 (예: "삼성")
+    private String score;                    // 현재 점수 (예: "LG 2 : KT 1")
+    private int outCount;                    // 아웃 카운트 (예: 2)
+    private List<String> pitchResult;        // 현재 타자의 투구 결과 (예: ["스트라이크", "볼", "파울"])
+    private List<String> runnerOnBase;       // 각 루 주자 (예: ["1루 구자욱", "2루 강민호", "3루 김상수"])
     private PlayerRelayInfo pitcher;         // 현재 투수 정보
     private PlayerRelayInfo batter;          // 현재 타자 정보
     private PlayerRelayInfo previousBatter;  // 직전 타자 정보
-    private List<PlayerRelayInfo> nextBatters; // 대기 타자 3명
+    private List<String> nextBatters;        // 대기 타자 3명 (예: ["5번 김지찬", "6번 이원석", "7번 김현준"])
 }
-

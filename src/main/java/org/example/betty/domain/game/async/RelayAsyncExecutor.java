@@ -31,6 +31,10 @@ public class RelayAsyncExecutor {
      */
     @Async
     public void startRelay(String gameId, int seleniumIndex) {
+
+        // 먼저 WebDriver 생성 및 등록
+        liveRelayScraper.initDriver(gameId, seleniumIndex);
+
         Runnable task = () -> {
             try {
                 RedisGameRelay relayData = liveRelayScraper.scrapeRelay(gameId, seleniumIndex);
@@ -51,11 +55,6 @@ public class RelayAsyncExecutor {
         hashOps.put(redisKey, "relay", relayData);
 
         log.info("[중계 저장] gameId: {} - Redis 저장 완료", gameId);
-    }
-
-    public void stopRelay(String gameId) {
-        liveRelayScraper.stopRelay(gameId);
-        log.info("[RelayAsyncExecutor] 중계 수동 종료 - gameId: {}", gameId);
     }
 
 }

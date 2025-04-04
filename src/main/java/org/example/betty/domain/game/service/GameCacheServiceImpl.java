@@ -77,8 +77,8 @@ public class GameCacheServiceImpl implements GameCacheService {
 
             if (!"CANCELED".equalsIgnoreCase(game.getStatus()) &&
                     !"ENDED".equalsIgnoreCase(game.getStatus())) {
-                scheduleLineupJob(game);   // 라인업 예약
-//                scheduleRelayJob(game);    // 중계 예약
+//                scheduleLineupJob(game);   // 라인업 예약
+                scheduleRelayJob(game);    // 중계 예약
             }
 
             index++;
@@ -142,10 +142,10 @@ public class GameCacheServiceImpl implements GameCacheService {
     private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
-//        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
+        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
 
         // 테스트용
-        LocalDateTime gameStartTime = LocalDateTime.now().plusMinutes(2);
+//        LocalDateTime gameStartTime = LocalDateTime.now().plusMinutes(2);
 
 
         final Integer seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
@@ -167,20 +167,7 @@ public class GameCacheServiceImpl implements GameCacheService {
             );
             log.info("[중계 크롤링 예약] 경기 시작 전 - gameId: {}, 시각: {}", gameId, gameStartTime);
         }
-        scheduleRelayStopJob(game);
-    }
-
-    private void scheduleRelayStopJob(Game game) {
-        String gameId = generateGameId(game);
-        LocalDateTime stopTime = LocalDateTime.now().plusMinutes(2); // ⏱ 테스트용: 2분 뒤 종료
-//  LocalDateTime stopTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusHours(2); // ⏰ 실제: 경기 시작 2시간 후
-
-        taskScheduler.schedule(() -> {
-            relayAsyncExecutor.stopRelay(gameId);
-            log.info("[중계 종료 예약 실행] gameId: {}", gameId);
-        }, stopTime.atZone(ZoneId.systemDefault()).toInstant());
-
-        log.info("[중계 종료 예약 완료] gameId: {}, 종료시각: {}", gameId, stopTime);
+//        scheduleRelayStopJob(game);
     }
 
 

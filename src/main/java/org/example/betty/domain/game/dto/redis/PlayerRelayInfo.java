@@ -2,21 +2,19 @@ package org.example.betty.domain.game.dto.redis;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlayerRelayInfo {
-    private String name;           // 선수명
-    private String position;       // 예: "3번타자(좌타)", "투수(우투)"
-
-    // 타자 기록
-    private Double avg;            // 타율
-
-    // 투수 기록
-    private Integer inningPitched; // 이닝
-    private Integer totalPitches;  // 투구수
-
-    private String summaryText;    // 공격 결과 요약 (예: "2루수 병살타 아웃" 같은 결과)
+    private String name;           // 선수명 (ex: 구자욱)
+    private String position;       // 포지션/타순 정보 (ex: 2번타자(좌타), 투수(우투))
+    private String avg;            // (현재타자만) 타율 (ex: 0.368)
+    private String inningPitched; // (투수만) 이닝 (ex: 0.2)
+    private String totalPitches;  // (투수만) 투구수 (ex: 16)
+    private String summaryText;    // (직전타자만)현재 타석 결과 (ex: 삼진 아웃)
+    private List<String> pitchResults; // (직전타자만) 투구 결과 리스트 (ex: ["스트라이크", "볼", "파울", ...])
 }

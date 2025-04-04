@@ -1,11 +1,13 @@
 package org.example.betty.domain.game.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GamesRepository;
 import org.example.betty.external.game.scraper.LineupScraper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
@@ -24,30 +26,18 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GameCacheServiceImpl implements GameCacheService {
 
     private final GamesRepository gameRepository;
     private final LineupScraper lineupScraper;
     private final TaskScheduler taskScheduler;
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Qualifier("redisTemplate2")
+    private final RedisTemplate<String, Object> redisTemplate2;
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
 
     public static final String REDIS_GAME_PREFIX = "games:";
-
-    public GameCacheServiceImpl(GamesRepository gameRepository,
-                                LineupScraper lineupScraper,
-                                TaskScheduler taskScheduler,
-                                RedisTemplate<String, Object> redisTemplate,
-                                LineupAsyncExecutor lineupAsyncExecutor,
-                                RelayAsyncExecutor relayAsyncExecutor) {
-        this.gameRepository = gameRepository;
-        this.lineupScraper = lineupScraper;
-        this.taskScheduler = taskScheduler;
-        this.redisTemplate = redisTemplate;
-        this.lineupAsyncExecutor = lineupAsyncExecutor;
-        this.relayAsyncExecutor = relayAsyncExecutor;
-    }
 
     @Override
     @Transactional
@@ -56,7 +46,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         LocalDate today = LocalDate.now();
 
         List<Game> todayGames = gameRepository.findByGameDate(today);
-        HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+        HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
         int index = 0;
 
@@ -81,7 +71,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
             LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
-            redisTemplate.expireAt(redisKey, expireDate);
+            redisTemplate2.expireAt(redisKey, expireDate);
 
             if (!"CANCELED".equalsIgnoreCase(game.getStatus()) &&
                     !"ENDED".equalsIgnoreCase(game.getStatus())) {
@@ -114,7 +104,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         // 테스트용: 지금부터 10초 뒤에 실행하고 싶을 때
 //        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
 
-        Integer seleniumIndex = (Integer) redisTemplate.opsForHash().get(redisKey, "seleniumIndex");
+        Integer seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
         if (seleniumIndex == null) {
             log.warn("[라인업 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
             return;
@@ -124,7 +114,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 //            RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
             RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId, seleniumIndex);
             if (lineup != null) {
-                redisTemplate.opsForHash().put(redisKey, "lineup", lineup);
+                redisTemplate2.opsForHash().put(redisKey, "lineup", lineup);
                 log.info("[라인업 저장 완료] - gameId: {}", gameId);
             } else {
                 log.warn("[라인업 저장 실패] - gameId: {}", gameId);
@@ -156,7 +146,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         LocalDateTime gameStartTime = LocalDateTime.now().plusMinutes(2);
 
 
-        final Integer seleniumIndex = (Integer) redisTemplate.opsForHash().get(redisKey, "seleniumIndex");
+        final Integer seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
         if (seleniumIndex == null) {
             log.warn("[중계 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
             return;

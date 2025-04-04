@@ -32,10 +32,16 @@ public class LiveRelayScraper extends BaseScraper {
     public RedisGameRelay scrapeRelay(String gameId, int index) {
         RedisGameRelay relay = new RedisGameRelay();
 
-        WebDriver driver = driverMap.computeIfAbsent(gameId, id -> createDriver(seleniumUrls.get(index)));
+        // ✅ 이미 종료된 경우 크롤링 스킵
+        if (!driverMap.containsKey(gameId)) {
+            log.warn("[{}] 중계 스킵: WebDriver가 종료되어 없음", gameId);
+            return null;
+        }
+
+        WebDriver driver = driverMap.get(gameId);
 
         if (driver == null) {
-            log.error("[{}] WebDriver 생성 실패 → 중계 크롤링 중단", gameId);
+            log.error("[{}] WebDriver가 null입니다 → 크롤링 중단", gameId);
             return null;
         }
 
@@ -55,6 +61,7 @@ public class LiveRelayScraper extends BaseScraper {
 
         return relay;
     }
+
 
     // 다른곳에서 사용예정
     public void stopRelay(String gameId) {

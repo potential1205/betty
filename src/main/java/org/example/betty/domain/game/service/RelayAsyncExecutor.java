@@ -50,4 +50,10 @@ public class RelayAsyncExecutor {
 
         log.info("[중계 저장] gameId: {} - Redis 저장 완료", gameId);
     }
+
+    public void stopRelay(String gameId) {
+        liveRelayScraper.stopRelay(gameId);
+        log.info("[RelayAsyncExecutor] 중계 수동 종료 - gameId: {}", gameId);
+    }
+
 }

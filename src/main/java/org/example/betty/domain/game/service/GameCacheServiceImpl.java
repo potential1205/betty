@@ -34,7 +34,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
 
-    private static final String REDIS_GAME_PREFIX = "games:";
+    public static final String REDIS_GAME_PREFIX = "games:";
 
     public GameCacheServiceImpl(GamesRepository gameRepository,
                                 LineupScraper lineupScraper,
@@ -87,7 +87,7 @@ public class GameCacheServiceImpl implements GameCacheService {
             if (!"CANCELED".equalsIgnoreCase(game.getStatus()) &&
                     !"ENDED".equalsIgnoreCase(game.getStatus())) {
                 scheduleLineupJob(game);   // 라인업 예약
-                scheduleRelayJob(game);    // 중계 예약
+//                scheduleRelayJob(game);    // 중계 예약
             }
 
             index++;
@@ -110,10 +110,11 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
 
         // 테스트용: 지금부터 10초 뒤에 실행하고 싶을 때
-        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
+//        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
+
         Integer seleniumIndex = (Integer) redisTemplate.opsForHash().get(redisKey, "seleniumIndex");
         if (seleniumIndex == null) {
             log.warn("[라인업 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
@@ -175,7 +176,22 @@ public class GameCacheServiceImpl implements GameCacheService {
             );
             log.info("[중계 크롤링 예약] 경기 시작 전 - gameId: {}, 시각: {}", gameId, gameStartTime);
         }
+        scheduleRelayStopJob(game);
     }
+
+    private void scheduleRelayStopJob(Games game) {
+        String gameId = generateGameId(game);
+        LocalDateTime stopTime = LocalDateTime.now().plusMinutes(2); // ⏱ 테스트용: 2분 뒤 종료
+//  LocalDateTime stopTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusHours(2); // ⏰ 실제: 경기 시작 2시간 후
+
+        taskScheduler.schedule(() -> {
+            relayAsyncExecutor.stopRelay(gameId);
+            log.info("[중계 종료 예약 실행] gameId: {}", gameId);
+        }, stopTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        log.info("[중계 종료 예약 완료] gameId: {}, 종료시각: {}", gameId, stopTime);
+    }
+
 
 
     private String generateGameId(Games game) {

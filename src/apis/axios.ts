@@ -30,6 +30,7 @@ axiosInstance.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
         if (token) {
+            console.log('Authorization 헤더 설정:', `Bearer ${token}`);
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;

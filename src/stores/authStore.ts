@@ -79,7 +79,6 @@ export const useUserStore = create<UserState>()(
         try {
           set({ isLoading: true, error: null });
 
-          // 1단계: Web3Auth 초기화 및 연결
           await initWeb3Auth();
 
           if (!web3auth.connected) {
@@ -100,12 +99,10 @@ export const useUserStore = create<UserState>()(
             throw new Error('ID 토큰을 가져올 수 없습니다');
           }
 
-          // 2단계: 백엔드 로그인
           console.log('백엔드 로그인 시도...');
           await backendLogin(userInfo.idToken);
           console.log('백엔드 로그인 성공');
 
-          set({ isAuthenticated: true, isLoading: false });
           return true;
         } catch (error: any) {
           console.error('로그인 실패:', error);

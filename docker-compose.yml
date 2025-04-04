@@ -114,7 +114,7 @@ services:
       -
   selenium-chrome-5:
     image: selenium/standalone-chrome:134.0-20250323
-    container_name: selenium-chrome-4
+    container_name: selenium-chrome-5
     ports:
       - "4448:4444"
       - "5904:5900"

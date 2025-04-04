@@ -3,10 +3,9 @@ package org.example.betty.domain.game.service;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
-import org.example.betty.domain.game.entity.Games;
+import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GamesRepository;
 import org.example.betty.external.game.scraper.LineupScraper;
-import org.example.betty.external.game.scraper.LiveRelayScraper;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
@@ -56,12 +55,12 @@ public class GameCacheServiceImpl implements GameCacheService {
     public void cacheDailyGames() {
         LocalDate today = LocalDate.now();
 
-        List<Games> todayGames = gameRepository.findByGameDate(today);
+        List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
 
         int index = 0;
 
-        for (Games game : todayGames) {
+        for (Game game : todayGames) {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
@@ -97,7 +96,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Override
     @Transactional
     public boolean recoverTodayGameSchedule(LocalDate targetDate) {
-        List<Games> todayGames = gameRepository.findByGameDate(targetDate);
+        List<Game> todayGames = gameRepository.findByGameDate(targetDate);
         log.info("[복구] 오늘 경기 {}개 → 캐시 및 스케줄링 재시도", todayGames.size());
         cacheDailyGames();
         return true;
@@ -106,7 +105,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     /**
      * Lineup 크롤링 예약: 경기 시작 30분 전 또는 이미 지났으면 즉시 실행
      */
-    private void scheduleLineupJob(Games game) {
+    private void scheduleLineupJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
@@ -148,7 +147,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     /**
      * Relay 크롤링 예약: Lineup이 저장된 후에 실행
      */
-    private void scheduleRelayJob(Games game) {
+    private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
 //        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
@@ -179,7 +178,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         scheduleRelayStopJob(game);
     }
 
-    private void scheduleRelayStopJob(Games game) {
+    private void scheduleRelayStopJob(Game game) {
         String gameId = generateGameId(game);
         LocalDateTime stopTime = LocalDateTime.now().plusMinutes(2); // ⏱ 테스트용: 2분 뒤 종료
 //  LocalDateTime stopTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusHours(2); // ⏰ 실제: 경기 시작 2시간 후
@@ -194,7 +193,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
 
 
-    private String generateGameId(Games game) {
+    private String generateGameId(Game game) {
         return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 + game.getAwayTeam().getTeamCode()
                 + game.getHomeTeam().getTeamCode()

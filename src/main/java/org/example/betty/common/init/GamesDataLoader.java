@@ -2,8 +2,8 @@ package org.example.betty.common.init;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.game.entity.Games;
-import org.example.betty.domain.game.entity.Teams;
+import org.example.betty.domain.game.entity.Game;
+import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.game.repository.GamesRepository;
 import org.example.betty.domain.game.repository.TeamsRepository;
 import org.example.betty.external.game.scraper.GameScheduleScraper;
@@ -37,18 +37,18 @@ public class GamesDataLoader implements CommandLineRunner {
         }
 
         List<GameSchedule> schedules = scraper.scrapeAllMonthsSchedule();
-        List<Games> games = schedules.stream()
+        List<Game> games = schedules.stream()
                 .map(this::toEntity)
                 .toList();
 
         gamesRepository.saveAll(games);
     }
 
-    private Games toEntity(GameSchedule schedule) {
-        Teams homeTeam = teamsRepository.findByTeamNameContaining(schedule.getHomeTeam());
-        Teams awayTeam = teamsRepository.findByTeamNameContaining(schedule.getAwayTeam());
+    private Game toEntity(GameSchedule schedule) {
+        Team homeTeam = teamsRepository.findByTeamNameContaining(schedule.getHomeTeam());
+        Team awayTeam = teamsRepository.findByTeamNameContaining(schedule.getAwayTeam());
 
-        return new Games(
+        return new Game(
                 homeTeam,
                 awayTeam,
                 schedule.getStadium(),

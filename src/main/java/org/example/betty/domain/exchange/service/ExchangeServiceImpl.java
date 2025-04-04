@@ -1,0 +1,92 @@
+package org.example.betty.domain.exchange.service;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.example.betty.common.util.PendingTransactionUtil;
+import org.example.betty.common.util.SessionUtil;
+import org.example.betty.domain.exchange.dto.req.SwapRequest;
+import org.example.betty.domain.exchange.dto.req.TransactionRequest;
+import org.example.betty.domain.exchange.dto.resp.TransactionResponse;
+import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.entity.Transaction;
+import org.example.betty.domain.exchange.enums.TransactionStatus;
+import org.example.betty.domain.exchange.repository.TokenRepository;
+import org.example.betty.domain.exchange.repository.TransactionRepository;
+import org.example.betty.domain.wallet.entity.Wallet;
+import org.example.betty.domain.wallet.repository.WalletRepository;
+import org.example.betty.exception.BusinessException;
+import org.example.betty.exception.ErrorCode;
+import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+
+import java.math.BigInteger;
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class ExchangeServiceImpl implements ExchangeService {
+
+    private final SessionUtil sessionUtil;
+    private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
+    private final TokenRepository tokenRepository;
+    private final Web3jService web3jService;
+    private final PendingTransactionUtil pendingTransactionUtil;
+
+    @Override
+    @Transactional
+    public TransactionResponse processTransaction(TransactionRequest request, String accessToken) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        // PENDING 상태 검증
+        pendingTransactionUtil.throwIfPending(walletAddress);
+
+        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        Token token = tokenRepository.findById(request.getTokenId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        // 트랜잭션 객체 생성 후 PENDING 상태로 저장
+        Transaction transaction = Transaction.builder()
+                .wallet(wallet)
+                .tokenTo(token)
+                .amountIn(request.getAmountIn())
+                .transactionStatus(TransactionStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        transactionRepository.save(transaction);
+
+        TransactionResponse pendingResponse = new TransactionResponse(
+                true, "트랜잭션 처리 중입니다. 잠시만 기다려 주세요.", transaction.getId()
+        );
+
+        // 비동기로 블록체인 전송 처리
+        new Thread(() -> handleBlockchainTransaction(transaction)).start();
+
+        return pendingResponse;
+    }
+
+    private void handleBlockchainTransaction(Transaction transaction) {
+        try {
+            // 실제 컨트랙트 주소와 인코딩된 함수 호출 바인딩 필요
+            TransactionReceipt receipt = web3jService.sendTransaction("contractAddress", BigInteger.ZERO, "encodedFunction");
+            String txHash = receipt.getTransactionHash();
+
+            // TODO: 트랜잭션 성공 처리 및 DB 상태 업데이트
+            System.out.println("Blockchain TX Success: " + txHash);
+
+        } catch (Exception e) {
+            // TODO: 트랜잭션 실패 처리 로직
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public TransactionResponse processSwap(SwapRequest request, String accessToken) {
+        // TODO: swap 로직 구현
+        // TODO: swap 시에도 pendingTransactionUtil.throwIfPending(walletAddress) 호출 필요
+        return null;
+    }
+}

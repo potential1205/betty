@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../frontend/dist:/var/www/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+
+    depends_on:
+      - spring
+
+  spring:
+    build: .
+    container_name: spring
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME}
+
+      # MySQL
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+
+      # JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT}
+
+      # AWS S3
+      CLOUD_AWS_S3_BUCKET: ${CLOUD_AWS_S3_BUCKET}
+      CLOUD_AWS_CREDENTIALS_ACCESS_KEY: ${CLOUD_AWS_CREDENTIALS_ACCESS_KEY}
+      CLOUD_AWS_CREDENTIALS_SECRET_KEY: ${CLOUD_AWS_CREDENTIALS_SECRET_KEY}
+      CLOUD_AWS_REGION_STATIC: ${CLOUD_AWS_REGION_STATIC}
+
+      # Redis
+      SPRING_DATA_REDIS_HOST1: ${SPRING_DATA_REDIS_HOST1}
+      SPRING_DATA_REDIS_HOST2: ${SPRING_DATA_REDIS_HOST2}
+      SPRING_DATA_REDIS_HOST3: ${SPRING_DATA_REDIS_HOST3}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD}
+      SPRING_DATA_REDIS_PORT_REDIS1: ${SPRING_DATA_REDIS_PORT_REDIS1}
+      SPRING_DATA_REDIS_PORT_REDIS2: ${SPRING_DATA_REDIS_PORT_REDIS2}
+      SPRING_DATA_REDIS_PORT_REDIS3: ${SPRING_DATA_REDIS_PORT_REDIS3}
+
+      # Web3Auth
+      WEB3AUTH_JWKS_URL: ${WEB3AUTH_JWKS_URL}
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Selenium
+      SELENIUM_REMOTE_URL: ${SELENIUM_REMOTE_URL}
+
+      # redis
+      REDIS1_PORT: ${REDIS1_PORT}
+      REDIS2_PORT: ${REDIS2_PORT}
+      REDIS3_PORT: ${REDIS3_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # stadium
+      STADIUM_URL: ${STADIUM_URL}
+
+      # admin
+      ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY}
+
+  selenium:
+    image: selenium/standalone-chrome
+    container_name: selenium
+    ports:
+      - "8084:4444"
+    shm_size: 4g

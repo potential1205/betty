@@ -6,7 +6,9 @@ import org.example.betty.common.util.S3Util;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.display.entity.Display;
 import org.example.betty.domain.display.dto.Pixel;
+import org.example.betty.domain.display.entity.DisplayAccess;
 import org.example.betty.domain.display.entity.WalletsDisplays;
+import org.example.betty.domain.display.repository.DisplayAccessRepository;
 import org.example.betty.domain.display.repository.DisplayRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
@@ -16,12 +18,17 @@ import org.example.betty.exception.ErrorCode;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.methods.response.Transaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.utils.Convert;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,9 +43,11 @@ public class DisplayServiceImpl implements DisplayService{
     private final SimpMessagingTemplate messagingTemplate;
     private final S3Util s3Util;
     private final DisplayRepository displayRepository;
+    private final DisplayAccessRepository displayAccessRepository;
     private final WalletRepository walletRepository;
     private final WalletsDisplaysRepository walletsDisplaysRepository;
     private final SessionUtil sessionUtil;
+    private final Web3j web3j;
 
     @Override
     public List<Display> getAllDisplayList(String accessToken) {
@@ -64,6 +73,97 @@ public class DisplayServiceImpl implements DisplayService{
                 .toList();
 
         return displayRepository.findByIdIn(displayIdList);
+    }
+
+    @Override
+    public void checkDisplayAccess(String accessToken, Long gameId, Long teamId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(wallet.getWalletAddress(),gameId, teamId)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_DISPLAY_ACCESS);
+        }
+    }
+
+    @Override
+    public void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        if (displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
+            throw new BusinessException(ErrorCode.ALREADY_HAS_DISPLAY_ACCESS);
+        }
+
+        try {
+            TransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send()
+                    .getTransactionReceipt()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.TRANSACTION_NOT_CONFIRMED));
+
+            if (!"0x1".equals(receipt.getStatus())) {
+                throw new BusinessException(ErrorCode.FAILED_TRANSACTION);
+            }
+
+            Transaction tx = web3j.ethGetTransactionByHash(txHash).send()
+                    .getTransaction()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TRANSACTION));
+
+//            if (!tx.getTo().equalsIgnoreCase(TOKEN_CONTRACT_ADDRESS)) {
+//                throw new IllegalArgumentException("토큰 컨트랙트 주소가 아님");
+//            }
+
+            String input = tx.getInput();
+            if (!input.startsWith("0xa9059cbb")) {
+                throw new BusinessException(ErrorCode.INVALID_TOKEN_TRANSFER);
+            }
+
+            String toAddress = "0x" + input.substring(34, 74);
+            String amountHex = input.substring(74);
+            BigInteger amount = new BigInteger(amountHex, 16);
+
+            BigInteger requiredAmount = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
+
+            if (!toAddress.equalsIgnoreCase(wallet.getWalletAddress())) {
+                throw new BusinessException(ErrorCode.INVALID_TRANSACTION);
+            }
+
+            if (amount.compareTo(requiredAmount) < 0) {
+                throw new BusinessException(ErrorCode.INSUFFICIENT_TOKEN_AMOUNT);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Web3 통신 실패", e);
+        }
+
+        DisplayAccess displayAccess = DisplayAccess.builder()
+                .walletAddress(wallet.getWalletAddress())
+                .gameId(gameId)
+                .teamId(teamId)
+                .build();
+
+        displayAccessRepository.save(displayAccess);
+    }
+
+    @Override
+    public void gameEnd(String accessToken, Long gameId, Long teamId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        handleGameEnd(gameId, teamId);
+    }
+
+    @Override
+    public void inningEnd(String accessToken, Long gameId, Long teamId, int inning) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        handleInningEnd(gameId, teamId, inning);
     }
 
     public Pixel[][] getDisplay(Long gameId, Long teamId) {

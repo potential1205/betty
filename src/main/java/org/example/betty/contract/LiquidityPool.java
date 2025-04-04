@@ -1,0 +1,203 @@
+package org.example.betty.contract;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.Contract;
+import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.ContractGasProvider;
+
+/**
+ * <p>Auto generated code.
+ * <p><strong>Do not modify!</strong>
+ * <p>Please use the <a href="https://docs.web3j.io/command_line.html">web3j command line tools</a>,
+ * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
+ * <a href="https://github.com/hyperledger-web3j/web3j/tree/main/codegen">codegen module</a> to update.
+ *
+ * <p>Generated with web3j version 1.6.3.
+ */
+@SuppressWarnings("rawtypes")
+public class LiquidityPool extends Contract {
+    public static final String BINARY = "癤�0x608060405234801561001057600080fd5b50604051610f40380380610f40833981810160405281019061003291906101fb565b600073ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff16036100a1576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161009890610298565b60405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1603610110576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161010790610304565b60405180910390fd5b816000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555080600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505050610324565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b60006101c88261019d565b9050919050565b6101d8816101bd565b81146101e357600080fd5b50565b6000815190506101f5816101cf565b92915050565b6000806040838503121561021257610211610198565b5b6000610220858286016101e6565b9250506020610231858286016101e6565b9150509250929050565b600082825260208201905092915050565b7f42544320746f6b656e2061646472657373206973207a65726f00000000000000600082015250565b600061028260198361023b565b915061028d8261024c565b602082019050919050565b600060208201905081810360008301526102b181610275565b9050919050565b7f46616e20746f6b656e2061646472657373206973207a65726f00000000000000600082015250565b60006102ee60198361023b565b91506102f9826102b8565b602082019050919050565b6000602082019050818103600083015261031d816102e1565b9050919050565b610c0d806103336000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c80633bce1c751161005b5780633bce1c7514610117578063663c2b991461014757806375daa3de14610163578063a42c6b001461018157610088565b806301b424e51461008d578063074bc101146100ab5780632cf5dbda146100c9578063392e53cd146100f9575b600080fd5b61009561019f565b6040516100a29190610606565b60405180910390f35b6100b36101a5565b6040516100c091906106a0565b60405180910390f35b6100e360048036038101906100de919061072a565b6101c9565b6040516100f09190610606565b60405180910390f35b610101610387565b60405161010e9190610785565b60405180910390f35b610131600480360381019061012c919061072a565b6103a0565b60405161013e9190610606565b60405180910390f35b610161600480360381019061015c91906107a0565b61055c565b005b61016b6105c1565b60405161017891906106a0565b60405180910390f35b6101896105e7565b6040516101969190610606565b60405180910390f35b60025481565b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080831161020d576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016102049061083d565b60405180910390fd5b60008360025461021d919061088c565b905060008160035460025461023291906108c0565b61023c9190610931565b90508060035411610282576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610279906109ae565b60405180910390fd5b8060035461029091906109ce565b92508160028190555080600381905550600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb85856040518363ffffffff1660e01b81526004016102fd929190610a11565b6020604051808303816000875af115801561031c573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103409190610a66565b61037f576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161037690610adf565b60405180910390fd5b505092915050565b600080600254118061039b57506000600354115b905090565b60008083116103e4576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016103db9061083d565b60405180910390fd5b6000836003546103f4919061088c565b905060008160035460025461040991906108c0565b6104139190610931565b90508060025411610459576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610450906109ae565b60405180910390fd5b8060025461046791906109ce565b9250816003819055508060028190555060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb85856040518363ffffffff1660e01b81526004016104d2929190610a11565b6020604051808303816000875af11580156104f1573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105159190610a66565b610554576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161054b90610b4b565b60405180910390fd5b505092915050565b600060025414801561057057506000600354145b6105af576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016105a690610bb7565b60405180910390fd5b81600281905550806003819055505050565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60035481565b6000819050919050565b610600816105ed565b82525050565b600060208201905061061b60008301846105f7565b92915050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000819050919050565b600061066661066161065c84610621565b610641565b610621565b9050919050565b60006106788261064b565b9050919050565b600061068a8261066d565b9050919050565b61069a8161067f565b82525050565b60006020820190506106b56000830184610691565b92915050565b600080fd5b6106c9816105ed565b81146106d457600080fd5b50565b6000813590506106e6816106c0565b92915050565b60006106f782610621565b9050919050565b610707816106ec565b811461071257600080fd5b50565b600081359050610724816106fe565b92915050565b60008060408385031215610741576107406106bb565b5b600061074f858286016106d7565b925050602061076085828601610715565b9150509250929050565b60008115159050919050565b61077f8161076a565b82525050565b600060208201905061079a6000830184610776565b92915050565b600080604083850312156107b7576107b66106bb565b5b60006107c5858286016106d7565b92505060206107d6858286016106d7565b9150509250929050565b600082825260208201905092915050565b7f416d6f756e74206d7573742062652067726561746572207468616e2030000000600082015250565b6000610827601d836107e0565b9150610832826107f1565b602082019050919050565b600060208201905081810360008301526108568161081a565b9050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6000610897826105ed565b91506108a2836105ed565b92508282019050808211156108ba576108b961085d565b5b92915050565b60006108cb826105ed565b91506108d6836105ed565b92508282026108e4816105ed565b915082820484148315176108fb576108fa61085d565b5b5092915050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601260045260246000fd5b600061093c826105ed565b9150610947836105ed565b92508261095757610956610902565b5b828204905092915050565b7f496e76616c6964206f75747075742063616c63756c6174696f6e000000000000600082015250565b6000610998601a836107e0565b91506109a382610962565b602082019050919050565b600060208201905081810360008301526109c78161098b565b9050919050565b60006109d9826105ed565b91506109e4836105ed565b92508282039050818111156109fc576109fb61085d565b5b92915050565b610a0b816106ec565b82525050565b6000604082019050610a266000830185610a02565b610a3360208301846105f7565b9392505050565b610a438161076a565b8114610a4e57600080fd5b50565b600081519050610a6081610a3a565b92915050565b600060208284031215610a7c57610a7b6106bb565b5b6000610a8a84828501610a51565b91505092915050565b7f46616e20746f6b656e207472616e73666572206661696c656400000000000000600082015250565b6000610ac96019836107e0565b9150610ad482610a93565b602082019050919050565b60006020820190508181036000830152610af881610abc565b9050919050565b7f425443207472616e73666572206661696c656400000000000000000000000000600082015250565b6000610b356013836107e0565b9150610b4082610aff565b602082019050919050565b60006020820190508181036000830152610b6481610b28565b9050919050565b7f416c726561647920696e697469616c697a656400000000000000000000000000600082015250565b6000610ba16013836107e0565b9150610bac82610b6b565b602082019050919050565b60006020820190508181036000830152610bd081610b94565b905091905056fea2646970667358221220d24fb982c149b3a546bf1f083aca3f2a6c7f979bb32097b00ee465ce4a1d4f2564736f6c634300081c0033\r\n";
+
+    private static String librariesLinkedBinary;
+
+    public static final String FUNC_BTCRESERVE = "btcReserve";
+
+    public static final String FUNC_BTCTOKEN = "btcToken";
+
+    public static final String FUNC_BUYFANTOKEN = "buyFanToken";
+
+    public static final String FUNC_FANTOKEN = "fanToken";
+
+    public static final String FUNC_FANTOKENRESERVE = "fanTokenReserve";
+
+    public static final String FUNC_ISINITIALIZED = "isInitialized";
+
+    public static final String FUNC_SELLFANTOKEN = "sellFanToken";
+
+    public static final String FUNC_SETINITIALLIQUIDITY = "setInitialLiquidity";
+
+    @Deprecated
+    protected LiquidityPool(String contractAddress, Web3j web3j, Credentials credentials,
+            BigInteger gasPrice, BigInteger gasLimit) {
+        super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
+    }
+
+    protected LiquidityPool(String contractAddress, Web3j web3j, Credentials credentials,
+            ContractGasProvider contractGasProvider) {
+        super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
+    }
+
+    @Deprecated
+    protected LiquidityPool(String contractAddress, Web3j web3j,
+            TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
+        super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
+    }
+
+    protected LiquidityPool(String contractAddress, Web3j web3j,
+            TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+        super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
+    }
+
+    public RemoteFunctionCall<BigInteger> btcReserve() {
+        final Function function = new Function(FUNC_BTCRESERVE, 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
+
+    public RemoteFunctionCall<String> btcToken() {
+        final Function function = new Function(FUNC_BTCTOKEN, 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteFunctionCall<TransactionReceipt> buyFanToken(BigInteger amountBTCIn, String to) {
+        final Function function = new Function(
+                FUNC_BUYFANTOKEN, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(amountBTCIn), 
+                new org.web3j.abi.datatypes.Address(160, to)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteFunctionCall<String> fanToken() {
+        final Function function = new Function(FUNC_FANTOKEN, 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteFunctionCall<BigInteger> fanTokenReserve() {
+        final Function function = new Function(FUNC_FANTOKENRESERVE, 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
+
+    public RemoteFunctionCall<Boolean> isInitialized() {
+        final Function function = new Function(FUNC_ISINITIALIZED, 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Bool>() {}));
+        return executeRemoteCallSingleValueReturn(function, Boolean.class);
+    }
+
+    public RemoteFunctionCall<TransactionReceipt> sellFanToken(BigInteger amountFanTokenIn,
+            String to) {
+        final Function function = new Function(
+                FUNC_SELLFANTOKEN, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(amountFanTokenIn), 
+                new org.web3j.abi.datatypes.Address(160, to)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteFunctionCall<TransactionReceipt> setInitialLiquidity(BigInteger _btcAmount,
+            BigInteger _fanTokenAmount) {
+        final Function function = new Function(
+                FUNC_SETINITIALLIQUIDITY, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_btcAmount), 
+                new org.web3j.abi.datatypes.generated.Uint256(_fanTokenAmount)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    @Deprecated
+    public static LiquidityPool load(String contractAddress, Web3j web3j, Credentials credentials,
+            BigInteger gasPrice, BigInteger gasLimit) {
+        return new LiquidityPool(contractAddress, web3j, credentials, gasPrice, gasLimit);
+    }
+
+    @Deprecated
+    public static LiquidityPool load(String contractAddress, Web3j web3j,
+            TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
+        return new LiquidityPool(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
+    }
+
+    public static LiquidityPool load(String contractAddress, Web3j web3j, Credentials credentials,
+            ContractGasProvider contractGasProvider) {
+        return new LiquidityPool(contractAddress, web3j, credentials, contractGasProvider);
+    }
+
+    public static LiquidityPool load(String contractAddress, Web3j web3j,
+            TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+        return new LiquidityPool(contractAddress, web3j, transactionManager, contractGasProvider);
+    }
+
+    public static RemoteCall<LiquidityPool> deploy(Web3j web3j, Credentials credentials,
+            ContractGasProvider contractGasProvider, String _btcToken, String _fanToken) {
+        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _btcToken), 
+                new org.web3j.abi.datatypes.Address(160, _fanToken)));
+        return deployRemoteCall(LiquidityPool.class, web3j, credentials, contractGasProvider, getDeploymentBinary(), encodedConstructor);
+    }
+
+    public static RemoteCall<LiquidityPool> deploy(Web3j web3j,
+            TransactionManager transactionManager, ContractGasProvider contractGasProvider,
+            String _btcToken, String _fanToken) {
+        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _btcToken), 
+                new org.web3j.abi.datatypes.Address(160, _fanToken)));
+        return deployRemoteCall(LiquidityPool.class, web3j, transactionManager, contractGasProvider, getDeploymentBinary(), encodedConstructor);
+    }
+
+    @Deprecated
+    public static RemoteCall<LiquidityPool> deploy(Web3j web3j, Credentials credentials,
+            BigInteger gasPrice, BigInteger gasLimit, String _btcToken, String _fanToken) {
+        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _btcToken), 
+                new org.web3j.abi.datatypes.Address(160, _fanToken)));
+        return deployRemoteCall(LiquidityPool.class, web3j, credentials, gasPrice, gasLimit, getDeploymentBinary(), encodedConstructor);
+    }
+
+    @Deprecated
+    public static RemoteCall<LiquidityPool> deploy(Web3j web3j,
+            TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit,
+            String _btcToken, String _fanToken) {
+        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _btcToken), 
+                new org.web3j.abi.datatypes.Address(160, _fanToken)));
+        return deployRemoteCall(LiquidityPool.class, web3j, transactionManager, gasPrice, gasLimit, getDeploymentBinary(), encodedConstructor);
+    }
+
+
+
+    private static String getDeploymentBinary() {
+        if (librariesLinkedBinary != null) {
+            return librariesLinkedBinary;
+        } else {
+            return BINARY;
+        }
+    }
+}

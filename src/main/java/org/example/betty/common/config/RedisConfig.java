@@ -3,7 +3,6 @@ package org.example.betty.common.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -57,9 +56,8 @@ public class RedisConfig {
         return new LettuceConnectionFactory(config);
     }
 
-    @Primary
-    @Bean(name = "redisTemplate")
-    public RedisTemplate<String, Object> redisTemplate() {
+    @Bean(name = "redisTemplate1")
+    public RedisTemplate<String, Object> redisTemplate1() {
         return createRedisTemplate(redisConnectionFactoryRedis1());
     }
 

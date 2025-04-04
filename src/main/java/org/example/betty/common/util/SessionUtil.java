@@ -19,11 +19,11 @@ public class SessionUtil {
 
     private final TokenService tokenService;
 
-    @Qualifier("redisTemplate")
-    private final RedisTemplate<String, Object> redis1;
+    @Qualifier("redisTemplate1")
+    private final RedisTemplate<String, Object> redisTemplate1;
 
     public void setSession(String walletAddress, String accessToken, Duration ttl) {
-        redis1.opsForValue().set(walletAddress, accessToken, ttl);
+        redisTemplate1.opsForValue().set(walletAddress, accessToken, ttl);
     }
 
     public String getSession(String accessToken) {
@@ -38,7 +38,7 @@ public class SessionUtil {
 
         log.info("accessToken에서 지갑 주소 추출:" + walletAddress);
 
-        Object stored = redis1.opsForValue().get(walletAddress);
+        Object stored = redisTemplate1.opsForValue().get(walletAddress);
 
         log.info("redis 세션 조회:" + walletAddress);
 
@@ -62,6 +62,6 @@ public class SessionUtil {
     }
 
     public void deleteSession(String walletAddress) {
-        redis1.delete(walletAddress);
+        redisTemplate1.delete(walletAddress);
     }
 }

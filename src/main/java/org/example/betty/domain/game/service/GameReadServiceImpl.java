@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GamesRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,8 @@ import static org.example.betty.domain.game.service.GameCacheServiceImpl.REDIS_G
 @RequiredArgsConstructor
 public class GameReadServiceImpl implements GameReadService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Qualifier("redisTemplate2")
+    private final RedisTemplate<String, Object> redisTemplate2;
     private final GamesRepository gamesRepository;
 
     @Override
@@ -27,9 +29,9 @@ public class GameReadServiceImpl implements GameReadService {
         LocalDate today = LocalDate.now();
         String pattern = REDIS_GAME_PREFIX + today + ":*";
 
-        Set<String> redisKeys = redisTemplate.keys(pattern);
+        Set<String> redisKeys = redisTemplate2.keys(pattern);
         List<RedisGameSchedule> schedules = new ArrayList<>();
-        HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+        HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
         if (redisKeys != null && !redisKeys.isEmpty()) {
             for (String key : redisKeys) {

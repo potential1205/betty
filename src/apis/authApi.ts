@@ -45,11 +45,17 @@ export const backendLogout = async (): Promise<void> => {
     }
 };
 
-export const getNickname = async (): Promise<NicknameResponse> => {
+export const getNickname = async (): Promise<NicknameResponse | null> => {
     try {
         const response = await axiosInstance.get('/wallet');
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
+        const apiError: ApiError = error.response?.data;
+
+        if (apiError?.code === ErrorCodes.NOT_FOUND_WALLET) {
+            console.log('등록되지 않은 지갑입니다.');
+            return null;
+        }
         console.error('닉네임 조회 실패: ', error);
         throw error;
     }
@@ -70,3 +76,8 @@ export const registerNickname = async (nickname: string): Promise<NicknameRespon
         throw error;
     }
 };
+
+export const checkNickname = async (): Promise<boolean> => {
+    const response = await getNickname();
+    return !!response?.nickname;
+  };

@@ -9,26 +9,42 @@ const letters = ['B', 'E', 'T', 'T', 'Y']
 function LogoScreen() {
   const navigate = useNavigate()
   const { nickname, setNickname } = useStore()
-  const { login, isLoading, error } = useUserStore()
-  const [isNicknameSet, setIsNicknameSet] = useState(false)
+  const {
+    login,
+    isLoading,
+    error,
+    needsNickname,
+    registerNickname,
+    checkNickname,
+  } = useUserStore();
 
-  const handleNicknameSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (nickname.trim()) {
-      setIsNicknameSet(true)
-    }
-  }
+  const [step, setStep] = useState<'LOGIN' | 'NICKNAME'>('LOGIN');
 
   const handleLogin = async () => {
     try {
-      const loginSuccess = await login('google')
-      if (loginSuccess) {
-        navigate('/home')
+      const loginSuccess = await login('google');
+      if (!loginSuccess) return;
+
+      const hasNickname = await checkNickname();
+      if (hasNickname) {
+        navigate('/home');
+      } else {
+        setStep('NICKNAME');
       }
     } catch (error) {
-      console.error('로그인 프로세스 실패:', error)
+      console.error('로그인 오류: ', error);
     }
-  }
+  };
+
+  const handleNicknameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (nickname.trim()) return;
+
+    const success = await registerNickname(nickname.trim());
+    if (success) {
+      navigate('/home');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -168,8 +184,17 @@ function LogoScreen() {
             </span>
           </p>
 
-          {!isNicknameSet ? (
-            <motion.div 
+          {step === 'LOGIN' ? (
+            <button
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="bg-blue-950 text-white px-4 py-2 rounded-full font-['Giants-Bold'] text-sm hover:bg-blue-900 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? '로그인 중...' : 'Google로 로그인'}
+            </button>
+          ) : (
+            <form 
+              onSubmit={handleNicknameSubmit}
               className="w-full max-w-[240px] flex gap-2 items-center"
             >
               <input
@@ -179,32 +204,22 @@ function LogoScreen() {
                 placeholder="닉네임을 입력하세요"
                 maxLength={10}
                 className="flex-1 px-2 py-2 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-100 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-all duration-300 text-sm"
-                style={{
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                }}
+                style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}
                 autoFocus
               />
               <button
-                onClick={handleNicknameSubmit}
+                type="submit"
                 disabled={!nickname.trim()}
                 className={`px-3 py-2 rounded-full font-['Giants-Bold'] text-xs transition-all duration-300 whitespace-nowrap min-w-[50px] ${
-                  nickname.trim() 
-                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:scale-105' 
+                  nickname.trim()
+                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:scale-105'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 시작
               </button>
-            </motion.div>
-          ) : (
-            <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="bg-blue-950 text-white px-4 py-2 rounded-full font-['Giants-Bold'] text-sm hover:bg-blue-900 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? '로그인 중...' : 'Google로 로그인'}
-            </button>
-          )}
+            </form>
+         )}
           
           {error && (
             <motion.p 

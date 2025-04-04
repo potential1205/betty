@@ -56,7 +56,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
 
       # Selenium
-      SELENIUM_REMOTE_URL: ${SELENIUM_REMOTE_URL}
+      SELENIUM_REMOTE_URLS: ${SELENIUM_REMOTE_URLS}
 
       # redis
       REDIS1_PORT: ${REDIS1_PORT}

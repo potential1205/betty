@@ -58,12 +58,6 @@ services:
       # Selenium
       SELENIUM_REMOTE_URLS: ${SELENIUM_REMOTE_URLS}
 
-      # redis
-      REDIS1_PORT: ${REDIS1_PORT}
-      REDIS2_PORT: ${REDIS2_PORT}
-      REDIS3_PORT: ${REDIS3_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-
       # stadium
       STADIUM_URL: ${STADIUM_URL}
 

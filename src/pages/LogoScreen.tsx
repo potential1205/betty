@@ -25,10 +25,14 @@ function LogoScreen() {
       const loginSuccess = await login('google');
       if (!loginSuccess) return;
 
-      const hasNickname = await checkNickname();
-      if (hasNickname) {
-        navigate('/home');
-      } else {
+      try {
+        const hasNickname = await checkNickname();
+        if (hasNickname) {
+          navigate('/home');
+        } else {
+          setStep('NICKNAME');
+        }
+      } catch (error) {
         setStep('NICKNAME');
       }
     } catch (error) {

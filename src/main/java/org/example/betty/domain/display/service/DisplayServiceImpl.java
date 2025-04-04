@@ -40,7 +40,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class DisplayServiceImpl implements DisplayService{
-
     @Qualifier("redisTemplate3")
     private final RedisTemplate<String, Object> redisTemplate3;
     private final SimpMessagingTemplate messagingTemplate;

@@ -20,7 +20,7 @@ public class GameStatusLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)
-    private Games game;
+    private Game game;
 
     @Column(nullable = false)
     private String status;

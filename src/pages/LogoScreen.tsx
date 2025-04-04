@@ -28,7 +28,7 @@ function LogoScreen() {
       const hasNickname = await checkNickname();
       if (hasNickname) {
         console.log('닉네임 있음 -> 홈으로 이동');
-        navigate('/home');
+        navigate('/main');
       } else {
         console.log('닉네임 없음 -> 닉네임 입력 화면으로');
         setStep('NICKNAME');

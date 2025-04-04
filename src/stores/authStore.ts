@@ -65,7 +65,8 @@ export const useUserStore = create<UserState>()(
           if (response && response.nickname) {
             set({
                 nickname: response.nickname,
-                needsNickname: false
+                needsNickname: false,
+                isAuthenticated: true
               });
               return true;
           } else {

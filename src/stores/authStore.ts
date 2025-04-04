@@ -75,7 +75,8 @@ export const useUserStore = create<UserState>()(
         } catch (error) {
           console.log('닉네임 등록이 필요합니다');
           set({
-            needsNickname: true
+            needsNickname: true,
+            isLoading: false,
           });
           return false;
         }

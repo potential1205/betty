@@ -38,7 +38,7 @@ function LogoScreen() {
 
   const handleNicknameSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (nickname.trim()) return;
+    if (!nickname.trim()) return;
 
     const success = await registerNickname(nickname.trim());
     if (success) {

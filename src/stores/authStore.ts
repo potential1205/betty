@@ -61,11 +61,17 @@ export const useUserStore = create<UserState>()(
       checkNickname: async () => {
         try {
           const response = await getNickname();
-          set({
-            nickname: response.nickname,
-            needsNickname: false
-          });
-          return true;
+
+          if (response && response.nickname) {
+            set({
+                nickname: response.nickname,
+                needsNickname: false
+              });
+              return true;
+          } else {
+            set({ needsNickname: true });
+            return false;
+          }
         } catch (error) {
           console.log('닉네임 등록이 필요합니다');
           set({

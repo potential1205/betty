@@ -69,7 +69,7 @@ export const useUserStore = create<UserState>()(
               });
               return true;
           } else {
-            set({ needsNickname: true });
+            set({ needsNickname: true, isLoading: false });
             return false;
           }
         } catch (error) {

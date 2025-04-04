@@ -25,18 +25,17 @@ function LogoScreen() {
       const loginSuccess = await login('google');
       if (!loginSuccess) return;
 
-      try {
-        const hasNickname = await checkNickname();
-        if (hasNickname) {
-          navigate('/home');
-        } else {
-          setStep('NICKNAME');
-        }
-      } catch (error) {
+      const hasNickname = await checkNickname();
+      if (hasNickname) {
+        console.log('닉네임 있음 -> 홈으로 이동');
+        navigate('/home');
+      } else {
+        console.log('닉네임 없음 -> 닉네임 입력 화면으로');
         setStep('NICKNAME');
       }
     } catch (error) {
       console.error('로그인 오류: ', error);
+      setStep('LOGIN');
     }
   };
 

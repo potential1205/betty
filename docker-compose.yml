@@ -70,6 +70,9 @@ services:
       # admin
       ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY}
 
+      # Exchange Contract
+      EXCHANGE_ADDRESS: ${EXCHANGE_ADDRESS}
+
   selenium:
     image: selenium/standalone-chrome
     container_name: selenium

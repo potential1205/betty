@@ -25,12 +25,17 @@ export const getAccessToken = () => {
     return localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
+let interceptorLogged = false;
+
 // 모든 요청에 토큰 추가
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
         if (token) {
-            console.log('Authorization 헤더 설정:', `Bearer ${token}`);
+            if (!interceptorLogged) {
+                console.log('Authorization 헤더 설정:', `Bearer ${token}`);
+                interceptorLogged = true;
+            }
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;

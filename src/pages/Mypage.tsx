@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
@@ -9,6 +9,7 @@ import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
 import { Transaction } from '../stores/useStore';
+import { getNickname } from '../apis/authApi';
 
 type TeamColor = {
   bg: string;
@@ -21,10 +22,44 @@ type TeamColors = {
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice, userTokens } = useStore();
+  const {
+    toggleSidebar,
+    walletInfo,
+    activeTab,
+    setActiveTab,
+    isChargeModalOpen,
+    setIsChargeModalOpen,
+    nickname,
+    setNickname,
+    bettyPrice,
+    userTokens
+  } = useStore();
+
+  const { isAuthenticated } = useUserStore();
+
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
+
+  useEffect(() => {
+    toggleSidebar(false);
+
+    const fetchNickname = async () => {
+      try {
+        const res = await getNickname();
+        if (res?.nickname) {
+          console.log('닉네임 불러오기: ', res.nickname);
+          setNickname(res.nickname);
+        }
+      } catch (err) {
+        console.error('닉네임 불러오기 실패: ', err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchNickname();
+    }
+  }, [isAuthenticated]);
 
   // 거래 유형별 스타일 정의
   const transactionStyles = {

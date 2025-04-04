@@ -21,6 +21,8 @@ export const backendLogin = async (idToken: string): Promise<void> => {
         if(accessToken) {
             setAccessToken(accessToken.replace('Bearer ', ''));
         }
+        // 응답 내용은 사용 x
+        return;
     } catch (error: any) {
         if (error.response?.data) {
             const apiError: ApiError = error.response.data;

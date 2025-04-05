@@ -177,7 +177,7 @@ public class DisplayServiceImpl implements DisplayService{
             board = new Pixel[64][64];
             for (int i = 0; i < 64; i++) {
                 for (int j = 0; j < 64; j++) {
-                    board[i][j] = new Pixel("", "ffffff");
+                    board[i][j] = new Pixel("", "#ffffff");
                 }
             }
             redisTemplate3.opsForValue().set(key, board);

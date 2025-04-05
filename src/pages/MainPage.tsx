@@ -12,11 +12,13 @@ type Tab = 'LIVE-PICK' | 'WINNER' | 'PIXEL';
 const MainPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('LIVE-PICK');
-  const { currentIndex, games, toggleSidebar } = useStore();
-  const currentGame = games[currentIndex];
-  const teamNames = Object.keys(currentGame).filter(key => 
-    key !== 'inning' && key !== 'status' && key !== 'id'
-  );
+  const { currentGame, toggleSidebar } = useStore();
+
+  // 게임 정보가 없으면 홈으로 리다이렉트
+  if (!currentGame) {
+    navigate('/');
+    return null;
+  }
 
   return (
     <div className="relative h-full bg-black text-white overflow-hidden">
@@ -40,16 +42,20 @@ const MainPage: React.FC = () => {
 
       {/* 상단 매치업 타이틀 */}
       <div className="pt-16 pb-4 text-center">
-        <div className="text-red-600 text-sm font-['Giants-Bold']">LIVE</div>
+        <div className="text-red-600 text-sm font-['Giants-Bold']">
+          {currentGame.status === 'LIVE' ? 'LIVE' : 
+           currentGame.status === 'ENDED' ? '경기종료' :
+           currentGame.status === 'CANCELED' ? '경기취소' : '경기예정'}
+        </div>
         <h1 className="text-4xl font-['Giants-Bold'] mt-1">
-          {`${teamNames[0]} vs ${teamNames[1]}`}
+          {`${currentGame.homeTeam} vs ${currentGame.awayTeam}`}
         </h1>
         <div className="mt-2">
           <div className="text-xl font-['Giants-Bold']">
-            {currentGame[teamNames[0]]} : {currentGame[teamNames[1]]}
+            {currentGame.homeScore} : {currentGame.awayScore}
           </div>
           <div className="text-xs text-gray-400 mt-0.5">
-            {currentGame.inning}회 {currentGame.status}
+            {currentGame.schedule.stadium} | {currentGame.schedule.startTime}
           </div>
         </div>
       </div>
@@ -87,8 +93,8 @@ const MainPage: React.FC = () => {
         )}
       </div>
 
-      {/* Sidebar - PIXEL 탭이 아닐 때만 표시 */}
-      {activeTab !== 'PIXEL' && <Sidebar />}
+      {/* Sidebar */}
+      <Sidebar />
     </div>
   );
 };

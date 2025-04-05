@@ -5,6 +5,7 @@ import { initWeb3Auth, web3auth } from '../utils/web3auth';
 import { WALLET_ADAPTERS } from '@web3auth/base';
 import { useWalletStore } from './walletStore';
 import { useStore } from './useStore';
+import { IProvider } from '@web3auth/base';
 
 interface UserState {
   walletAddress: string | null;
@@ -125,6 +126,23 @@ export const useUserStore = create<UserState>()(
           const userInfo = await web3auth.getUserInfo();
           if (!userInfo.idToken) {
             throw new Error('ID 토큰을 가져올 수 없습니다');
+          }
+
+          // 지갑 주소 가져오기
+          const web3authProvider = await web3auth.provider;
+          if (web3authProvider) {
+            try {
+              const accounts = await web3authProvider.request({
+                method: 'eth_accounts'
+              }) as string[];
+              
+              if (accounts && accounts.length > 0) {
+                console.log('지갑 주소:', accounts[0]);
+                set({ walletAddress: accounts[0].toLowerCase() });
+              }
+            } catch (error) {
+              console.error('지갑 주소 가져오기 실패:', error);
+            }
           }
 
           // 2단계: 백엔드 로그인

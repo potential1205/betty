@@ -21,6 +21,9 @@ const GRID_SIZE = 64;
 const PIXEL_SIZE = 5;
 const CANVAS_SIZE = GRID_SIZE * PIXEL_SIZE;
 
+// 컴포넌트 외부에서 초기화 상태 관리
+const isCanvasReset = { current: false };
+
 export function CollaborativeCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,17 +48,23 @@ export function CollaborativeCanvas() {
 
   const { connect, disconnect, sendPixel } = useWebSocketService({
     onConnect: () => {
+      console.log('WebSocket 연결 성공');
       setIsConnected(true);
     },
     onDisconnect: () => {
+      console.log('WebSocket 연결 해제');
       setIsConnected(false);
     },
     onInitialCanvas: (pixels) => {
+      console.log('초기 캔버스 데이터 수신:', pixels);
+      pixelColorMapRef.current.clear();
       updatePixels(pixels);
       loadInitialPixels(pixels);
       renderPixelCanvas();
     },
     onPixelUpdate: (pixelData: Pixel | PixelUpdateMessage) => {
+      console.log('픽셀 업데이트 수신:', pixelData);
+      
       if ('r' in pixelData && 'c' in pixelData) {
         const pixel: Pixel = {
           x: pixelData.c,
@@ -74,7 +83,11 @@ export function CollaborativeCanvas() {
   });
 
   useEffect(() => {
-    if (!canvasRef.current || !gridCanvasRef.current) return;
+    console.log('컴포넌트 마운트, walletAddress:', walletAddress);
+    if (!canvasRef.current || !gridCanvasRef.current) {
+      console.log('캔버스 참조가 없음');
+      return;
+    }
 
     // 메인 캔버스 설정
     const canvas = canvasRef.current;
@@ -152,8 +165,10 @@ export function CollaborativeCanvas() {
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handlePointerUp);
       disconnect();
+      // 컴포넌트 언마운트 시 초기화 상태 초기화
+      isCanvasReset.current = false;
     };
-  }, [walletAddress]);
+  }, []); // walletAddress 의존성 제거
   
   // 그리드 그리기 함수
   const drawGrid = (ctx: CanvasRenderingContext2D) => {
@@ -182,10 +197,12 @@ export function CollaborativeCanvas() {
   
   // 초기 픽셀 로드
   const loadInitialPixels = (pixels: Pixel[]) => {
+    console.log('초기 픽셀 로드 시작:', pixels.length);
     pixelColorMapRef.current.clear();
     pixels.forEach(pixel => {
       updatePixelInMap(pixel);
     });
+    console.log('초기 픽셀 로드 완료, 현재 픽셀 맵 크기:', pixelColorMapRef.current.size);
   };
   
   // 픽셀 맵 업데이트
@@ -196,7 +213,13 @@ export function CollaborativeCanvas() {
   
   // 픽셀 캔버스 렌더링
   const renderPixelCanvas = () => {
-    if (!pixelCanvasRef.current || !canvasRef.current) return;
+    console.log('픽셀 캔버스 렌더링 시작');
+    console.log('현재 픽셀 맵 크기:', pixelColorMapRef.current.size);
+    
+    if (!pixelCanvasRef.current || !canvasRef.current) {
+      console.log('캔버스 참조가 없음');
+      return;
+    }
     
     const pixelCtx = pixelCanvasRef.current.getContext('2d');
     if (!pixelCtx) return;
@@ -272,8 +295,11 @@ export function CollaborativeCanvas() {
     const x = Math.floor(offsetX / (PIXEL_SIZE * scale));
     const y = Math.floor(offsetY / (PIXEL_SIZE * scale));
     
+    console.log('포인터 이벤트 발생:', { x, y, scale, offsetX, offsetY });
+    
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
       const currentColor = useCanvasStore.getState().selectedColor;
+      console.log('픽셀 그리기:', { x, y, color: currentColor });
       
       const pixel: Pixel = {
         x,

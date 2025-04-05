@@ -6,7 +6,16 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: [
+          ['babel-plugin-styled-components', {
+            displayName: true,
+            fileName: false
+          }]
+        ]
+      }
+    }),
     tailwindcss()
   ],
   build: {
@@ -19,5 +28,15 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom']
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://j12a609.p.ssafy.io',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      }
+    }
   }
 });

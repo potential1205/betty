@@ -157,22 +157,9 @@ export function useWebSocketService({
     }
   };
 
-  const resetCanvas = (walletAddress: string) => {
-    if (stompClient) {
-      stompClient.publish({
-        destination: '/app/resetCanvas',
-        body: JSON.stringify({
-          type: 'RESET_CANVAS',
-          walletAddress: walletAddress
-        })
-      });
-    }
-  };
-
   return {
     connect,
     disconnect,
     sendPixel,
-    resetCanvas,
   };
 } 

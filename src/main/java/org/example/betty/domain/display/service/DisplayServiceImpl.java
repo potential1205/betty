@@ -246,7 +246,7 @@ public class DisplayServiceImpl implements DisplayService{
         for (int r = 0; r < 64; r++) {
             for (int c = 0; c < 64; c++) {
                 Pixel pixel = display[r][c];
-                Color color = Color.decode("#" + pixel.getColor());
+                Color color = Color.decode(pixel.getColor());
                 image.setRGB(r, c, color.getRGB());
             }
         }

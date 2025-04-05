@@ -87,7 +87,7 @@ public class PlayerRelayInfoParser {
                 }
                 summaryText = String.join(" / ", parts);
             } catch (Exception e) {
-                log.warn("[{}] 직전 타자 summaryText 파싱 실패: {}", gameId, e.getMessage());
+                log.trace("[{}] 직전 타자 summaryText 없음 (아직 없음 or 이닝 시작 등)", gameId);
             }
 
             // ✅ pitchResults 파싱

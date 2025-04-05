@@ -72,8 +72,6 @@ public class GameCacheServiceImpl implements GameCacheService {
                         .build();
 
                 hashOps.put(redisKey, "gameInfo", gameSchedule);
-                hashOps.put(redisKey, "lineup", null);
-                hashOps.put(redisKey, "relay", null);
                 log.info("[캐싱 완료] gameInfo 저장 - gameId: {}", gameId);
             } else {
                 log.info("[캐싱 스킵] Redis에 이미 존재하는 경기 - gameId: {}", gameId);

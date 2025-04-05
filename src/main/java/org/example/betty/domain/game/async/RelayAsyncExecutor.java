@@ -35,11 +35,13 @@ public class RelayAsyncExecutor {
     //실시간 중계 크롤링을 5초 간격으로 실행하는 메서드
     @Async
     public void startRelay(String gameId, int seleniumIndex) {
+
+        gameProblemService.initializeFirstBatterFromLineup(gameId);
         liveRelayScraper.initDriver(gameId, seleniumIndex);
 
         Runnable task = () -> {
             try {
-                RedisGameRelay relayData = liveRelayScraper.scrapeRelay(gameId, seleniumIndex);
+                RedisGameRelay relayData = liveRelayScraper.scrapeRelay(gameId);
 
                 if (relayData == null) {
                     stopRelay(gameId);

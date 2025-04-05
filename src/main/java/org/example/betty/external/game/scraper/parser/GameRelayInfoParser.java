@@ -2,7 +2,6 @@ package org.example.betty.external.game.scraper.parser;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -16,8 +15,6 @@ import java.util.NoSuchElementException;
 
 @Slf4j
 public class GameRelayInfoParser {
-
-    private static final Duration WAIT_DURATION = Duration.ofSeconds(10);
 
     public static String extractInningInfo(WebDriver driver) {
         try {
@@ -37,12 +34,7 @@ public class GameRelayInfoParser {
     public static List<String> extractPitchResult(WebDriver driver) {
         List<String> result = new ArrayList<>();
         try {
-            // 현재 타자 블록을 먼저 찾고
-            WebElement currentBatterBox = driver.findElement(
-                    By.cssSelector(".RelayList_player_area__2ur0q.RelayList_type_current__eUw25")
-            );
 
-            // 해당 블록 안의 투구 결과 텍스트만 가져오기
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
             List<WebElement> textElements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
                     By.cssSelector(".RelayList_player_area__2ur0q.RelayList_type_current__eUw25 .RelayList_history_list__13jzg .RelayList_text__tFNjV"))

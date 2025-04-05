@@ -62,10 +62,9 @@ public class GamesDataLoader implements CommandLineRunner {
     private String convertStatus(String rawStatus) {
         return switch (rawStatus) {
             case "예정" -> "SCHEDULED";
-            case "진행" -> "LIVE";
             case "종료" -> "ENDED";
             case "취소" -> "CANCELED";
-            default -> "UNKNOWN";
+            default -> "LIVE";
         };
     }
 }

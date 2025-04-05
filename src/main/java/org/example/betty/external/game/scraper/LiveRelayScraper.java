@@ -6,12 +6,9 @@ import org.example.betty.external.game.scraper.common.BaseScraper;
 import org.example.betty.external.game.scraper.parser.GameRelayInfoParser;
 import org.example.betty.external.game.scraper.parser.PlayerRelayInfoParser;
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,8 +32,8 @@ public class LiveRelayScraper extends BaseScraper {
         }
     }
 
-    public RedisGameRelay scrapeRelay(String gameId, int index) {
-        final int maxRetries = 3;
+    public RedisGameRelay scrapeRelay(String gameId) {
+        int maxRetries = 3;
         final long retryDelayMillis = 1000L;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {

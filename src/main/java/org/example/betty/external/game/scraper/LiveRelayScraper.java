@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -33,72 +33,97 @@ public class LiveRelayScraper extends BaseScraper {
     }
 
     public RedisGameRelay scrapeRelay(String gameId, int index) {
-        RedisGameRelay relay = new RedisGameRelay();
+        final int maxRetries = 3;
+        final long retryDelayMillis = 1000L;
 
-        if (!driverMap.containsKey(gameId)) {
-            log.warn("[{}] 중계 스킵: WebDriver가 종료되어 없음", gameId);
-            return null;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                log.info("[{}] 중계 크롤링 시도 #{}", gameId, attempt);
+
+                WebDriver driver = driverMap.get(gameId);
+                if (driver == null) {
+                    log.warn("[{}] WebDriver 인스턴스가 존재하지 않음 → 크롤링 중단", gameId);
+                    return null;
+                }
+
+                String url = "https://m.sports.naver.com/game/" + gameId + "/relay";
+                driver.get(url);
+
+                try {
+//                    WebElement endMessage = driver.findElement(By.cssSelector(".RelayEnd_title__yZjvp"));
+//                    String endText = endMessage.getText();
+//                    if (endText.contains("경기가 종료되었습니다.")) {
+//                        log.info("[{}] 경기 종료 감지 → WebDriver 종료 및 크롤링 중단", gameId);
+//                        driver.quit();
+//                        driverMap.remove(gameId);
+//                        return null;
+//                    }
+                    String pageSource = driver.getPageSource();
+                    if (pageSource.contains("경기가 종료되었습니다")) {
+                        log.info("[{}] 종료 경기 감지 (pageSource로)", gameId);
+                        driver.quit();
+                        driverMap.remove(gameId);
+                        return null;
+                    }
+
+                } catch (NoSuchElementException ignored) {}
+
+                RedisGameRelay relay = new RedisGameRelay();
+
+                String fullInning = GameRelayInfoParser.extractInningInfo(driver);
+                if (fullInning != null && fullInning.contains(" - ")) {
+                    String[] parts = fullInning.split(" - ");
+                    relay.setInning(parts[0].trim());
+                    relay.setTeamAtBat(parts[1].trim());
+                } else {
+                    relay.setInning(fullInning);
+                    relay.setTeamAtBat(null);
+                }
+
+                relay.setPitchResult(GameRelayInfoParser.extractPitchResult(driver));
+                relay.setNextBatters(GameRelayInfoParser.extractNextBatterNames(driver));
+                relay.setRunnerOnBase(GameRelayInfoParser.extractRunnerOnBase(driver));
+                relay.setScore(GameRelayInfoParser.extractScore(driver));
+                relay.setOutCount(GameRelayInfoParser.extractOutCount(driver));
+
+                List<WebElement> players = driver.findElements(
+                        By.cssSelector(".RelayList_player_area__2ur0q.RelayList_type_current__eUw25")
+                );
+
+                if (players.size() >= 2) {
+                    relay.setPitcher(PlayerRelayInfoParser.extractPitcherInfo(players.get(0), driver, gameId));
+                    relay.setBatter(PlayerRelayInfoParser.extractBatterInfo(players.get(1), driver, gameId));
+                } else {
+                    log.warn("[{}] 투수/타자 정보 부족. players.size() = {}", gameId, players.size());
+                }
+
+                List<WebElement> allPlayers = driver.findElements(By.cssSelector(".RelayList_player_area__2ur0q"));
+                if (allPlayers.size() >= 3) {
+                    relay.setPreviousBatter(PlayerRelayInfoParser.extractPreviousBatterInfo(allPlayers.get(2), driver, gameId));
+                } else {
+                    relay.setPreviousBatter(null);
+                }
+
+                return relay;
+
+            } catch (WebDriverException e) {
+                log.warn("[{}] WebDriver 오류 발생 (시도 {}): {}", gameId, attempt, e.getMessage());
+                if (attempt == maxRetries) {
+                    log.error("[{}] WebDriver 오류로 최대 재시도 초과. 크롤링 실패", gameId, e);
+                    return null;
+                }
+                try {
+                    Thread.sleep(retryDelayMillis);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            } catch (Exception e) {
+                log.error("[{}] 중계 파싱 중 예외 발생: {}", gameId, e.getMessage(), e);
+                return null;
+            }
         }
 
-        WebDriver driver = driverMap.get(gameId);
-        if (driver == null) {
-            log.error("[{}] WebDriver가 null입니다 → 크롤링 중단", gameId);
-            return null;
-        }
-
-        try {
-            String url = "https://m.sports.naver.com/game/" + gameId + "/relay";
-            driver.get(url);
-
-            // 기본 정보 파싱
-            String fullInning = GameRelayInfoParser.extractInningInfo(driver);  // 예: "5회말 - 삼성공격"
-            if (fullInning != null && fullInning.contains(" - ")) {
-                String[] parts = fullInning.split(" - ");
-                relay.setInning(parts[0].trim());      // 예: "5회말"
-                relay.setTeamAtBat(parts[1].trim());   // 예: "삼성공격"
-            } else {
-                relay.setInning(fullInning);
-                relay.setTeamAtBat(null); // 또는 "" 처리
-            }
-
-
-            relay.setPitchResult(GameRelayInfoParser.extractPitchResult(driver));
-            relay.setNextBatters(GameRelayInfoParser.extractNextBatterNames(driver));
-            relay.setRunnerOnBase(GameRelayInfoParser.extractRunnerOnBase(driver));
-            relay.setScore(GameRelayInfoParser.extractScore(driver));
-            relay.setOutCount(GameRelayInfoParser.extractOutCount(driver));
-
-
-
-
-            // 현재 투수 / 타자
-            List<WebElement> players = driver.findElements(
-                    By.cssSelector(".RelayList_player_area__2ur0q.RelayList_type_current__eUw25")
-            );
-
-            if (players.size() >= 2) {
-                WebElement pitcherBox = players.get(0);
-                WebElement batterBox = players.get(1);
-                relay.setPitcher(PlayerRelayInfoParser.extractPitcherInfo(pitcherBox, driver, gameId));
-                relay.setBatter(PlayerRelayInfoParser.extractBatterInfo(batterBox, driver, gameId));
-            } else {
-                log.warn("[{}] 투수/타자 박스를 찾을 수 없습니다. players.size() = {}", gameId, players.size());
-            }
-
-            // 직전 타자
-            List<WebElement> allPlayers = driver.findElements(By.cssSelector(".RelayList_player_area__2ur0q"));
-            if (allPlayers.size() >= 3) {
-                WebElement previousBatterBox = allPlayers.get(2);
-                relay.setPreviousBatter(PlayerRelayInfoParser.extractPreviousBatterInfo(previousBatterBox, driver, gameId));
-            } else {
-                relay.setPreviousBatter(null);
-            }
-
-        } catch (Exception e) {
-            log.error("[중계 크롤링 실패] - gameId: {}, 이유: {}", gameId, e.getMessage(), e);
-            return null;
-        }
-
-        return relay;
+        return null;
     }
 }

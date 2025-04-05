@@ -46,7 +46,6 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
         LocalDate today = LocalDate.now();
-
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -56,34 +55,52 @@ public class GameCacheServiceImpl implements GameCacheService {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
-            RedisGameSchedule gameSchedule = RedisGameSchedule.builder()
-                    .season(game.getSeason())
-                    .gameDate(game.getGameDate().toString())
-                    .startTime(game.getStartTime().toString())
-                    .stadium(game.getStadium())
-                    .homeTeam(game.getHomeTeam().getTeamName().split(" ")[0])
-                    .awayTeam(game.getAwayTeam().getTeamName().split(" ")[0])
-                    .status(game.getStatus())
-                    .build();
+            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
+                    && !"ENDED".equalsIgnoreCase(game.getStatus());
 
-            hashOps.put(redisKey, "gameInfo", gameSchedule);
-            hashOps.put(redisKey, "lineup", null);
-            hashOps.put(redisKey, "relay", null);
+            boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
+
+            if (isNewEntry) {
+                RedisGameSchedule gameSchedule = RedisGameSchedule.builder()
+                        .season(game.getSeason())
+                        .gameDate(game.getGameDate().toString())
+                        .startTime(game.getStartTime().toString())
+                        .stadium(game.getStadium())
+                        .homeTeam(game.getHomeTeam().getTeamName().split(" ")[0])
+                        .awayTeam(game.getAwayTeam().getTeamName().split(" ")[0])
+                        .status(game.getStatus())
+                        .build();
+
+                hashOps.put(redisKey, "gameInfo", gameSchedule);
+                hashOps.put(redisKey, "lineup", null);
+                hashOps.put(redisKey, "relay", null);
+                log.info("[캐싱 완료] gameInfo 저장 - gameId: {}", gameId);
+            } else {
+                log.info("[캐싱 스킵] Redis에 이미 존재하는 경기 - gameId: {}", gameId);
+            }
+
+            // 모든 경기 seleniumIndex 캐싱
             hashOps.put(redisKey, "seleniumIndex", index % 5);
+            index++;
 
+            if (isActive) {
+                Object cachedLineup = hashOps.get(redisKey, "lineup");
+                if (cachedLineup == null) {
+//                    scheduleLineupJob(game);   // 라인업 크롤링 예약
+                } else {
+                    log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
+                }
+
+                scheduleRelayJob(game);    // 중계는 무조건 예약 또는 즉시 실행
+            }
+
+            // Redis 키 만료 설정
             LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
             redisTemplate2.expireAt(redisKey, expireDate);
-
-            if (!"CANCELED".equalsIgnoreCase(game.getStatus()) &&
-                    !"ENDED".equalsIgnoreCase(game.getStatus())) {
-//                scheduleLineupJob(game);   // 라인업 예약
-                scheduleRelayJob(game);    // 중계 예약
-            }
-
-            index++;
         }
     }
+
 
     @Override
     @Transactional
@@ -117,20 +134,20 @@ public class GameCacheServiceImpl implements GameCacheService {
             RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId, seleniumIndex);
             if (lineup != null) {
                 redisTemplate2.opsForHash().put(redisKey, "lineup", lineup);
-                log.info("[라인업 저장 완료] - gameId: {}", gameId);
+                log.info("[라인업 저장 완료] - gameId: {}, time: {}", gameId, LocalDateTime.now());
             } else {
-                log.warn("[라인업 저장 실패] - gameId: {}", gameId);
+                log.warn("[라인업 저장 실패] - gameId: {}, time: {}", gameId, LocalDateTime.now());
             }
         };
 
         if (executeTime.isBefore(LocalDateTime.now())) {
-            lineupAsyncExecutor.runAsync(task);  // 비동기로 즉시 실행
+            lineupAsyncExecutor.runAsync(task);
         } else {
             taskScheduler.schedule(
                     () -> lineupAsyncExecutor.runAsync(task),
                     executeTime.atZone(ZoneId.systemDefault()).toInstant()
             );
-            log.info("[라인업 크롤링 예약] 경기 시작 30분 전 - gameId: {}", gameId);
+            log.info("[라인업 크롤링 예약] 경기 시작 30분 전 - gameId: {}, 실행시각: {}", gameId, executeTime);
         }
     }
 
@@ -170,12 +187,15 @@ public class GameCacheServiceImpl implements GameCacheService {
 //        scheduleRelayStopJob(game);
     }
 
-
-
     private String generateGameId(Game game) {
         return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 + game.getAwayTeam().getTeamCode()
                 + game.getHomeTeam().getTeamCode()
                 + "0" + game.getSeason();
     }
+
+
+
+    // 타자 교체 감지
+
 }

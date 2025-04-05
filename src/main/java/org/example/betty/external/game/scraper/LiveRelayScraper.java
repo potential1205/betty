@@ -9,6 +9,7 @@ import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,9 +80,9 @@ public class LiveRelayScraper extends BaseScraper {
                     relay.setTeamAtBat(null);
                 }
 
-                relay.setPitchResult(GameRelayInfoParser.extractPitchResult(driver));
-                relay.setNextBatters(GameRelayInfoParser.extractNextBatterNames(driver));
-                relay.setRunnerOnBase(GameRelayInfoParser.extractRunnerOnBase(driver));
+                relay.setPitchResult(new ArrayList<>(GameRelayInfoParser.extractPitchResult(driver)));
+                relay.setNextBatters(new ArrayList<>(GameRelayInfoParser.extractNextBatterNames(driver)));
+                relay.setRunnerOnBase(new ArrayList<>(GameRelayInfoParser.extractRunnerOnBase(driver)));
                 relay.setScore(GameRelayInfoParser.extractScore(driver));
                 relay.setOutCount(GameRelayInfoParser.extractOutCount(driver));
 

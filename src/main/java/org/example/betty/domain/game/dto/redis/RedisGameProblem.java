@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RedisGameProblem {
+public class RedisGameProblem implements Serializable {
 
     private String problemId;
     private String gameId;
@@ -26,6 +26,8 @@ public class RedisGameProblem {
     private String answer;
     private long timestamp;
 
+    // redis 저장x
+    @JsonIgnore
     public String getFormattedTimestamp() {
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.of("Asia/Seoul"))

@@ -28,6 +28,17 @@ public class Web3jServiceImpl implements Web3jService {
 
     private Credentials credentials;
 
+    @Override
+    public Web3j getWeb3j() {
+        return web3j;
+    }
+
+    @Override
+    public Credentials getCredentials() {
+        return Credentials.create(adminPrivateKey);
+    }
+
+
     @PostConstruct
     private void init() {
         credentials = Credentials.create(adminPrivateKey);

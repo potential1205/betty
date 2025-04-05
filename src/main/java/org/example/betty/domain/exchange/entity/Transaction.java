@@ -40,11 +40,9 @@ public class Transaction {
     private Token tokenTo;
 
     @Column(name = "amount_in", precision = 18, scale = 8)
-    @NotNull
     private BigDecimal amountIn;
 
     @Column(name = "amount_out", precision = 18, scale = 8)
-    @NotNull
     private BigDecimal amountOut;
 
     @Enumerated(EnumType.STRING)
@@ -55,7 +53,11 @@ public class Transaction {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public void updateTransactionStatus(TransactionStatus transactionStatus) {
-        this.transactionStatus = transactionStatus;
+    public void updateStatus(TransactionStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("트랜잭션 상태는 null일 수 없습니다.");
+        }
+        this.transactionStatus = newStatus;
     }
+
 }

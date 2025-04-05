@@ -177,7 +177,7 @@ public class DisplayServiceImpl implements DisplayService{
             board = new Pixel[64][64];
             for (int i = 0; i < 64; i++) {
                 for (int j = 0; j < 64; j++) {
-                    board[i][j] = new Pixel("", "ffffff");
+                    board[i][j] = new Pixel("", "#ffffff");
                 }
             }
             redisTemplate3.opsForValue().set(key, board);
@@ -246,8 +246,8 @@ public class DisplayServiceImpl implements DisplayService{
         for (int r = 0; r < 64; r++) {
             for (int c = 0; c < 64; c++) {
                 Pixel pixel = display[r][c];
-                Color color = Color.decode("#" + pixel.getColor());
-                image.setRGB(r, c, color.getRGB());
+                Color color = Color.decode(pixel.getColor());
+                image.setRGB(c, r, color.getRGB());
             }
         }
         return image;

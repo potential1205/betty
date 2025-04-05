@@ -84,9 +84,8 @@ public class GameCacheServiceImpl implements GameCacheService {
             index++;
 
             if (isActive) {
-                Object cachedLineup = hashOps.get(redisKey, "lineup");
-                if (cachedLineup == null) {
-//                    scheduleLineupJob(game);   // 라인업 크롤링 예약
+                if (hashOps.get(redisKey, "lineup") == null) {
+                    scheduleLineupJob(game);   // 라인업 크롤링 예약
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }

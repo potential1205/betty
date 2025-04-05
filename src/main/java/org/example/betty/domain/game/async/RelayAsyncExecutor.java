@@ -3,6 +3,7 @@ package org.example.betty.domain.game.async;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
+import org.example.betty.domain.game.service.GameProblemServiceImpl;
 import org.example.betty.external.game.scraper.LiveRelayScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
@@ -25,6 +26,7 @@ public class RelayAsyncExecutor {
     private final LiveRelayScraper liveRelayScraper;
     private final TaskScheduler taskScheduler;
     private final Map<String, ScheduledFuture<?>> relayTasks = new ConcurrentHashMap<>();
+    private final GameProblemServiceImpl gameProblemService;
 
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
@@ -47,6 +49,8 @@ public class RelayAsyncExecutor {
 
                 saveRelayDataToRedis(gameId, relayData);
                 log.info("[중계 크롤링] gameId: {} - 크롤링 완료", gameId);
+                gameProblemService.handleRelayUpdate(gameId, relayData);
+                log.info("[핸들러 동작]");
 
             } catch (Exception e) {
                 log.error("[중계 크롤링 실패] gameId: {}", gameId, e);

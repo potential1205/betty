@@ -21,13 +21,16 @@ public class GameRelayInfoParser {
 
     public static String extractInningInfo(WebDriver driver) {
         try {
-            WebElement element = driver.findElement(By.cssSelector(".OffenseTitle_title__1LKfI"));
-            return element.getText().trim(); // 예: "5회말 - 삼성공격"
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".OffenseTitle_title__1LKfI")));
+
+            return element.getText().trim();
         } catch (NoSuchElementException e) {
             log.warn("[이닝 정보 없음] 요소가 존재하지 않음: {}", e.getMessage());
             return null;
         }
     }
+
 
 
 
@@ -40,8 +43,9 @@ public class GameRelayInfoParser {
             );
 
             // 해당 블록 안의 투구 결과 텍스트만 가져오기
-            List<WebElement> textElements = currentBatterBox.findElements(
-                    By.cssSelector(".RelayList_history_list__13jzg .RelayList_text__tFNjV")
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+            List<WebElement> textElements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
+                    By.cssSelector(".RelayList_player_area__2ur0q.RelayList_type_current__eUw25 .RelayList_history_list__13jzg .RelayList_text__tFNjV"))
             );
 
             for (WebElement el : textElements) {
@@ -50,13 +54,13 @@ public class GameRelayInfoParser {
                     result.add(text);
                 }
             }
-
         } catch (Exception e) {
-            log.warn("[투구 결과(pitchResult) 파싱 실패] {}", e.getMessage());
+            return result;
         }
 
         return result;
     }
+
 
 
 

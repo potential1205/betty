@@ -6,9 +6,12 @@ import org.example.betty.external.game.scraper.common.BaseScraper;
 import org.example.betty.external.game.scraper.parser.GameRelayInfoParser;
 import org.example.betty.external.game.scraper.parser.PlayerRelayInfoParser;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,8 +41,7 @@ public class LiveRelayScraper extends BaseScraper {
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                log.info("[{}] 중계 크롤링 시도 #{}", gameId, attempt);
-
+//                log.info("[{}] 중계 크롤링 시도 #{}", gameId, attempt);
                 WebDriver driver = driverMap.get(gameId);
                 if (driver == null) {
                     log.warn("[{}] WebDriver 인스턴스가 존재하지 않음 → 크롤링 중단", gameId);
@@ -50,21 +52,21 @@ public class LiveRelayScraper extends BaseScraper {
                 driver.get(url);
 
                 try {
-//                    WebElement endMessage = driver.findElement(By.cssSelector(".RelayEnd_title__yZjvp"));
-//                    String endText = endMessage.getText();
-//                    if (endText.contains("경기가 종료되었습니다.")) {
-//                        log.info("[{}] 경기 종료 감지 → WebDriver 종료 및 크롤링 중단", gameId);
-//                        driver.quit();
-//                        driverMap.remove(gameId);
-//                        return null;
-//                    }
-                    String pageSource = driver.getPageSource();
-                    if (pageSource.contains("경기가 종료되었습니다")) {
-                        log.info("[{}] 종료 경기 감지 (pageSource로)", gameId);
+                    WebElement endMessage = driver.findElement(By.cssSelector(".RelayEnd_title__yZjvp"));
+                    String endText = endMessage.getText();
+                    if (endText.contains("경기가 종료되었습니다.")) {
+                        log.info("[{}] 경기 종료 감지 → WebDriver 종료 및 크롤링 중단", gameId);
                         driver.quit();
                         driverMap.remove(gameId);
                         return null;
                     }
+//                    String pageSource = driver.getPageSource();
+//                    if (pageSource.contains("경기가 종료되었습니다")) {
+//                        log.info("[{}] 종료 경기 감지 (pageSource로)", gameId);
+//                        driver.quit();
+//                        driverMap.remove(gameId);
+//                        return null;
+//                    }
 
                 } catch (NoSuchElementException ignored) {}
 

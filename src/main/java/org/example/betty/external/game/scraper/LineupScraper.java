@@ -114,7 +114,8 @@ public class LineupScraper extends BaseScraper {
         }
 
         PlayerInfo starterPitcher = players.get(0);
-        List<PlayerInfo> starterBatters = players.subList(1, players.size());
+        List<PlayerInfo> starterBatters = new ArrayList<>(players.subList(1, players.size()));
+
 
         return new TeamLineup(starterPitcher, starterBatters);
     }

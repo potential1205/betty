@@ -321,7 +321,6 @@ public class Token extends Contract {
     }
 
 
-
     private static String getDeploymentBinary() {
         if (librariesLinkedBinary != null) {
             return librariesLinkedBinary;

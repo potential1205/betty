@@ -1,7 +1,7 @@
-package org.example.betty.domain.exchange.repository;
+package org.example.betty.domain.wallet.repository;
 
 import org.example.betty.domain.exchange.entity.Token;
-import org.example.betty.domain.exchange.entity.WalletBalance;
+import org.example.betty.domain.wallet.entity.WalletBalance;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 

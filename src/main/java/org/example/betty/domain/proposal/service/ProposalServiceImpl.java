@@ -1,13 +1,12 @@
 package org.example.betty.domain.proposal.service;
 
-import ch.qos.logback.core.spi.ErrorCodes;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.exchange.entity.Token;
-import org.example.betty.domain.exchange.entity.WalletBalance;
+import org.example.betty.domain.wallet.entity.WalletBalance;
 import org.example.betty.domain.exchange.repository.TokenRepository;
-import org.example.betty.domain.exchange.repository.WalletBalanceRepository;
+import org.example.betty.domain.wallet.repository.WalletBalanceRepository;
 import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.proposal.dto.req.CreateProposalRequest;
 import org.example.betty.domain.proposal.dto.req.CreateWalletProposalRequest;

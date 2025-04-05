@@ -3,9 +3,10 @@ package org.example.betty.domain.game.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
-import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.example.betty.domain.game.dto.redis.RedisGameProblem;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,15 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameProblemServiceImpl implements GameProblemService {
 
     private final ProblemGenerator problemGenerator;
-    private final RedisTemplate<String, Object> redisTemplate;
 
-    // 이전 타자 이름 저장용 Map
+    @Qualifier("redisTemplate2")
+    private final RedisTemplate<String, Object> redisTemplate2;
+
     private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
 
-    /**
-     * 중계 데이터가 업데이트될 때마다 호출됨
-     * 타자 교체가 감지되면 문제 생성 후 이전 타자 갱신
-     */
     @Override
     public void handleRelayUpdate(String gameId, RedisGameRelay currentRelay) {
         PlayerRelayInfo currentBatter = currentRelay.getBatter();
@@ -37,51 +35,77 @@ public class GameProblemServiceImpl implements GameProblemService {
         String currentBatterName = currentBatter.getName();
         String previousBatterName = previousBatterMap.get(gameId);
 
-        // 타자 이름이 바뀐 경우에만 문제 생성
-        if (!currentBatterName.equals(previousBatterName)) {
-            log.info("[타자 교체 감지] gameId={} | {} → {}", gameId, previousBatterName, currentBatterName);
+        // 최초 실행: 초기화만 하고 문제 출제 생략
+        if (previousBatterName == null) {
+            previousBatterMap.put(gameId, currentBatterName);
+            log.info("[초기 중계 세팅] gameId={} | 현재 타자로 초기화: {}", gameId, currentBatterName);
+            return;
+        }
 
+        // 타자 교체 감지
+        if (!currentBatterName.equals(previousBatterName)) {
+
+            // 1. 정답 채점
+            PlayerRelayInfo prevBatter = currentRelay.getPreviousBatter();
+            if (prevBatter != null && prevBatter.getName() != null) {
+                String answer = determineAnswer(prevBatter);
+                updateProblemAnswer(gameId, prevBatter.getName(), answer);
+            }
+
+            // 2. 새 문제 출제
             List<RedisGameProblem> problems = problemGenerator.generateCommonProblems(gameId, currentRelay);
+            String redisKey = "games:" + LocalDate.now() + ":" + gameId + ":problems";
+            ListOperations<String, Object> listOps = redisTemplate2.opsForList();
+
             for (RedisGameProblem problem : problems) {
-                String problemKey = "games:" + gameId + ":problems";
-                redisTemplate.opsForHash().put(problemKey, problem.getProblemId(), problem);
+                listOps.rightPush(redisKey, problem);
                 log.info("[문제 생성] {} | 문제ID: {}", problem.getDescription(), problem.getProblemId());
             }
 
-            // 이전 타자 갱신
+            // 3. 타자 갱신
             previousBatterMap.put(gameId, currentBatterName);
         }
     }
 
-    /**
-     * 중계 시작 전에 호출: 원정팀 1번 타자 저장
-     */
-    public void initializeFirstBatterFromLineup(String gameId) {
-        String redisKey = "games:" + LocalDate.now() + ":" + gameId;
+    private String determineAnswer(PlayerRelayInfo prevBatter) {
+        String summary = prevBatter.getSummaryText();
+        if (summary == null) return null;
 
-        Object lineupObj = redisTemplate.opsForHash().get(redisKey, "lineup");
+        if (summary.contains("안타") || summary.contains("볼넷") || summary.contains("사구") || summary.contains("실책")) {
+            return "O";
+        }
+        return "X";
+    }
 
-        if (!(lineupObj instanceof RedisGameLineup)) {
-            log.warn("[라인업 없음] gameId={} | lineup 데이터가 존재하지 않거나 타입 불일치", gameId);
-            return;
+    private void updateProblemAnswer(String gameId, String batterName, String answer) {
+        String redisKey = "games:" + LocalDate.now() + ":" + gameId + ":problems";
+        ListOperations<String, Object> listOps = redisTemplate2.opsForList();
+        List<Object> problems = listOps.range(redisKey, 0, -1);
+
+        for (int i = 0; i < problems.size(); i++) {
+            Object obj = problems.get(i);
+            if (obj instanceof RedisGameProblem problem &&
+                    problem.getAnswer() == null &&
+                    problem.getBatterName().equals(batterName)) {
+
+                RedisGameProblem updated = RedisGameProblem.builder()
+                        .problemId(problem.getProblemId())
+                        .gameId(problem.getGameId())
+                        .inning(problem.getInning())
+                        .batterName(problem.getBatterName())
+                        .type(problem.getType())
+                        .description(problem.getDescription())
+                        .options(problem.getOptions())
+                        .answer(answer)
+                        .timestamp(problem.getTimestamp())
+                        .build();
+
+                listOps.set(redisKey, i, updated);
+                log.info("[문제 정답 확정] 문제ID: {} | 타자: {} | 정답: {}", problem.getProblemId(), batterName, answer);
+                return;
+            }
         }
 
-        RedisGameLineup lineup = (RedisGameLineup) lineupObj;
-        String firstBatterName = null;
-
-        if (lineup.getAway() != null
-                && lineup.getAway().getStarterBatters() != null
-                && !lineup.getAway().getStarterBatters().isEmpty()
-                && lineup.getAway().getStarterBatters().get(0) != null) {
-
-            firstBatterName = lineup.getAway().getStarterBatters().get(0).getName();
-        }
-
-        if (firstBatterName != null) {
-            previousBatterMap.put(gameId, firstBatterName);
-            log.info("[초기 타자 저장] gameId={} | 원정팀 1번 타자: {}", gameId, firstBatterName);
-        } else {
-            log.warn("[1번 타자 없음] gameId={} | away starterBatters 리스트가 비었거나 null", gameId);
-        }
+        log.warn("[정답 업데이트 실패] gameId={} | 타자: {} | 문제를 찾을 수 없음", gameId, batterName);
     }
 }

@@ -30,6 +30,11 @@ contract LiquidityPool {
         return (btcReserve > 0 || fanTokenReserve > 0);
     }
 
+    // 가격 계산 - 현재 유동성 풀 상태 반환
+    function getReserves() external view returns (uint256 btc, uint256 fanToken) {
+        return (btcReserve, fanTokenReserve);
+    }
+
 
     // BETTY → 팬토큰 구매
     function buyFanToken(uint256 amountBTCIn, address to) external returns (uint256 fanTokenOut) {

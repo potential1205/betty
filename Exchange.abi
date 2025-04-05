@@ -1,4 +1,4 @@
-[
+﻿[
     {
         "type":  "constructor",
         "inputs":  [
@@ -81,7 +81,11 @@
                        }
                    ],
         "outputs":  [
-
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
                     ],
         "stateMutability":  "nonpayable"
     },
@@ -154,7 +158,11 @@
                        }
                    ],
         "outputs":  [
-
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
                     ],
         "stateMutability":  "nonpayable"
     },
@@ -179,7 +187,11 @@
                        }
                    ],
         "outputs":  [
-
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
                     ],
         "stateMutability":  "nonpayable"
     },
@@ -202,5 +214,104 @@
 
                     ],
         "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "event",
+        "name":  "BuyExecuted",
+        "inputs":  [
+                       {
+                           "name":  "buyer",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "tokenName",
+                           "type":  "string",
+                           "indexed":  false,
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountIn",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "amountOut",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "SellExecuted",
+        "inputs":  [
+                       {
+                           "name":  "seller",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "tokenName",
+                           "type":  "string",
+                           "indexed":  false,
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountIn",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "amountOut",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "SwapExecuted",
+        "inputs":  [
+                       {
+                           "name":  "user",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "tokenFrom",
+                           "type":  "string",
+                           "indexed":  false,
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "tokenTo",
+                           "type":  "string",
+                           "indexed":  false,
+                           "internalType":  "string"
+                       },
+                       {
+                           "name":  "amountIn",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "amountOut",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
     }
 ]

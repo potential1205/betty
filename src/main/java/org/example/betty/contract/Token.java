@@ -320,6 +320,9 @@ public class Token extends Contract {
         return deployRemoteCall(Token.class, web3j, transactionManager, gasPrice, gasLimit, getDeploymentBinary(), encodedConstructor);
     }
 
+    public static void linkLibraries(List<Contract.LinkReference> references) {
+        librariesLinkedBinary = linkBinaryWithReferences(BINARY, references);
+    }
 
     private static String getDeploymentBinary() {
         if (librariesLinkedBinary != null) {

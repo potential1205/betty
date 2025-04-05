@@ -49,9 +49,15 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(null) // KRW
+                .tokenTo(btc)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -84,9 +90,15 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(btc)
+                .tokenTo(null) // KRW
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -122,11 +134,15 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(btc)
                 .tokenTo(token)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -162,11 +178,15 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
                 .tokenFrom(token)
+                .tokenTo(btc)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();

@@ -1,4 +1,4 @@
-[
+﻿[
     {
         "type":  "constructor",
         "inputs":  [
@@ -93,6 +93,26 @@
         "outputs":  [
                         {
                             "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "getReserves",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "btc",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        },
+                        {
+                            "name":  "fanToken",
                             "type":  "uint256",
                             "internalType":  "uint256"
                         }

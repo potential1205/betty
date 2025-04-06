@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateProposalRequest {
-    private Long teamId;
-    private String title;
-    private String content;
+public class SaveProposalHashRequest {
+    private Long proposalId;
+    private String txHash;
 }

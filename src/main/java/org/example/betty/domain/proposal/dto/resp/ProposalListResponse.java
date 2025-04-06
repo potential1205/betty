@@ -1,4 +1,4 @@
-package org.example.betty.domain.proposal.dto;
+package org.example.betty.domain.proposal.dto.resp;
 
 import lombok.*;
 import org.example.betty.domain.proposal.entity.Proposal;

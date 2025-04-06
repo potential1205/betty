@@ -11,4 +11,6 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long> {
     List<Proposal> findAllByTeamId(Long teamId);
 
     Optional<Proposal> findByIdAndTeamId(Long proposalId, Long teamId);
+
+    Optional<Proposal> findByIdAndWalletId(Long proposalId, Long id);
 }

@@ -105,8 +105,8 @@ public class ProposalServiceImpl implements ProposalService {
         proposal.setContentHash(contentHash);
 
         // 토큰 10개 소각 로직 (온 체인)
-        TransactionRequest transactionRequest = new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("10"));
-        exchangeService.processUse(transactionRequest, accessToken);
+//        TransactionRequest transactionRequest = new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("10"));
+//        exchangeService.processUse(transactionRequest, accessToken);
 
         return CreateProposalResponse.of(proposal.getId(), contentHash, proposal.getClosedAt());
     }
@@ -152,8 +152,8 @@ public class ProposalServiceImpl implements ProposalService {
         walletProposalRepository.save(walletProposal);
 
         // 토큰 1개 소각 (온 체인)
-        TransactionRequest transactionRequest = new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("1"));
-        exchangeService.processUse(transactionRequest, accessToken);
+//        TransactionRequest transactionRequest = new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("1"));
+//        exchangeService.processUse(transactionRequest, accessToken);
     }
 
     @Override

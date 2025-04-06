@@ -97,8 +97,8 @@ public class DisplayServiceImpl implements DisplayService{
 
             String input = tx.getInput();
             String tokenAddress = "0x" + input.substring(34, 74); // 토큰 주소
-            String amountHex = input.substring(74); // 토큰 양
-            BigInteger amount = new BigInteger(amountHex, 16);
+            Long findGameId = Long.valueOf(input.substring(74, 138)); // 게임 ID
+            Long findTeamId = Long.valueOf(input.substring(138, 202)); // 팀 ID
 
             log.info("findTxHash: {}", findTxHash);
             log.info("walletAddress(from): {}", from); // 지갑 주소
@@ -106,17 +106,11 @@ public class DisplayServiceImpl implements DisplayService{
 
             log.info("Input Data: {}", input);
             log.info("tokenAddress: {}", tokenAddress);
-            log.info("Amount (Hex): {}", amountHex);
-            log.info("Amount (Decimal): {}", amount);
-
-            BigInteger requiredAmount = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
+            log.info("findGameId: {}", findGameId);
+            log.info("findTeamId: {}", findTeamId);
 
             if (!walletAddress.equalsIgnoreCase(wallet.getWalletAddress())) {
                 throw new BusinessException(ErrorCode.INVALID_TRANSACTION);
-            }
-
-            if (amount.compareTo(requiredAmount) < 0) {
-                throw new BusinessException(ErrorCode.INSUFFICIENT_TOKEN_AMOUNT);
             }
 
         } catch (IOException e) {

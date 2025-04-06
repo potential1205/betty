@@ -59,7 +59,7 @@ public class RedisConfig {
 
     @Primary
     @Bean(name = "redisTemplate")
-    public RedisTemplate<String, Object> redisTemplate1() {
+    public RedisTemplate<String, Object> redisTemplate() {
         return createRedisTemplate(redisConnectionFactoryRedis1());
     }
 

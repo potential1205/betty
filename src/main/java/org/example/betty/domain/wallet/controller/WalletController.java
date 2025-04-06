@@ -4,9 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.common.resp.BaseResponse;
 import org.example.betty.common.resp.SuccessResponse;
 import org.example.betty.domain.wallet.dto.CheckWalletNicknameResponse;
 import org.example.betty.domain.wallet.dto.RegisterWalletRequest;
+import org.example.betty.domain.wallet.service.BalanceService;
 import org.example.betty.domain.wallet.service.WalletService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class WalletController {
 
     private final WalletService walletService;
+    private final BalanceService balanceService;
 
     @Operation(summary = "지갑 조회", description = "accessToken을 이용해 현재 로그인된 사용자의 지갑이 등록되어 있는지 확인하고 닉네임을 반환합니다.")
     @GetMapping
@@ -41,5 +44,11 @@ public class WalletController {
 
         return ResponseEntity.ok()
                 .body(SuccessResponse.of(true));
+    }
+
+    @PostMapping("/balances/sync")
+    public BaseResponse<Void> syncAllWalletBalances() {
+        balanceService.syncAllWalletBalances();
+        return BaseResponse.success();
     }
 }

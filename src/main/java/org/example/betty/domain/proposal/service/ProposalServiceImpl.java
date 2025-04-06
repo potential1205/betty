@@ -139,6 +139,7 @@ public class ProposalServiceImpl implements ProposalService {
     }
 
     @Override
+    @Transactional
     public void saveProposalHash(SaveProposalHashRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
 

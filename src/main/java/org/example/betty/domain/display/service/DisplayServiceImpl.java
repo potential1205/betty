@@ -95,6 +95,11 @@ public class DisplayServiceImpl implements DisplayService{
             String amountHex = input.substring(74);
             BigInteger amount = new BigInteger(amountHex, 16);
 
+            log.info(input);
+            log.info(toAddress);
+            log.info(amountHex);
+            log.info(String.valueOf(amount));
+
             BigInteger requiredAmount = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
 
             if (!toAddress.equalsIgnoreCase(wallet.getWalletAddress())) {

@@ -22,7 +22,7 @@ import java.util.Map;
 public class AuthServiceImpl implements AuthService {
 
     private final SessionUtil sessionUtil;
-    private final TokenService tokenService;
+    private final JWTService JWTService;
     private final Web3AuthService web3AuthService;
 
     @Override
@@ -41,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new BusinessException(ErrorCode.INVALID_ID_TOKEN);
             }
 
-            String accessToken = tokenService.generateAccessToken(walletAddress, exp);
+            String accessToken = JWTService.generateAccessToken(walletAddress, exp);
 
             sessionUtil.setSession(walletAddress, accessToken, ttl);
 

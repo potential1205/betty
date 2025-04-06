@@ -31,6 +31,10 @@ public class Proposal {
 
     private int currentCount;
 
+    private String txHash;
+
+    private String contentHash;
+
     @NotNull
     private LocalDateTime createdAt;
 

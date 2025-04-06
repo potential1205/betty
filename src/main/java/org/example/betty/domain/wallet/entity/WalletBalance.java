@@ -32,7 +32,7 @@ public class WalletBalance {
     @NotNull
     private Token token;
 
-    @Column(precision = 18, scale = 8)
+    @Column(precision = 36, scale = 18)
     private BigDecimal balance;
 
     @Column(name = "created_at")

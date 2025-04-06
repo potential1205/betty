@@ -169,7 +169,7 @@ public class ProposalServiceImpl implements ProposalService {
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        return proposalRepository.findByIdAndTeamId(teamId, proposalId)
+        return proposalRepository.findByIdAndTeamId(proposalId, teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_PROPOSAL));
     }
 

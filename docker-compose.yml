@@ -67,6 +67,31 @@ services:
       # Exchange Contract
       EXCHANGE_ADDRESS: ${EXCHANGE_ADDRESS}
 
+      # Token Addresses
+      BTC_ADDRESS: ${BTC_ADDRESS}
+      DSB_ADDRESS: ${DSB_ADDRESS}
+      SSG_ADDRESS: ${SSG_ADDRESS}
+      LGT_ADDRESS: ${LGT_ADDRESS}
+      LTG_ADDRESS: ${LTG_ADDRESS}
+      KWH_ADDRESS: ${KWH_ADDRESS}
+      NCD_ADDRESS: ${NCD_ADDRESS}
+      KTW_ADDRESS: ${KTW_ADDRESS}
+      KIA_ADDRESS: ${KIA_ADDRESS}
+      SSL_ADDRESS: ${SSL_ADDRESS}
+      HWE_ADDRESS: ${HWE_ADDRESS}
+
+      # Liquidity Pool Addresses
+      DSB_POOL: ${DSB_POOL}
+      SSG_POOL: ${SSG_POOL}
+      LGT_POOL: ${LGT_POOL}
+      LTG_POOL: ${LTG_POOL}
+      KWH_POOL: ${KWH_POOL}
+      NCD_POOL: ${NCD_POOL}
+      KTW_POOL: ${KTW_POOL}
+      KIA_POOL: ${KIA_POOL}
+      SSL_POOL: ${SSL_POOL}
+      HWE_POOL: ${HWE_POOL}
+
   selenium-chrome-1:
     image: selenium/standalone-chrome:134.0-20250323
     container_name: selenium-chrome-1
@@ -102,35 +127,6 @@ services:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2
       - SE_NODE_MAX_INSTANCES=2
-
-
-      # Token Addresses
-      BTC_ADDRESS: ${BTC_ADDRESS}
-      DSB_ADDRESS: ${DSB_ADDRESS}
-      SSG_ADDRESS: ${SSG_ADDRESS}
-      LGT_ADDRESS: ${LGT_ADDRESS}
-      LTG_ADDRESS: ${LTG_ADDRESS}
-      KWH_ADDRESS: ${KWH_ADDRESS}
-      NCD_ADDRESS: ${NCD_ADDRESS}
-      KTW_ADDRESS: ${KTW_ADDRESS}
-      KIA_ADDRESS: ${KIA_ADDRESS}
-      SSL_ADDRESS: ${SSL_ADDRESS}
-      HWE_ADDRESS: ${HWE_ADDRESS}
-
-      # Liquidity Pool Addresses
-      DSB_POOL: ${DSB_POOL}
-      SSG_POOL: ${SSG_POOL}
-      LGT_POOL: ${LGT_POOL}
-      LTG_POOL: ${LTG_POOL}
-      KWH_POOL: ${KWH_POOL}
-      NCD_POOL: ${NCD_POOL}
-      KTW_POOL: ${KTW_POOL}
-      KIA_POOL: ${KIA_POOL}
-      SSL_POOL: ${SSL_POOL}
-      HWE_POOL: ${HWE_POOL}
-
-
-
 
   selenium-chrome-4:
     image: selenium/standalone-chrome:134.0-20250323

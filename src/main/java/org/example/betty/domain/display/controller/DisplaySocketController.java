@@ -24,7 +24,6 @@ public class DisplaySocketController {
 
     @MessageMapping("/updatePixel")
     public void updatePixel(PixelUpdateMessage message, SimpMessageHeaderAccessor headerAccessor) {
-        log.info("pixel 업데이트 요청 도착");
         String walletAddress = (String) headerAccessor.getSessionAttributes().get("walletAddress");
 
         if (walletAddress == null || walletAddress.trim().isEmpty()) {

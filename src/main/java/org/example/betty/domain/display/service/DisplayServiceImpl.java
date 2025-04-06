@@ -7,12 +7,10 @@ import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.display.entity.Display;
 import org.example.betty.domain.display.dto.Pixel;
 import org.example.betty.domain.display.entity.DisplayAccess;
-import org.example.betty.domain.display.entity.WalletsDisplays;
 import org.example.betty.domain.display.repository.DisplayAccessRepository;
 import org.example.betty.domain.display.repository.DisplayRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
-import org.example.betty.domain.wallet.repository.WalletsDisplaysRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,8 +28,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
 
 @Service
@@ -45,7 +41,6 @@ public class DisplayServiceImpl implements DisplayService{
     private final DisplayRepository displayRepository;
     private final DisplayAccessRepository displayAccessRepository;
     private final WalletRepository walletRepository;
-    private final WalletsDisplaysRepository walletsDisplaysRepository;
     private final SessionUtil sessionUtil;
     private final Web3j web3j;
 
@@ -60,29 +55,13 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     @Override
-    public List<Display> getAllMyDisplayList(String accessToken) {
-        String walletAddress = sessionUtil.getWalletAddress(accessToken);
-
-        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-
-        List<WalletsDisplays> walletsDisplaysList = walletsDisplaysRepository.findAllByWalletId(wallet.getId());
-
-        List<Long> displayIdList = walletsDisplaysList.stream()
-                .map(WalletsDisplays::getDisplayId)
-                .toList();
-
-        return displayRepository.findByIdIn(displayIdList);
-    }
-
-    @Override
     public void checkDisplayAccess(String accessToken, Long gameId, Long teamId) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(wallet.getWalletAddress(),gameId, teamId)) {
+        if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(wallet.getWalletAddress(), gameId, teamId)) {
             throw new BusinessException(ErrorCode.NOT_FOUND_DISPLAY_ACCESS);
         }
     }
@@ -111,15 +90,7 @@ public class DisplayServiceImpl implements DisplayService{
                     .getTransaction()
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TRANSACTION));
 
-//            if (!tx.getTo().equalsIgnoreCase(TOKEN_CONTRACT_ADDRESS)) {
-//                throw new IllegalArgumentException("토큰 컨트랙트 주소가 아님");
-//            }
-
             String input = tx.getInput();
-            if (!input.startsWith("0xa9059cbb")) {
-                throw new BusinessException(ErrorCode.INVALID_TOKEN_TRANSFER);
-            }
-
             String toAddress = "0x" + input.substring(34, 74);
             String amountHex = input.substring(74);
             BigInteger amount = new BigInteger(amountHex, 16);
@@ -133,8 +104,9 @@ public class DisplayServiceImpl implements DisplayService{
             if (amount.compareTo(requiredAmount) < 0) {
                 throw new BusinessException(ErrorCode.INSUFFICIENT_TOKEN_AMOUNT);
             }
+
         } catch (IOException e) {
-            throw new RuntimeException("Web3 통신 실패", e);
+            throw new BusinessException(ErrorCode.FAILED_CONNECT_WEB3J);
         }
 
         DisplayAccess displayAccess = DisplayAccess.builder()
@@ -147,23 +119,18 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     @Override
-    public void gameEnd(String accessToken, Long gameId, Long teamId) {
-        String walletAddress = sessionUtil.getWalletAddress(accessToken);
-
-        walletRepository.findByWalletAddress(walletAddress)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-
-        handleGameEnd(gameId, teamId);
+    public void gameEnd(Long gameId, Long teamId) {
+        String destination = "/topic/gameEnd/" + gameId + "/" + teamId;
+        messagingTemplate.convertAndSend(destination, "GAME_OVER");
+        String key = "display" + ":" + gameId + ":" + teamId;
+        redisTemplate.delete(key);
     }
 
     @Override
-    public void inningEnd(String accessToken, Long gameId, Long teamId, int inning) {
-        String walletAddress = sessionUtil.getWalletAddress(accessToken);
-
-        walletRepository.findByWalletAddress(walletAddress)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-
-        handleInningEnd(gameId, teamId, inning);
+    public void inningEnd(Long gameId, Long teamId, int inning) {
+        String key = "display" + ":" + gameId + ":" + teamId;
+        Pixel[][] display = (Pixel[][]) redisTemplate.opsForValue().get(key);
+        saveDisplay(display, gameId, teamId, inning);
     }
 
     public Pixel[][] getDisplay(Long gameId, Long teamId) {
@@ -183,28 +150,11 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     public void updatePixel(Long gameId, Long teamId, int r, int c, Pixel pixel) {
-        log.info("updatePixel 진입");
-
         String key = "display" + ":" + gameId + ":" + teamId;
-
         Pixel[][] board = getDisplay(gameId, teamId);
         board[r][c] = pixel;
         redisTemplate.opsForValue().set(key, board);
         log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
-    }
-
-    public void handleGameEnd(Long gameId, Long teamId) {
-        String destination = "/topic/gameEnd/" + gameId + "/" + teamId;
-        messagingTemplate.convertAndSend(destination, "GAME_OVER");
-        String key = "display" + ":" + gameId + ":" + teamId;
-        redisTemplate.delete(key);
-    }
-
-    public void handleInningEnd(Long gameId, Long teamId, int inning) {
-        String key = "display" + ":" + gameId + ":" + teamId;
-
-        Pixel[][] display = (Pixel[][]) redisTemplate.opsForValue().get(key);
-        saveDisplay(display, gameId, teamId, inning);
     }
 
     public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
@@ -228,13 +178,10 @@ public class DisplayServiceImpl implements DisplayService{
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            Display resultDisplay = displayRepository.save(newDisplay);
-            saveWalletsDisplays(display,resultDisplay.getId());
+            displayRepository.save(newDisplay);
         } catch (IOException e) {
-            e.printStackTrace();
             throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);
         }
-
     }
 
     public BufferedImage createImageFromBoard(Pixel[][] display) {
@@ -248,30 +195,6 @@ public class DisplayServiceImpl implements DisplayService{
             }
         }
         return image;
-    }
-
-    public void saveWalletsDisplays(Pixel[][] display, Long displayId) {
-        Set<Long> walletIds = new HashSet<>();
-
-        for (int r = 0; r < 64; r++) {
-            for (int c = 0; c < 64; c++) {
-                String walletAddress = display[r][c].getWalletAddress();
-                if (walletAddress != null && !walletAddress.isEmpty()) {
-                    Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-                    walletIds.add(wallet.getId());
-                }
-            }
-        }
-
-        List<WalletsDisplays> walletsDisplaysList = walletIds.stream()
-                .map(walletId -> WalletsDisplays.builder()
-                        .walletId(walletId)
-                        .displayId(displayId)
-                        .build())
-                .toList();
-
-        walletsDisplaysRepository.saveAll(walletsDisplaysList);
     }
 
 }

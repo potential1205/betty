@@ -13,20 +13,19 @@ import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.utils.Convert;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,7 +34,8 @@ import java.util.List;
 @Slf4j
 public class DisplayServiceImpl implements DisplayService{
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Qualifier("redisTemplate3")
+    private final RedisTemplate<String, Object> redisTemplate3;
     private final SimpMessagingTemplate messagingTemplate;
     private final S3Util s3Util;
     private final DisplayRepository displayRepository;
@@ -131,13 +131,13 @@ public class DisplayServiceImpl implements DisplayService{
         String destination = "/topic/gameEnd/" + gameId + "/" + teamId;
         messagingTemplate.convertAndSend(destination, "GAME_OVER");
         String key = "display" + ":" + gameId + ":" + teamId;
-        redisTemplate.delete(key);
+        redisTemplate3.delete(key);
     }
 
     @Override
     public void inningEnd(Long gameId, Long teamId, int inning) {
         String key = "display" + ":" + gameId + ":" + teamId;
-        Pixel[][] display = (Pixel[][]) redisTemplate.opsForValue().get(key);
+        Pixel[][] display = (Pixel[][]) redisTemplate3.opsForValue().get(key);
         saveDisplay(display, gameId, teamId, inning);
     }
 
@@ -146,7 +146,7 @@ public class DisplayServiceImpl implements DisplayService{
 
         log.info("조회된 전광판 key : " + key);
 
-        Pixel[][] board = (Pixel[][]) redisTemplate.opsForValue().get(key);
+        Pixel[][] board = (Pixel[][]) redisTemplate3.opsForValue().get(key);
         if (board == null) {
             log.info("전광판이 조회되지 않아 새로 생성합니다. : " + key);
             board = new Pixel[64][64];
@@ -155,7 +155,7 @@ public class DisplayServiceImpl implements DisplayService{
                     board[i][j] = new Pixel("", "#ffffff");
                 }
             }
-            redisTemplate.opsForValue().set(key, board);
+            redisTemplate3.opsForValue().set(key, board);
         }
         return board;
     }
@@ -164,7 +164,7 @@ public class DisplayServiceImpl implements DisplayService{
         String key = "display" + ":" + gameId + ":" + teamId;
         Pixel[][] board = getDisplay(gameId, teamId);
         board[r][c] = pixel;
-        redisTemplate.opsForValue().set(key, board);
+        redisTemplate3.opsForValue().set(key, board);
         log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
     }
 

@@ -30,7 +30,8 @@ public enum ErrorCode {
     FAILED_TRANSACTION(HttpStatus.NOT_FOUND, 4005, "실패한 트랜잭션입니다."),
     INVALID_TOKEN_TRANSFER(HttpStatus.NOT_FOUND, 4006, "잘못된 토큰 전송 시도입니다."),
     INVALID_TRANSACTION(HttpStatus.NOT_FOUND, 4007, "유효하지 않은 트랜잭션입니다."),
-    INSUFFICIENT_TOKEN_AMOUNT(HttpStatus.NOT_FOUND, 4008, "전송된 토큰 금액이 부족합니다.");
+    INSUFFICIENT_TOKEN_AMOUNT(HttpStatus.NOT_FOUND, 4008, "전송된 토큰 금액이 부족합니다."),
+    FAILED_CONNECT_WEB3J(HttpStatus.NOT_FOUND, 4009, "WEB3J 연결에 실패했습니다.");
 
     private final HttpStatus status;
     private final int code;

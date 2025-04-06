@@ -24,7 +24,6 @@ public class DisplaySocketController {
 
     @MessageMapping("/updatePixel")
     public void updatePixel(PixelUpdateMessage message, SimpMessageHeaderAccessor headerAccessor) {
-        log.info("pixel 업데이트 요청 도착");
         String walletAddress = (String) headerAccessor.getSessionAttributes().get("walletAddress");
 
         if (walletAddress == null || walletAddress.trim().isEmpty()) {
@@ -42,7 +41,7 @@ public class DisplaySocketController {
     @MessageMapping("/getBoard/{gameId}/{teamId}")
     @SendTo("/topic/board/{gameId}/{teamId}")
     public Pixel[][] getBoard(@DestinationVariable Long gameId, @DestinationVariable Long teamId) {
-        log.info("display 조회 요청 도착");
+        log.info("display 조회 요청 도착" + gameId + "," + teamId);
         return displayService.getDisplay(gameId, teamId);
     }
 }

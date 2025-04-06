@@ -1,8 +1,6 @@
 package org.example.betty.domain.proposal.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -17,6 +15,7 @@ import java.time.LocalDateTime;
 @Table(name = "proposals")
 public class Proposal {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long walletId;

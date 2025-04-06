@@ -8,6 +8,7 @@ import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.common.util.Web3ContractUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.web3j.protocol.Web3j;
 
 import java.math.BigDecimal;
@@ -47,6 +48,7 @@ public class PriceServiceImpl implements PriceService {
     @Value("${HWE_POOL}")
     private String hwePoolAddress;
 
+    @Transactional
     @Override
     public void syncAllPrices() {
         updatePrice("DSB", dsbPoolAddress);
@@ -61,7 +63,8 @@ public class PriceServiceImpl implements PriceService {
         updatePrice("HWE", hwePoolAddress);
     }
 
-    private void updatePrice(String tokenName, String poolAddress) {
+    @Transactional
+    protected void updatePrice(String tokenName, String poolAddress) {
         try {
             LiquidityPool pool = LiquidityPool.load(
                     poolAddress,

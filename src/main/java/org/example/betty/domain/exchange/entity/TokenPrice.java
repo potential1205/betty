@@ -19,7 +19,7 @@ public class TokenPrice {
     @JoinColumn(name = "token_id", nullable = false)
     private Token token;
 
-    @Column(name = "token_name", nullable = false, length = 20)
+    @Column(name = "token_name", nullable = true, length = 20)
     private String tokenName;
 
     @Column(name = "price", precision = 36, scale = 18, nullable = false)

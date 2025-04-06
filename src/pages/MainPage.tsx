@@ -1,119 +1,99 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import Sidebar from '../components/Sidebar';
-import walletImg from '../assets/wallet.png';
-import hamburgerImg from '../assets/hamburger.png';
-import { colors } from '../constants/colors';
-import { useStore } from '../stores/useStore';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from '../stores/useStore';
+import backImg from '../assets/back.png';
+import hamburgerImg from '../assets/hamburger.png';
+import Sidebar from '../components/Sidebar';
+import { ColorPicker } from '../components/ColorPicker';
+import { CollaborativeCanvas } from '../components/CollaborativeCanvas';
+
+type Tab = 'LIVE-PICK' | 'WINNER' | 'PIXEL';
 
 const MainPage: React.FC = () => {
-  const { currentIndex, games, handleNext, handlePrev, toggleSidebar } = useStore();
   const navigate = useNavigate();
-  const currentGame = games[currentIndex];
+  const [activeTab, setActiveTab] = useState<Tab>('LIVE-PICK');
+  const { currentGame, toggleSidebar } = useStore();
 
-  const teamNames = Object.keys(currentGame).filter(key => 
-    key !== 'inning' && key !== 'status' && key !== 'id'
-  );
-
-  const getBackgroundStyle = () => {
-    const teamA = teamNames[0] as keyof typeof colors;
-    const teamB = teamNames[1] as keyof typeof colors;
-    return {
-      background: `linear-gradient(135deg, 
-        ${colors[teamA]} 0%,
-        ${colors[teamB]} 35%,
-        #ffffff 65%,
-        #ffffff 100%)`
-    };
-  };
-
-  const getCardStyle = (index: number) => {
-    const position = (index - currentIndex + games.length) % games.length;
-    const translateX = position === 0 ? 0 : position === 1 ? 240 : position === games.length - 1 ? -240 : -1000;
-    const scale = position === 0 ? 1 : 0.8;
-    const opacity = position === 0 ? 1 : 0.5;
-    const zIndex = position === 0 ? 2 : 1;
-
-    return {
-      x: translateX,
-      scale,
-      opacity,
-      zIndex,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    };
-  };
+  // 게임 정보가 없으면 홈으로 리다이렉트
+  if (!currentGame) {
+    navigate('/');
+    return null;
+  }
 
   return (
-    <div className="relative h-full overflow-hidden" style={getBackgroundStyle()}>
+    <div className="relative h-full bg-black text-white overflow-hidden">
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
-        <button onClick={() => navigate('/my')} className="w-8 h-7">
-          <img src={walletImg} alt="wallet" className="w-full h-full" />
+        <button 
+          onClick={() => navigate(-1)} 
+          className="w-[12px] h-[12px]"
+        >
+          <img src={backImg} alt="Back" className="w-full h-full" />
         </button>
-        <button onClick={() => toggleSidebar(true)} className="w-5 h-5">
-          <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
-        </button>
+        <div className="w-5 h-5 flex items-center justify-center">
+          <button 
+            onClick={() => toggleSidebar(true)}
+            className="w-5 h-5"
+          >
+            <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
+          </button>
+        </div>
       </div>
 
-      {/* 매치업 정보 */}
-      <div className="absolute top-13 left-0 right-0 z-10 text-center">
-        <div className="text-red-600 text-sm font-['Giants-Bold']">LIVE</div>
-        <h1 className="text-4xl font-['Giants-Bold'] text-white mt-1">
-          {`${teamNames[0]} vs ${teamNames[1]}`}
+      {/* 상단 매치업 타이틀 */}
+      <div className="pt-16 pb-4 text-center">
+        <div className="text-red-600 text-sm font-['Giants-Bold']">
+          {currentGame.status === 'LIVE' ? 'LIVE' : 
+           currentGame.status === 'ENDED' ? '경기종료' :
+           currentGame.status === 'CANCELED' ? '경기취소' : '경기예정'}
+        </div>
+        <h1 className="text-4xl font-['Giants-Bold'] mt-1">
+          {`${currentGame.homeTeam} vs ${currentGame.awayTeam}`}
         </h1>
-        <div className="mt-2 text-white">
-          <span className="text-xl font-['Giants-Bold']">
-            {currentGame[teamNames[0]]} : {currentGame[teamNames[1]]}
-          </span>
-          <div className="text-xs mt-0.5 text-gray-300">
-            {currentGame.inning}회 {currentGame.status}
+        <div className="mt-2">
+          <div className="text-xl font-['Giants-Bold']">
+            {currentGame.homeScore} : {currentGame.awayScore}
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5">
+            {currentGame.schedule.stadium} | {currentGame.schedule.startTime}
           </div>
         </div>
       </div>
 
-      {/* 캐러셀 */}
-      <div className="relative h-full flex items-center justify-center translate-y-[10%]">
-        {games.map((game, index) => (
-          <motion.div
-            key={game.id}
-            className="absolute w-[80%] h-[65%] rounded-2xl"
-            animate={getCardStyle(index)}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            onDragEnd={(event, info) => {
-              const swipe = Math.abs(info.offset.x) * info.velocity.x;
-              const threshold = 10000;
-              if (swipe < -threshold) {
-                handleNext();
-              } else if (swipe > threshold) {
-                handlePrev();
-              }
-            }}
-          >
-            <div className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl 
-              border border-white/20 shadow-lg p-6">
-              {/* 카드 내용 필요 시 여기에 추가 */}
+      {/* 토글 탭 */}
+      <div className="px-6">
+        <div className="flex rounded-full bg-gray-800/50 p-1">
+          {(['LIVE-PICK', 'WINNER', 'PIXEL'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-3 rounded-full text-sm font-['Pretendard-Regular'] transition-colors
+                ${activeTab === tab ? 'bg-white text-black' : 'text-white'}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 컨텐츠 영역 */}
+      <div className="mt-6 px-6 overflow-y-auto h-[calc(100vh-280px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {activeTab === 'PIXEL' && (
+          <div className="flex flex-col h-full">
+            <div className="w-full flex items-center mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">선택된 색상:</span>
+                <ColorPicker />
+              </div>
             </div>
-          </motion.div>
-        ))}
+            <div className="w-full">
+              <CollaborativeCanvas />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 입장 버튼 */}
-      <div className="absolute bottom-12 left-0 right-0 flex justify-center px-12 z-10">
-        <button
-          onClick={() => navigate('/main')}
-          className="w-full h-12 bg-black rounded-[20px] text-white text-lg font-['Pretendard-Regular']"
-        >
-          입장하기
-        </button>
-      </div>
-
+      {/* Sidebar */}
       <Sidebar />
     </div>
   );

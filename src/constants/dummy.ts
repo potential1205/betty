@@ -267,16 +267,16 @@ export const teamColors = {
 
 export const formatTeamName = (team: string) => {
   const teamNames: { [key: string]: string } = {
-    '두산': '두산',
-    '롯데': '롯데',
-    '키움': '키움',
-    'KIA': 'KIA',
-    'LG': 'LG',
-    '한화': '한화',
-    'SSG': 'SSG',
-    '삼성': '삼성',
-    'NC': 'NC',
-    'KT': 'KT'
+    '1': '두산',
+    '2': '롯데',
+    '3': '키움',
+    '4': 'KIA',
+    '5': 'LG',
+    '6': '한화',
+    '7': 'SSG',
+    '8': '삼성',
+    '9': 'NC',
+    '10': 'KT'
   };
   return teamNames[team] || team;
 };
@@ -290,9 +290,68 @@ export const formatTeamCode = (team: string) => {
     'LG': 'LGT',      // LG 트윈스
     '한화': 'HHE',    // 한화 이글스
     'SSG': 'SSG',     // SSG 랜더스
-    '삼성': 'SAL',    // 삼성 라이온즈
+    '삼성': 'SSL',    // 삼성 라이온즈
     'NC': 'NCD',      // NC 다이노스
     'KT': 'KTW'       // KT 위즈
   };
   return teamCodes[team] || team;
+};
+
+export const todayGamesData = {
+  "schedules": [
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "14:00",
+      "stadium": "잠실야구장",
+      "homeTeam": "두산",
+      "awayTeam": "롯데",
+      "status": "LIVE"
+    },
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "14:00",
+      "stadium": "고척스카이돔",
+      "homeTeam": "키움",
+      "awayTeam": "KIA",
+      "status": "SCHEDULED"
+    },
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "14:00",
+      "stadium": "대전한화생명이글스파크",
+      "homeTeam": "한화",
+      "awayTeam": "LG",
+      "status": "SCHEDULED"
+    },
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "14:00",
+      "stadium": "대구삼성라이온즈파크",
+      "homeTeam": "삼성",
+      "awayTeam": "SSG",
+      "status": "FINISHED"
+    },
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "17:00",
+      "stadium": "창원NC파크",
+      "homeTeam": "NC",
+      "awayTeam": "KT",
+      "status": "SCHEDULED"
+    },
+    {
+      "season": 2024,
+      "gameDate": "2024-03-19",
+      "startTime": "17:00",
+      "stadium": "인천SSG랜더스필드",
+      "homeTeam": "SSG",
+      "awayTeam": "두산",
+      "status": "SCHEDULED"
+    }
+  ]
 };

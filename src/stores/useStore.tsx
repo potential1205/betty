@@ -1,6 +1,6 @@
 import { create } from 'zustand';
+import axios from 'axios';
 import { allGames, userTokenDummy } from '../constants/dummy';
-import { colors } from '../constants/colors';
 
 interface GameData {
   id: number;
@@ -16,14 +16,14 @@ interface TeamToken {
 
 interface Proposal {
   id: number;
-  team: string;
+  walletId: number;
+  teamId: number;
   title: string;
-  description: string;
-  requiredTokens: number;
-  currentVotes: number;
-  targetVotes: number;
-  deadline: string;
-  status: 'pending' | 'approved';
+  content: string;
+  targetCount: number;
+  currentCount: number;
+  createdAt: string;
+  closedAt: string;
 }
 
 export interface Transaction {
@@ -47,12 +47,37 @@ interface WalletInfo {
     btcValue: number;
   }>;
   address?: string;
+  nickname?: string;
+}
+
+interface GameSchedule {
+  season: number;
+  gameDate: string;
+  startTime: string;
+  stadium: string;
+  homeTeam: string;
+  awayTeam: string;
+  status: string;
+}
+
+export interface Game {
+  id: number;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  inning: number;
+  status: string;
+  schedule: GameSchedule;
 }
 
 interface AppState {
   currentIndex: number;
   isSidebarOpen: boolean;
   games: GameData[];
+  todayGames: Game[];
+  setTodayGames: (games: Game[]) => void;
+  currentGame?: Game;
   userTokens: TeamToken[];
   myProposals: Proposal[];
   proposals: Proposal[];
@@ -61,6 +86,13 @@ interface AppState {
   teams: string[];
   bettyPrice: number;
   bettyBalance: number;
+  loading: {
+    proposals: boolean;
+    tokenCount: boolean;
+    createProposal: boolean;
+    vote: boolean;
+  };
+  error: string | null;
   setBettyPrice: (price: number) => void;
   setBettyBalance: (balance: number) => void;
   setCurrentIndex: (index: number) => void;
@@ -75,7 +107,7 @@ interface AppState {
   getVisibleTeams: () => string[];
   handlePrevTeam: () => void;
   handleNextTeam: () => void;
-  addProposal: (proposal: Omit<Proposal, 'id'>) => void;
+  addProposal: (proposal: Omit<Proposal, 'id' | 'walletId' | 'createdAt' | 'closedAt' | 'currentCount'>) => void;
   useTeamToken: (team: string, amount: number) => boolean;
   updateUserTokens: (team: string, amount: number) => void;
   SUGGEST_COST: number;
@@ -91,12 +123,105 @@ interface AppState {
   isChargeModalOpen: boolean;
   setIsChargeModalOpen: (isOpen: boolean) => void;
   chargeBetty: (amount: number) => void;
+  updateWalletInfo: (newInfo: Partial<WalletInfo>) => void;
+  
+  // API 함수들
+  fetchProposals: (teamId: number) => Promise<void>;
+  submitProposal: (teamId: number, title: string, content: string, targetCount: number) => Promise<void>;
+  voteForProposal: (teamId: number, proposalId: number) => Promise<void>;
+  fetchTeamTokenCount: (teamId: number) => Promise<number>;
+  clearError: () => void;
+  setCurrentGame: (game: Game) => void;
 }
 
 const initialWalletInfo: WalletInfo = {
   totalBTC: 100,
   transactions: [],
-  tokens: []
+  tokens: [
+    { team: '8', amount: 100, btcValue: 1000 },  // 삼성
+    { team: '1', amount: 100, btcValue: 1000 },  // 두산
+    { team: '2', amount: 100, btcValue: 1000 }   // 롯데
+  ]
+};
+
+// 팀 정보 상수
+export const TEAMS = {
+  DOOSAN: { id: '1', name: '두산', code: 'DSB' },
+  LOTTE: { id: '2', name: '롯데', code: 'LTG' },
+  KIWOOM: { id: '3', name: '키움', code: 'KWH' },
+  KIA: { id: '4', name: 'KIA', code: 'KIA' },
+  LG: { id: '5', name: 'LG', code: 'LGT' },
+  HANWHA: { id: '6', name: '한화', code: 'HWE' },
+  SSG: { id: '7', name: 'SSG', code: 'SSG' },
+  SAMSUNG: { id: '8', name: '삼성', code: 'SSL' },
+  NC: { id: '9', name: 'NC', code: 'NCD' },
+  KT: { id: '10', name: 'KT', code: 'KTW' }
+} as const;
+
+// ID로 팀 정보 조회
+export const getTeamById = (id: string) => {
+  return Object.values(TEAMS).find(team => team.id === id);
+};
+
+// API 관련 함수들
+const api = {
+  getProposalList: async (teamId: number) => {
+    try {
+      const response = await axios.get(`/api/v1/proposals/team/${teamId}`);
+      return response.data;
+    } catch (error) {
+      console.error('안건 목록 조회 실패:', error);
+      throw error;
+    }
+  },
+  
+  getProposalDetail: async (proposalId: number, teamId: number) => {
+    try {
+      const response = await axios.get(`/api/v1/proposals/${proposalId}/team/${teamId}`);
+      return response.data;
+    } catch (error) {
+      console.error('안건 상세 조회 실패:', error);
+      throw error;
+    }
+  },
+  
+  createProposal: async (teamId: number, title: string, content: string, targetCount: number) => {
+    try {
+      const response = await axios.post('/api/v1/proposals', {
+        teamId,
+        title,
+        content,
+        targetCount
+      });
+      return response.data;
+    } catch (error) {
+      console.error('안건 등록 실패:', error);
+      throw error;
+    }
+  },
+  
+  voteProposal: async (teamId: number, proposalId: number) => {
+    try {
+      const response = await axios.post('/api/v1/proposals/vote', {
+        teamId,
+        proposalId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('안건 투표 실패:', error);
+      throw error;
+    }
+  },
+  
+  getTeamTokenCount: async (teamId: number) => {
+    try {
+      const response = await axios.get(`/api/v1/proposals/team/${teamId}/token/count`);
+      return response.data.teamTokenCount;
+    } catch (error) {
+      console.error('팀 토큰 개수 조회 실패:', error);
+      throw error;
+    }
+  }
 };
 
 export const useStore = create<AppState>((set, get) => ({
@@ -106,40 +231,51 @@ export const useStore = create<AppState>((set, get) => ({
     ...game,
     status: game.status as "초" | "말"
   })),
+  todayGames: [],
+  setTodayGames: (games) => set({ todayGames: games }),
+  currentGame: undefined,
   userTokens: userTokenDummy,
   myProposals: [],
   proposals: [],
-  selectedTeam: Object.keys(colors)[0] || 'bears',
+  selectedTeam: '1',
   isSuggestModalOpen: false,
-  teams: Object.keys(colors),
+  teams: Object.values(TEAMS).map(team => team.id),
   bettyPrice: 1,
   bettyBalance: 1000,
+  loading: {
+    proposals: false,
+    tokenCount: false,
+    createProposal: false,
+    vote: false
+  },
+  error: null,
+  
+  // 기본 설정 함수들
   setBettyPrice: (price: number) => set({ bettyPrice: price }),
   setBettyBalance: (balance: number) => set({ bettyBalance: balance }),
   setCurrentIndex: (index) => set({ currentIndex: index }),
   handleNext: () => set((state) => ({ 
-    currentIndex: state.currentIndex === state.games.length - 1 ? 0 : state.currentIndex + 1 
+    currentIndex: Math.min(state.currentIndex + 1, state.games.length - 1)
   })),
   handlePrev: () => set((state) => ({ 
-    currentIndex: state.currentIndex === 0 ? state.games.length - 1 : state.currentIndex - 1 
+    currentIndex: Math.max(state.currentIndex - 1, 0)
   })),
   toggleSidebar: (isOpen) => set({ isSidebarOpen: isOpen }),
   updateGameData: (newData) => set({ games: newData }),
   addMyProposal: (proposal) => set((state) => ({ 
-    myProposals: [...state.myProposals, proposal],
-    proposals: [...state.proposals, proposal]
+    myProposals: [...state.myProposals, proposal]
   })),
-  setSelectedTeam: (team) => set({ selectedTeam: team }),
+  setSelectedTeam: (team) => {
+    set({ selectedTeam: team });
+    // 팀 변경 시 자동으로 데이터 로드
+    const teamId = parseInt(team);
+    get().fetchProposals(teamId);
+    get().fetchTeamTokenCount(teamId);
+  },
   toggleSuggestModal: (isOpen) => set({ isSuggestModalOpen: isOpen }),
   updateProposal: (proposalId, updates) => set((state) => {
     const proposal = state.proposals.find(p => p.id === proposalId);
-    
     if (!proposal) return state;
-
-    if (updates.currentVotes !== undefined) {
-      const tokenSuccess = get().useTeamToken(proposal.team, get().VOTE_COST);
-      if (!tokenSuccess) return state;
-    }
 
     return {
       proposals: state.proposals.map(p => 
@@ -153,41 +289,46 @@ export const useStore = create<AppState>((set, get) => ({
   getVisibleTeams: () => {
     const { teams, selectedTeam } = get();
     const currentIndex = teams.indexOf(selectedTeam);
-    const result = [];
     
-    let prevIndex = currentIndex - 1;
-    if (prevIndex < 0) prevIndex = teams.length - 1;
+    if (currentIndex === -1) return [teams[0], teams[1], teams[2]];
     
-    let currentTeam = teams[currentIndex];
+    const prevIndex = currentIndex === 0 ? teams.length - 1 : currentIndex - 1;
+    const nextIndex = currentIndex === teams.length - 1 ? 0 : currentIndex + 1;
     
-    let nextIndex = currentIndex + 1;
-    if (nextIndex >= teams.length) nextIndex = 0;
-    
-    result.push(teams[prevIndex]);
-    result.push(currentTeam);
-    result.push(teams[nextIndex]);
-    
-    return [...new Set(result)];
+    return [teams[prevIndex], teams[currentIndex], teams[nextIndex]];
   },
   handlePrevTeam: () => set((state) => {
     const currentIndex = state.teams.indexOf(state.selectedTeam);
     const newIndex = currentIndex > 0 ? currentIndex - 1 : state.teams.length - 1;
-    return { selectedTeam: state.teams[newIndex] };
+    const newTeam = state.teams[newIndex];
+    
+    // 팀 변경 시 자동으로 데이터 로드
+    const teamId = parseInt(newTeam);
+    get().fetchProposals(teamId);
+    get().fetchTeamTokenCount(teamId);
+    
+    return { selectedTeam: newTeam };
   }),
   handleNextTeam: () => set((state) => {
     const currentIndex = state.teams.indexOf(state.selectedTeam);
     const newIndex = currentIndex < state.teams.length - 1 ? currentIndex + 1 : 0;
-    return { selectedTeam: state.teams[newIndex] };
+    const newTeam = state.teams[newIndex];
+    
+    // 팀 변경 시 자동으로 데이터 로드
+    const teamId = parseInt(newTeam);
+    get().fetchProposals(teamId);
+    get().fetchTeamTokenCount(teamId);
+    
+    return { selectedTeam: newTeam };
   }),
   addProposal: (proposalData) => set((state) => {
-    const tokenSuccess = get().useTeamToken(proposalData.team, get().SUGGEST_COST);
-    if (!tokenSuccess) return state;
-
     const newProposal: Proposal = {
       ...proposalData,
       id: state.proposals.length + 1,
-      currentVotes: 0,
-      status: 'pending' as const
+      walletId: 0,
+      currentCount: 0,
+      createdAt: new Date().toISOString(),
+      closedAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
 
     return {
@@ -305,4 +446,162 @@ export const useStore = create<AppState>((set, get) => ({
       }
     };
   }),
+  updateWalletInfo: (newInfo: Partial<WalletInfo>) => set((state) => ({
+    walletInfo: {
+      ...state.walletInfo,
+      ...newInfo
+    }
+  })),
+
+  setCurrentGame: (game: Game) => set({ currentGame: game }),
+  
+  // API 연동 함수들
+  clearError: () => set({ error: null }),
+  
+  fetchProposals: async (teamId: number) => {
+    set(state => ({ 
+      loading: { ...state.loading, proposals: true },
+      error: null
+    }));
+    
+    try {
+      const response = await api.getProposalList(teamId);
+      set({ 
+        proposals: response.proposalList,
+        loading: { ...get().loading, proposals: false }
+      });
+      
+      // 내가 작성한 제안 필터링 (추후 API가 제공하면 개선 필요)
+      const myProposals = response.proposalList.filter(
+        (p: Proposal) => p.walletId === 0 // 실제로는 로그인한 사용자의 ID와 비교해야 함
+      );
+      
+      set({ myProposals });
+    } catch (error) {
+      console.error('Failed to fetch proposals:', error);
+      set({ 
+        proposals: [],
+        loading: { ...get().loading, proposals: false },
+        error: error instanceof Error ? error.message : '안건 목록 조회 중 오류가 발생했습니다.'
+      });
+    }
+  },
+  
+  submitProposal: async (teamId: number, title: string, content: string, targetCount: number) => {
+    set(state => ({ 
+      loading: { ...state.loading, createProposal: true },
+      error: null
+    }));
+    
+    try {
+      // 토큰 차감 로직 (실제로는 백엔드에서 처리)
+      const hasEnoughTokens = get().useTeamToken(String(teamId), get().SUGGEST_COST);
+      
+      if (!hasEnoughTokens) {
+        throw new Error(`토큰이 부족합니다. 제안 등록에는 ${get().SUGGEST_COST} 토큰이 필요합니다.`);
+      }
+      
+      await api.createProposal(teamId, title, content, targetCount);
+      
+      // 제안 등록 후 트랜잭션 추가
+      get().addTransaction({
+        type: 'VOTE',
+        team: String(teamId),
+        amount: get().SUGGEST_COST,
+        timestamp: new Date().toISOString(),
+        tokenName: String(teamId),
+        tokenAmount: get().SUGGEST_COST,
+        tokenPrice: get().bettyPrice
+      });
+      
+      // 데이터 다시 불러오기
+      await get().fetchProposals(teamId);
+      await get().fetchTeamTokenCount(teamId);
+      
+      set(state => ({ 
+        loading: { ...state.loading, createProposal: false },
+        isSuggestModalOpen: false // 제안 모달 닫기
+      }));
+    } catch (error) {
+      console.error('Failed to submit proposal:', error);
+      set(state => ({ 
+        loading: { ...state.loading, createProposal: false },
+        error: error instanceof Error ? error.message : '제안 등록 중 오류가 발생했습니다.'
+      }));
+      throw error;
+    }
+  },
+  
+  voteForProposal: async (teamId: number, proposalId: number) => {
+    set(state => ({ 
+      loading: { ...state.loading, vote: true },
+      error: null
+    }));
+    
+    try {
+      // 토큰 차감 로직 (실제로는 백엔드에서 처리)
+      const hasEnoughTokens = get().useTeamToken(String(teamId), get().VOTE_COST);
+      
+      if (!hasEnoughTokens) {
+        throw new Error(`토큰이 부족합니다. 투표에는 ${get().VOTE_COST} 토큰이 필요합니다.`);
+      }
+      
+      await api.voteProposal(teamId, proposalId);
+      
+      // 투표 후 트랜잭션 추가
+      get().addTransaction({
+        type: 'VOTE',
+        team: String(teamId),
+        amount: get().VOTE_COST,
+        timestamp: new Date().toISOString(),
+        tokenName: String(teamId),
+        tokenAmount: get().VOTE_COST,
+        tokenPrice: get().bettyPrice
+      });
+      
+      // 데이터 다시 불러오기
+      await get().fetchProposals(teamId);
+      await get().fetchTeamTokenCount(teamId);
+      
+      set(state => ({ 
+        loading: { ...state.loading, vote: false }
+      }));
+    } catch (error) {
+      console.error('Failed to vote for proposal:', error);
+      set(state => ({ 
+        loading: { ...state.loading, vote: false },
+        error: error instanceof Error ? error.message : '투표 중 오류가 발생했습니다.'
+      }));
+      throw error;
+    }
+  },
+  
+  fetchTeamTokenCount: async (teamId: number) => {
+    set(state => ({ 
+      loading: { ...state.loading, tokenCount: true }
+    }));
+    
+    try {
+      const tokenCount = await api.getTeamTokenCount(teamId);
+      
+      // userTokens 업데이트
+      set(state => ({
+        userTokens: state.userTokens.map(token => 
+          token.team === String(teamId)
+            ? { ...token, amount: tokenCount }
+            : token
+        ),
+        loading: { ...state.loading, tokenCount: false }
+      }));
+      
+      return tokenCount;
+    } catch (error) {
+      console.error('Failed to fetch team token count:', error);
+      set(state => ({ 
+        loading: { ...state.loading, tokenCount: false },
+        error: error instanceof Error ? error.message : '토큰 개수 조회 중 오류가 발생했습니다.'
+      }));
+      return 0;
+    }
+  }
 }));

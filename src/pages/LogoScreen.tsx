@@ -3,55 +3,60 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../stores/useStore'
 import { useUserStore } from '../stores/authStore'
 import { useState } from 'react'
+import { getWalletInfo } from '../apis/axios'
+import axios from 'axios'
 
 const letters = ['B', 'E', 'T', 'T', 'Y']
 
 function LogoScreen() {
   const navigate = useNavigate()
   const { nickname, setNickname } = useStore()
-  const {
-    login,
-    isLoading,
-    error,
-    needsNickname,
-    registerNickname,
-    checkNickname,
-  } = useUserStore();
+  const { login, isLoading: isLoginLoading, error } = useUserStore()
+  const [showNicknameInput, setShowNicknameInput] = useState(false)
+  const [isCheckingWallet, setIsCheckingWallet] = useState(false)
 
-  const [step, setStep] = useState<'LOGIN' | 'NICKNAME'>('LOGIN');
+  const handleNicknameSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (nickname.trim()) {
+      navigate('/home')
+    }
+  }
 
   const handleLogin = async () => {
     try {
-      const loginSuccess = await login('google');
-      if (!loginSuccess) return;
-
-      const hasNickname = await checkNickname();
-      if (hasNickname) {
-        console.log('닉네임 있음 -> 홈으로 이동');
-        navigate('/main');
-      } else {
-        console.log('닉네임 없음 -> 닉네임 입력 화면으로');
-        setStep('NICKNAME');
+      const loginSuccess = await login('google')
+      if (loginSuccess) {
+        setIsCheckingWallet(true)
+        // Web3Auth가 초기화될 때까지 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        try {
+          const walletData = await getWalletInfo()
+          // 지갑이 있으면 바로 홈으로 이동
+          navigate('/home')
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+              // 지갑이 없는 경우 닉네임 입력 요청
+              setShowNicknameInput(true)
+            } else {
+              console.error('서버 에러:', error.response?.data)
+              navigate('/home')
+            }
+          } else {
+            navigate('/home')
+          }
+        } finally {
+          setIsCheckingWallet(false)
+        }
       }
     } catch (error) {
-      console.error('로그인 오류: ', error);
-      setStep('LOGIN');
+      console.error('로그인 프로세스 실패:', error)
+      setIsCheckingWallet(false)
     }
-  };
+  }
 
-  const handleNicknameSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!nickname.trim()) return;
-
-    const success = await registerNickname(nickname.trim());
-    if (success) {
-      navigate('/home');
-    } else {
-      setStep('NICKNAME');
-    }
-  };
-
-  if (isLoading) {
+  if (isLoginLoading || isCheckingWallet) {
     return (
       <div className="flex flex-col items-center justify-center h-full" style={{
         background: 'linear-gradient(145deg, #0c1b4d 0%, #1a237e 100%)'
@@ -84,7 +89,7 @@ function LogoScreen() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="mt-4 text-white text-sm font-['Giants-Bold']"
         >
-          로딩 중...
+          {isCheckingWallet ? '지갑 정보 확인 중...' : '로그인 중...'}
         </motion.p>
       </div>
     )
@@ -189,18 +194,11 @@ function LogoScreen() {
             </span>
           </p>
 
-          {step === 'LOGIN' ? (
-            <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="bg-blue-950 text-white px-4 py-2 rounded-full font-['Giants-Bold'] text-sm hover:bg-blue-900 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? '로그인 중...' : 'Google로 로그인'}
-            </button>
-          ) : (
-            <form 
-              onSubmit={handleNicknameSubmit}
+          {showNicknameInput ? (
+            <motion.div 
               className="w-full max-w-[240px] flex gap-2 items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
             >
               <input
                 type="text"
@@ -209,22 +207,32 @@ function LogoScreen() {
                 placeholder="닉네임을 입력하세요"
                 maxLength={10}
                 className="flex-1 px-2 py-2 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-100 text-gray-800 font-['Giants-Bold'] text-center focus:outline-none focus:border-blue-500 transition-all duration-300 text-sm"
-                style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}
+                style={{
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                }}
                 autoFocus
               />
               <button
-                type="submit"
+                onClick={handleNicknameSubmit}
                 disabled={!nickname.trim()}
                 className={`px-3 py-2 rounded-full font-['Giants-Bold'] text-xs transition-all duration-300 whitespace-nowrap min-w-[50px] ${
-                  nickname.trim()
-                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:scale-105'
+                  nickname.trim() 
+                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:scale-105' 
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 시작
               </button>
-            </form>
-         )}
+            </motion.div>
+          ) : (
+            <button
+              onClick={handleLogin}
+              disabled={isLoginLoading}
+              className="bg-blue-950 text-white px-4 py-2 rounded-full font-['Giants-Bold'] text-sm hover:bg-blue-900 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoginLoading ? '로그인 중...' : 'Google로 로그인'}
+            </button>
+          )}
           
           {error && (
             <motion.p 

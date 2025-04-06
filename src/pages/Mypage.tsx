@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import { useUserStore } from '../stores/authStore';
 import { formatTeamCode, formatTeamName, teamColors, teamTokenPrices } from '../constants/dummy';
+import { getWalletInfo } from '../apis/axios';
 import backImg from '../assets/back_black.png';
 import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
+import RegisterWalletModal from '../components/RegisterWalletModal';
 import { Transaction } from '../stores/useStore';
-import { getNickname } from '../apis/authApi';
+import axios from 'axios';
 
 type TeamColor = {
   bg: string;
@@ -20,46 +22,27 @@ type TeamColors = {
   [key: string]: TeamColor;
 };
 
+interface WalletInfo {
+  address?: string;
+  nickname?: string;
+  totalBTC?: number;
+  transactions: Transaction[];
+  tokens?: Array<{
+    team: string;
+    amount: number;
+    btcValue?: number;
+  }>;
+}
+
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    toggleSidebar,
-    walletInfo,
-    activeTab,
-    setActiveTab,
-    isChargeModalOpen,
-    setIsChargeModalOpen,
-    nickname,
-    setNickname,
-    bettyPrice,
-    userTokens
-  } = useStore();
-
-  const { isAuthenticated } = useUserStore();
-
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice, userTokens, updateWalletInfo } = useStore();
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
-
-  useEffect(() => {
-    toggleSidebar(false);
-
-    const fetchNickname = async () => {
-      try {
-        const res = await getNickname();
-        if (res?.nickname) {
-          console.log('닉네임 불러오기: ', res.nickname);
-          setNickname(res.nickname);
-        }
-      } catch (err) {
-        console.error('닉네임 불러오기 실패: ', err);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchNickname();
-    }
-  }, [isAuthenticated]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 거래 유형별 스타일 정의
   const transactionStyles = {
@@ -81,11 +64,42 @@ const MyPage: React.FC = () => {
   };
 
   // BTC 금액 포맷팅 함수
-  const formatBTC = (btc: number) => btc.toFixed(2);
+  const formatBTC = (btc: number | undefined) => {
+    if (btc === undefined || btc === null) return '0.00';
+    return btc.toFixed(2);
+  };
 
   // 컴포넌트 마운트 시 사이드바를 닫힌 상태로 설정
-  React.useEffect(() => {
+  useEffect(() => {
     toggleSidebar(false);
+  }, []);
+
+  // 컴포넌트 마운트 시 지갑 정보 조회
+  useEffect(() => {
+    const fetchWalletInfo = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getWalletInfo();
+        updateWalletInfo({
+          address: data.address,
+          nickname: data.nickname,
+          totalBTC: data.totalBTC,
+          transactions: [],
+          tokens: []
+        });
+      } catch (error) {
+        console.error('지갑 정보 조회 실패:', error);
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setIsRegisterModalOpen(true);
+        } else {
+          setError('지갑 정보를 불러오는데 실패했습니다.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWalletInfo();
   }, []);
 
   const tabs = [
@@ -176,7 +190,7 @@ const MyPage: React.FC = () => {
             <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
               <p className="text-sm text-gray-400 mb-2">총 보유자산</p>
               <div className="flex items-baseline">
-                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo?.totalBTC)}</p>
                 <p className="text-xl text-gray-400 ml-2">BTC</p>
               </div>
             </div>
@@ -186,7 +200,7 @@ const MyPage: React.FC = () => {
               <h3 className="text-base font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
               <div className="space-y-3">
                 {userTokens.map((token) => {
-                  const tokenInfo = walletInfo.tokens?.find(t => t.team === token.team);
+                  const tokenInfo = walletInfo?.tokens?.find(t => t.team === token.team);
                   return (
                     <motion.div
                       key={token.team}
@@ -217,7 +231,7 @@ const MyPage: React.FC = () => {
                           <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
                           <div className="flex items-baseline">
                             <p className="text-base font-['Giants-Bold'] text-black">
-                              {formatBTC(tokenInfo?.btcValue || 0)}
+                              {formatBTC(tokenInfo?.btcValue)}
                             </p>
                             <p className="text-xs text-gray-500 ml-1">BTC</p>
                           </div>
@@ -465,41 +479,61 @@ const MyPage: React.FC = () => {
           `}
         </style>
 
-        {/* 지갑 주소 */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-['Giants-Bold']">{nickname}님, 안녕하세요!</h2>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <p className="text-red-500 mb-4">{error}</p>
             <button
-              onClick={() => {
-                useUserStore.getState().logout();
-                navigate('/');
-              }}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full border border-gray-200 hover:border-red-200"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-black text-white rounded-lg"
             >
-              로그아웃
+              다시 시도
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-1">{walletInfo.address}</p>
-        </div>
+        ) : (
+          <>
+            {/* 지갑 주소 */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-['Giants-Bold']">
+                  {walletInfo?.nickname ? `${walletInfo.nickname}님의 지갑` : '내 지갑'}
+                </h2>
+                <button
+                  onClick={() => {
+                    useUserStore.getState().logout();
+                    navigate('/');
+                  }}
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full border border-gray-200 hover:border-red-200"
+                >
+                  로그아웃
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">지갑 주소: {useUserStore.getState().walletAddress || '지갑 주소 없음'}</p>
+            </div>
 
-        {/* 탭 */}
-        <div className="flex space-x-2 mb-6 bg-white p-1 rounded-2xl shadow-sm">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'ASSETS' | 'TRANSACTIONS' | 'CHARGE')}
-              className={`flex-1 py-3 rounded-xl text-sm font-['Giants-Bold'] transition-all duration-200
-                ${activeTab === tab.id
-                  ? 'bg-black text-white shadow-md'
-                  : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+            {/* 탭 */}
+            <div className="flex space-x-2 mb-6 bg-white p-1 rounded-2xl shadow-sm">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as 'ASSETS' | 'TRANSACTIONS' | 'CHARGE')}
+                  className={`flex-1 py-3 rounded-xl text-sm font-['Giants-Bold'] transition-all duration-200
+                    ${activeTab === tab.id
+                      ? 'bg-black text-white shadow-md'
+                      : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-        {/* 탭 컨텐츠 */}
-        {renderContent()}
+            {/* 탭 컨텐츠 */}
+            {renderContent()}
+          </>
+        )}
       </div>
 
       <Sidebar />
@@ -507,8 +541,13 @@ const MyPage: React.FC = () => {
         isOpen={isChargeModalOpen}
         onClose={() => setIsChargeModalOpen(false)}
       />
+      <RegisterWalletModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+      />
     </div>
   );
 };
 
 export default MyPage;
+

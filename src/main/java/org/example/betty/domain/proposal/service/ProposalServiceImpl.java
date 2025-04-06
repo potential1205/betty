@@ -108,7 +108,7 @@ public class ProposalServiceImpl implements ProposalService {
         TransactionRequest transactionRequest = new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("10"));
         exchangeService.processUse(transactionRequest, accessToken);
 
-        return CreateProposalResponse.of(proposal.getId(), contentHash);
+        return CreateProposalResponse.of(proposal.getId(), contentHash, proposal.getClosedAt());
     }
 
     @Override

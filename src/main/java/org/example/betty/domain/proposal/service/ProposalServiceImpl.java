@@ -1,15 +1,12 @@
 package org.example.betty.domain.proposal.service;
 
-import ch.qos.logback.core.spi.ErrorCodes;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.common.util.SessionUtil;
-import org.example.betty.domain.exchange.dto.req.TransactionRequest;
 import org.example.betty.domain.exchange.entity.Token;
-import org.example.betty.domain.exchange.entity.WalletBalance;
+import org.example.betty.domain.wallet.entity.WalletBalance;
 import org.example.betty.domain.exchange.repository.TokenRepository;
-import org.example.betty.domain.exchange.repository.WalletBalanceRepository;
-import org.example.betty.domain.exchange.service.ExchangeService;
+import org.example.betty.domain.wallet.repository.WalletBalanceRepository;
 import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.proposal.dto.req.CreateProposalRequest;
 import org.example.betty.domain.proposal.dto.req.CreateWalletProposalRequest;
@@ -39,7 +36,6 @@ public class ProposalServiceImpl implements ProposalService {
     private final TokenRepository tokenRepository;
     private final WalletBalanceRepository walletBalanceRepository;
     private final WalletProposalRepository walletProposalRepository;
-    private final ExchangeService exchangeService;
 
     @Override
     public BigDecimal getTeamTokenCount(Long teamId, String accessToken) {
@@ -97,8 +93,6 @@ public class ProposalServiceImpl implements ProposalService {
         proposalRepository.save(proposal);
 
         // 토큰 10개 소각 로직 (온 체인)
-        exchangeService.processUse(
-                new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("10")), accessToken);
     }
 
     @Override
@@ -142,8 +136,6 @@ public class ProposalServiceImpl implements ProposalService {
         walletProposalRepository.save(walletProposal);
 
         // 토큰 1개 소각 (온 체인)
-        exchangeService.processUse(
-                new TransactionRequest(wallet.getId(), token.getId(), new BigDecimal("1")), accessToken);
     }
 
     @Override

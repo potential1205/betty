@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.auth.service.TokenService;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -20,10 +19,11 @@ public class SessionUtil {
 
     private final TokenService tokenService;
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Qualifier("redisTemplate")
+    private final RedisTemplate<String, Object> redis1;
 
     public void setSession(String walletAddress, String accessToken, Duration ttl) {
-        redisTemplate.opsForValue().set(walletAddress, accessToken, ttl);
+        redis1.opsForValue().set(walletAddress, accessToken, ttl);
     }
 
     public String getSession(String accessToken) {
@@ -38,7 +38,7 @@ public class SessionUtil {
 
         log.info("accessToken에서 지갑 주소 추출:" + walletAddress);
 
-        Object stored = redisTemplate.opsForValue().get(walletAddress);
+        Object stored = redis1.opsForValue().get(walletAddress);
 
         log.info("redis 세션 조회:" + walletAddress);
 
@@ -62,6 +62,6 @@ public class SessionUtil {
     }
 
     public void deleteSession(String walletAddress) {
-        redisTemplate.delete(walletAddress);
+        redis1.delete(walletAddress);
     }
 }

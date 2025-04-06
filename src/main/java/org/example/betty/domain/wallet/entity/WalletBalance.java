@@ -1,8 +1,9 @@
-package org.example.betty.domain.exchange.entity;
+package org.example.betty.domain.wallet.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.wallet.entity.Wallet;
 
 import java.math.BigDecimal;

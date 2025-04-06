@@ -75,17 +75,8 @@ public class ProposalServiceImpl implements ProposalService {
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
-        Token token = tokenRepository.findByTokenName(team.getTokenName())
+        tokenRepository.findByTokenName(team.getTokenName())
                 .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-
-        WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), token.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
-
-        if (walletBalance.getBalance().compareTo(BigDecimal.TEN) < 0) {
-            throw new BusinessException(ErrorCode.NOT_ENOUGH_TOKEN);
-        }
-
-        walletBalance.setBalance(walletBalance.getBalance().subtract(new BigDecimal("10")));
 
         Proposal proposal = Proposal.builder()
                 .walletId(wallet.getId())
@@ -122,17 +113,8 @@ public class ProposalServiceImpl implements ProposalService {
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
-        Token token = tokenRepository.findByTokenName(team.getTokenName())
+        tokenRepository.findByTokenName(team.getTokenName())
                 .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-
-        WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), token.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
-
-        if (walletBalance.getBalance().compareTo(BigDecimal.ONE) < 0) {
-            throw new BusinessException(ErrorCode.NOT_ENOUGH_TOKEN);
-        }
-
-        walletBalance.setBalance(walletBalance.getBalance().subtract(new BigDecimal("1")));
 
         Proposal proposal = proposalRepository.findByIdAndTeamId(request.getProposalId(), request.getTeamId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_PROPOSAL));

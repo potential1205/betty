@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.entity.Team;
-import org.example.betty.domain.game.repository.GamesRepository;
-import org.example.betty.domain.game.repository.TeamsRepository;
+import org.example.betty.domain.game.repository.GameRepository;
+import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.external.game.scraper.GameScheduleScraper;
 import org.example.betty.external.game.scraper.dto.GameSchedule;
 import org.springframework.boot.CommandLineRunner;
@@ -23,16 +23,16 @@ import java.util.List;
 public class GamesDataLoader implements CommandLineRunner {
 
     private final GameScheduleScraper scraper;
-    private final GamesRepository gamesRepository;
-    private final TeamsRepository teamsRepository;
+    private final GameRepository gameRepository;
+    private final TeamRepository teamRepository;
 
     @Override
     public void run(String... args) {
-        if (gamesRepository.count() > 0) {
+        if (gameRepository.count() > 0) {
             return;
         }
 
-        if (teamsRepository.count() == 0) {
+        if (teamRepository.count() == 0) {
             return;
         }
 
@@ -41,12 +41,12 @@ public class GamesDataLoader implements CommandLineRunner {
                 .map(this::toEntity)
                 .toList();
 
-        gamesRepository.saveAll(games);
+        gameRepository.saveAll(games);
     }
 
     private Game toEntity(GameSchedule schedule) {
-        Team homeTeam = teamsRepository.findByTeamNameContaining(schedule.getHomeTeam());
-        Team awayTeam = teamsRepository.findByTeamNameContaining(schedule.getAwayTeam());
+        Team homeTeam = teamRepository.findByTeamNameContaining(schedule.getHomeTeam());
+        Team awayTeam = teamRepository.findByTeamNameContaining(schedule.getAwayTeam());
 
         return new Game(
                 homeTeam,

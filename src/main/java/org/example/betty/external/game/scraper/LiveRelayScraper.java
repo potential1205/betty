@@ -79,10 +79,12 @@ public class LiveRelayScraper extends BaseScraper {
                     relay.setInning(fullInning);
                     relay.setTeamAtBat(null);
                 }
-
-                relay.setPitchResult(new ArrayList<>(GameRelayInfoParser.extractPitchResult(driver)));
-                relay.setNextBatters(new ArrayList<>(GameRelayInfoParser.extractNextBatterNames(driver)));
-                relay.setRunnerOnBase(new ArrayList<>(GameRelayInfoParser.extractRunnerOnBase(driver)));
+                relay.setPitchResult(GameRelayInfoParser.extractPitchResult(driver));
+                relay.setNextBatters(GameRelayInfoParser.extractNextBatterNames(driver));
+                relay.setRunnerOnBase(GameRelayInfoParser.extractRunnerOnBase(driver));
+//                relay.setPitchResult(new ArrayList<>(GameRelayInfoParser.extractPitchResult(driver)));
+//                relay.setNextBatters(new ArrayList<>(GameRelayInfoParser.extractNextBatterNames(driver)));
+//                relay.setRunnerOnBase(new ArrayList<>(GameRelayInfoParser.extractRunnerOnBase(driver)));
                 relay.setScore(GameRelayInfoParser.extractScore(driver));
                 relay.setOutCount(GameRelayInfoParser.extractOutCount(driver));
 

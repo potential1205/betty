@@ -11,5 +11,4 @@ public interface GameReadService {
      * - Redis에서 조회 (없으면 DB에서 조회하여 가공)
      */
     List<RedisGameSchedule> getTodayGameSchedules();
-
 }

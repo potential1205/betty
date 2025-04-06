@@ -2,7 +2,7 @@ package org.example.betty.common.init;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.game.repository.GamesRepository;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.game.service.GameCacheService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class GameCacheRecoveryRunner implements CommandLineRunner {
 
     private final GameCacheService gameCacheService;
-    private final GamesRepository gamesRepository;
+    private final GameRepository gamesRepository;
 
     @Override
     public void run(String... args) {

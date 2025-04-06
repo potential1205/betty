@@ -20,16 +20,25 @@ import java.util.concurrent.ScheduledFuture;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class RelayAsyncExecutor {
 
     private final LiveRelayScraper liveRelayScraper;
     private final TaskScheduler taskScheduler;
     private final Map<String, ScheduledFuture<?>> relayTasks = new ConcurrentHashMap<>();
     private final GameProblemServiceImpl gameProblemService;
-
-    @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
+
+    public RelayAsyncExecutor(
+            LiveRelayScraper liveRelayScraper,
+            TaskScheduler taskScheduler,
+            GameProblemServiceImpl gameProblemService,
+            @Qualifier("redisTemplate2") RedisTemplate<String, Object> redisTemplate2
+    ) {
+        this.liveRelayScraper = liveRelayScraper;
+        this.taskScheduler = taskScheduler;
+        this.gameProblemService = gameProblemService;
+        this.redisTemplate2 = redisTemplate2;
+    }
 
 
     //실시간 중계 크롤링을 5초 간격으로 실행하는 메서드

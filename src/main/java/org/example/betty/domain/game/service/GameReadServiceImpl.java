@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
-import org.example.betty.domain.game.repository.GamesRepository;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,7 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GameReadServiceImpl implements GameReadService {
 
-    private final GamesRepository gamesRepository;
+    private final GameRepository gamesRepository;
+    private final GameRepository gameRepository;
 
     @Override
     public List<RedisGameSchedule> getTodayGameSchedules() {

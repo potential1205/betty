@@ -2,7 +2,7 @@ package org.example.betty.common.util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.auth.service.TokenService;
+import org.example.betty.domain.auth.service.JWTService;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,7 +17,7 @@ import java.util.Objects;
 @Slf4j
 public class SessionUtil {
 
-    private final TokenService tokenService;
+    private final JWTService JWTService;
 
     @Qualifier("redisTemplate")
     private final RedisTemplate<String, Object> redis1;
@@ -34,7 +34,7 @@ public class SessionUtil {
         log.info("accessToken 존재");
         String accessTokenBody = accessToken.substring(7).trim();
 
-        String walletAddress = tokenService.getSubjectFromToken(accessTokenBody);
+        String walletAddress = JWTService.getSubjectFromToken(accessTokenBody);
 
         log.info("accessToken에서 지갑 주소 추출:" + walletAddress);
 
@@ -58,7 +58,7 @@ public class SessionUtil {
 
         String accessTokenBody = accessToken.substring(7).trim();
 
-        return tokenService.getSubjectFromToken(accessTokenBody);
+        return JWTService.getSubjectFromToken(accessTokenBody);
     }
 
     public void deleteSession(String walletAddress) {

@@ -25,6 +25,8 @@ public class Token {
     @Column(name = "token_name", length = 3)
     private String tokenName;
 
+    private String tokenAddress;
+
     @NotNull
     @Column(name = "description", length = 20)
     private String description;

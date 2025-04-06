@@ -449,7 +449,10 @@ export const useStore = create<AppState>((set, get) => ({
   updateWalletInfo: (newInfo: Partial<WalletInfo>) => set((state) => ({
     walletInfo: {
       ...state.walletInfo,
-      ...newInfo
+      ...newInfo,
+      totalBTC: newInfo.totalBTC ?? state.walletInfo.totalBTC ?? 0,
+      tokens: newInfo.tokens ?? state.walletInfo.tokens ?? [],
+      transactions: newInfo.transactions ?? state.walletInfo.transactions ?? [],
     }
   })),
 

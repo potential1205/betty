@@ -151,7 +151,7 @@ export const getTeamTokenCount = async (teamId: number) => {
   try {
     const response = await axiosInstance.get(`/proposals/team/${teamId}/token/count`);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     // 404 에러이고 팬토큰이 없는 경우
     if (error.response?.status === 404 && error.response?.data?.code === 4001) {
       return { teamTokenCount: 0 };

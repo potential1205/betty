@@ -46,14 +46,14 @@ interface Game {
   awayTeam: string;
   homeScore: number;
   awayScore: number;
-  inning?: string;
-  status?: string;
+  inning: number;
+  status: string;
   schedule: GameSchedule;
 }
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar } = useStore();
+  const { toggleSidebar, setTodayGames } = useStore();
   
   // 게임 데이터 상태
   const [games, setGames] = useState<Game[]>([]);
@@ -84,6 +84,7 @@ const Home: React.FC = () => {
             awayTeam: schedule.awayTeam,
             homeScore: 0,
             awayScore: 0,
+            inning: 0,
             status: schedule.status,
             schedule
           };
@@ -92,6 +93,7 @@ const Home: React.FC = () => {
         });
         
         setGames(formattedGames);
+        setTodayGames(formattedGames);
         setError(null);
       } catch (err) {
         console.error('API 요청 에러:', err);
@@ -339,17 +341,15 @@ const Home: React.FC = () => {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
-            onDragEnd={(e, { offset, velocity }) => {
-              const swipe = Math.abs(offset.x) * velocity.x;
+            onDragEnd={(event, info) => {
+              const swipe = Math.abs(info.offset.x) * info.velocity.x;
               const threshold = 10000;
-
               if (swipe < -threshold) {
                 handleNext();
               } else if (swipe > threshold) {
                 handlePrev();
               }
             }}
-            {...bind()}
           >
             <div className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl 
               border border-white/20 shadow-lg">
@@ -363,7 +363,7 @@ const Home: React.FC = () => {
         <button
           onClick={() => {
             const currentGame = games[currentIndex];
-            useStore.setState({ currentGame, games, currentIndex });
+            useStore.setState({ currentGame });
             navigate('/main');
           }}
           className="w-full h-12 bg-black rounded-[20px] text-white text-lg font-medium"

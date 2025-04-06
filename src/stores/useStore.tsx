@@ -50,10 +50,34 @@ interface WalletInfo {
   nickname?: string;
 }
 
+interface GameSchedule {
+  season: number;
+  gameDate: string;
+  startTime: string;
+  stadium: string;
+  homeTeam: string;
+  awayTeam: string;
+  status: string;
+}
+
+export interface Game {
+  id: number;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  inning: number;
+  status: string;
+  schedule: GameSchedule;
+}
+
 interface AppState {
   currentIndex: number;
   isSidebarOpen: boolean;
   games: GameData[];
+  todayGames: Game[];
+  setTodayGames: (games: Game[]) => void;
+  currentGame?: Game;
   userTokens: TeamToken[];
   myProposals: Proposal[];
   proposals: Proposal[];
@@ -107,6 +131,7 @@ interface AppState {
   voteForProposal: (teamId: number, proposalId: number) => Promise<void>;
   fetchTeamTokenCount: (teamId: number) => Promise<number>;
   clearError: () => void;
+  setCurrentGame: (game: Game) => void;
 }
 
 const initialWalletInfo: WalletInfo = {
@@ -126,9 +151,9 @@ export const TEAMS = {
   KIWOOM: { id: '3', name: '키움', code: 'KWH' },
   KIA: { id: '4', name: 'KIA', code: 'KIA' },
   LG: { id: '5', name: 'LG', code: 'LGT' },
-  HANWHA: { id: '6', name: '한화', code: 'HHE' },
+  HANWHA: { id: '6', name: '한화', code: 'HWE' },
   SSG: { id: '7', name: 'SSG', code: 'SSG' },
-  SAMSUNG: { id: '8', name: '삼성', code: 'SAL' },
+  SAMSUNG: { id: '8', name: '삼성', code: 'SSL' },
   NC: { id: '9', name: 'NC', code: 'NCD' },
   KT: { id: '10', name: 'KT', code: 'KTW' }
 } as const;
@@ -206,6 +231,9 @@ export const useStore = create<AppState>((set, get) => ({
     ...game,
     status: game.status as "초" | "말"
   })),
+  todayGames: [],
+  setTodayGames: (games) => set({ todayGames: games }),
+  currentGame: undefined,
   userTokens: userTokenDummy,
   myProposals: [],
   proposals: [],
@@ -424,6 +452,8 @@ export const useStore = create<AppState>((set, get) => ({
       ...newInfo
     }
   })),
+
+  setCurrentGame: (game: Game) => set({ currentGame: game }),
   
   // API 연동 함수들
   clearError: () => set({ error: null }),

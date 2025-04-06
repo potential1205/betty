@@ -1,115 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../stores/useStore';
+import { useStore, TEAMS, getTeamById } from '../stores/useStore';
 import { colors } from '../constants/colors';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
 import SuggestModal from '../components/suggest';
 import ConfirmModal from '../components/confirm';
-import axios from 'axios';
-
-// axios 인스턴스 생성
-const instance = axios.create({
-  baseURL: 'http://i9a609.p.ssafy.io:8080',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// 팀 정보 타입 정의
-interface TeamInfo {
-  name: string;
-  code: string;
-}
-
-interface TeamInfoMap {
-  [key: number]: TeamInfo;
-}
-
-// 팀 정보
-const TEAM_INFO: TeamInfoMap = {
-  1: { name: '두산', code: 'DOOSAN' },
-  2: { name: 'LG', code: 'LG' },
-  3: { name: '키움', code: 'KIWOOM' },
-  4: { name: 'KT', code: 'KT' },
-  5: { name: 'SSG', code: 'SSG' },
-  6: { name: 'NC', code: 'NC' },
-  7: { name: '롯데', code: 'LOTTE' },
-  8: { name: '삼성', code: 'SAMSUNG' },
-  9: { name: '한화', code: 'HANWHA' },
-  10: { name: 'KIA', code: 'KIA' }
-};
+import axiosInstance, {
+  getProposalList,
+  getProposalDetail,
+  createProposal,
+  voteProposal,
+  getTeamTokenCount
+} from '../apis/axios';
 
 // 팀 이름/코드 포맷팅 함수
 const formatTeamName = (teamId: string) => {
-  return TEAM_INFO[Number(teamId)]?.name || '알 수 없음';
+  const team = getTeamById(teamId);
+  return team?.name || '알 수 없음';
 };
 
 const formatTeamCode = (teamId: string) => {
-  return TEAM_INFO[Number(teamId)]?.code || '???';
-};
-
-// API 통신 함수들
-const api = {
-  getProposalList: async (teamId: number) => {
-    try {
-      const response = await instance.get(`/api/v1/proposals/team/${teamId}`);
-      return response.data;
-    } catch (error) {
-      console.error('안건 목록 조회 실패:', error);
-      throw error;
-    }
-  },
-  
-  getProposalDetail: async (proposalId: number, teamId: number) => {
-    try {
-      const response = await instance.get(`/api/v1/proposals/${proposalId}/team/${teamId}`);
-      return response.data;
-    } catch (error) {
-      console.error('안건 상세 조회 실패:', error);
-      throw error;
-    }
-  },
-  
-  createProposal: async (teamId: number, title: string, content: string, targetCount: number) => {
-    try {
-      const response = await instance.post('/api/v1/proposals', {
-        teamId,
-        title,
-        content,
-        targetCount
-      });
-      return response.data;
-    } catch (error) {
-      console.error('안건 등록 실패:', error);
-      throw error;
-    }
-  },
-  
-  voteProposal: async (teamId: number, proposalId: number) => {
-    try {
-      const response = await instance.post('/api/v1/proposals/vote', {
-        teamId,
-        proposalId
-      });
-      return response.data;
-    } catch (error) {
-      console.error('안건 투표 실패:', error);
-      throw error;
-    }
-  },
-  
-  getTeamTokenCount: async (teamId: number) => {
-    try {
-      const response = await instance.get(`/api/v1/proposals/team/${teamId}/token/count`);
-      return response.data.teamTokenCount;
-    } catch (error) {
-      console.error('팀 토큰 개수 조회 실패:', error);
-      throw error;
-    }
-  }
+  const team = getTeamById(teamId);
+  return team?.code || '???';
 };
 
 interface Proposal {
@@ -227,8 +142,8 @@ const TeamPage: React.FC = () => {
   const [teamTokenCount, setTeamTokenCount] = useState(0);
   const [selectedTeamId, setSelectedTeamId] = useState(1); // 기본 팀 ID (두산)
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [teamsData, setTeamsData] = useState(Object.keys(colors).map(Number));
+  const { toggleSidebar } = useStore();
+  const [teamsData, setTeamsData] = useState(Object.values(TEAMS).map(team => Number(team.id)));
   const [visibleTeams, setVisibleTeams] = useState<number[]>([]);
 
   // 팀 ID 변경 시 데이터 로드
@@ -237,15 +152,32 @@ const TeamPage: React.FC = () => {
       setLoading(true);
       try {
         // 병렬로 데이터 불러오기
-        const [proposalsData, tokenCount] = await Promise.all([
-          api.getProposalList(selectedTeamId),
-          api.getTeamTokenCount(selectedTeamId)
+        const [proposalsData, tokenCountData] = await Promise.all([
+          getProposalList(selectedTeamId),
+          getTeamTokenCount(selectedTeamId)
         ]);
         
-        setProposals(proposalsData.proposalList);
-        setTeamTokenCount(tokenCount);
-      } catch (error) {
+        setProposals(proposalsData.proposalList || []);
+        setTeamTokenCount(tokenCountData.teamTokenCount || 0);
+      } catch (error: any) {
         console.error('팀 데이터 로딩 실패:', error);
+        // 더 자세한 에러 정보 출력
+        if (error.response) {
+          // 서버가 응답을 반환한 경우
+          console.error('Error response:', {
+            data: error.response.data,
+            status: error.response.status,
+            headers: error.response.headers
+          });
+        } else if (error.request) {
+          // 요청은 보냈지만 응답을 받지 못한 경우
+          console.error('Error request:', error.request);
+        } else {
+          // 요청 설정 중에 문제가 발생한 경우
+          console.error('Error message:', error.message);
+        }
+        setProposals([]);
+        setTeamTokenCount(0);
       } finally {
         setLoading(false);
       }
@@ -262,16 +194,16 @@ const TeamPage: React.FC = () => {
   // 투표 핸들러
   const handleVote = async (proposalId: number) => {
     try {
-      await api.voteProposal(selectedTeamId, proposalId);
+      await voteProposal(selectedTeamId, proposalId);
       
       // 투표 후 데이터 다시 불러오기
-      const [proposalsData, tokenCount] = await Promise.all([
-        api.getProposalList(selectedTeamId),
-        api.getTeamTokenCount(selectedTeamId)
+      const [proposalsData, tokenCountData] = await Promise.all([
+        getProposalList(selectedTeamId),
+        getTeamTokenCount(selectedTeamId)
       ]);
       
-      setProposals(proposalsData.proposalList);
-      setTeamTokenCount(tokenCount);
+      setProposals(proposalsData.proposalList || []);
+      setTeamTokenCount(tokenCountData.teamTokenCount || 0);
     } catch (error) {
       console.error('투표 실패:', error);
     }
@@ -280,15 +212,16 @@ const TeamPage: React.FC = () => {
   // 제안 생성 핸들러
   const handleCreateProposal = async (title: string, content: string, targetCount: number) => {
     try {
-      await api.createProposal(selectedTeamId, title, content, targetCount);
+      await createProposal(selectedTeamId, title, content, targetCount);
       
-      // 제안 생성 후 목록 다시 불러오기
-      const proposalsData = await api.getProposalList(selectedTeamId);
-      setProposals(proposalsData.proposalList);
+      // 제안 생성 후 데이터 다시 불러오기
+      const [proposalsData, tokenCountData] = await Promise.all([
+        getProposalList(selectedTeamId),
+        getTeamTokenCount(selectedTeamId)
+      ]);
       
-      // 토큰 개수 다시 불러오기 (제안 생성에 토큰을 사용했다면)
-      const tokenCount = await api.getTeamTokenCount(selectedTeamId);
-      setTeamTokenCount(tokenCount);
+      setProposals(proposalsData.proposalList || []);
+      setTeamTokenCount(tokenCountData.teamTokenCount || 0);
     } catch (error) {
       console.error('제안 생성 실패:', error);
     }
@@ -332,7 +265,7 @@ const TeamPage: React.FC = () => {
         </button>
         <div className="w-5 h-5 flex items-center justify-center">
           <button 
-            onClick={() => setIsSidebarOpen(true)}
+            onClick={() => toggleSidebar(true)}
             className="w-5 h-5"
           >
             <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
@@ -366,7 +299,7 @@ const TeamPage: React.FC = () => {
                 <button
                   key={team}
                   onClick={() => setSelectedTeamId(team)}
-                  className={`px-4 py-2 rounded-full transition-all duration-300
+                  className={`px-4 py-2 rounded-full transition-all duration-300 font-['Giants-Bold']
                     ${team === selectedTeamId 
                       ? 'bg-white text-black scale-110' 
                       : 'bg-gray-800 text-white opacity-50 scale-90'}`}
@@ -394,7 +327,7 @@ const TeamPage: React.FC = () => {
                 <span className="text-2xl font-['Giants-Bold']">
                   {teamTokenCount}
                 </span>
-                <span className="ml-2 text-gray-400">{formatTeamCode(String(selectedTeamId))}</span>
+                <span className="ml-2 text-gray-400 font-['Giants-Bold']">{formatTeamCode(String(selectedTeamId))}</span>
               </div>
             </div>
 
@@ -463,9 +396,7 @@ const TeamPage: React.FC = () => {
       </div>
 
       {/* 사이드바 */}
-      {isSidebarOpen && (
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      )}
+      <Sidebar />
       
       {/* 제안하기 모달 */}
       <SuggestModal

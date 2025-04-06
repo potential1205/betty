@@ -17,7 +17,6 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [targetCount, setTargetCount] = useState(100);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -33,20 +32,15 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
       return;
     }
     
-    if (targetCount < 50) {
-      setError('목표 투표수는 최소 50 이상이어야 합니다.');
-      return;
-    }
-    
     try {
       setIsSubmitting(true);
       setError('');
-      await onSubmit(title, content, targetCount);
+      // 목표 투표수를 5로 고정
+      await onSubmit(title, content, 5);
       
       // 성공적으로 제출 후 폼 초기화 및 모달 닫기
       setTitle('');
       setContent('');
-      setTargetCount(100);
       onClose();
     } catch (error) {
       if (error instanceof Error) {
@@ -63,7 +57,6 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
   const handleClose = () => {
     setTitle('');
     setContent('');
-    setTargetCount(100);
     setError('');
     onClose();
   };
@@ -76,6 +69,13 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            maxWidth: '360px',
+            maxHeight: '743px',
+            margin: 'auto',
+            left: '0',
+            right: '0'
+          }}
         >
           {/* 배경 오버레이 */}
           <div 
@@ -88,7 +88,7 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="relative mx-4 bg-gray-900 rounded-xl p-6 w-full max-w-md z-10"
+            className="relative mx-4 bg-gray-900 rounded-xl p-6 w-full max-w-[328px] z-10"
           >
             <h2 className="text-xl font-['Giants-Bold'] text-white mb-6">
               {formatTeamName(team)} 팀에 제안하기
@@ -127,33 +127,13 @@ const SuggestModal: React.FC<SuggestModalProps> = ({
             
             <div className="mb-6">
               <label className="block text-gray-400 text-sm mb-2">목표 투표 수</label>
-              <div className="flex items-center">
-                <button
-                  onClick={() => setTargetCount(Math.max(50, targetCount - 50))}
-                  className="bg-gray-800 px-3 py-2 rounded-l-md border border-gray-700"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  value={targetCount}
-                  onChange={(e) => setTargetCount(Math.max(50, parseInt(e.target.value) || 50))}
-                  className="w-full bg-gray-800 py-2 text-center text-white border-t border-b border-gray-700 focus:outline-none"
-                  min={50}
-                  step={50}
-                />
-                <button
-                  onClick={() => setTargetCount(targetCount + 50)}
-                  className="bg-gray-800 px-3 py-2 rounded-r-md border border-gray-700"
-                >
-                  +
-                </button>
+              <div className="w-full bg-gray-800 py-2 px-3 rounded-md border border-gray-700 text-white">
+                5
               </div>
-              <p className="text-gray-500 text-xs mt-1">최소 50 이상, 50 단위로 설정 가능</p>
             </div>
             
             <div className="text-gray-400 text-sm mb-6">
-              <p>- 제안 등록에는 3 {formatTeamCode(team)}이 사용됩니다.</p>
+              <p>- 제안 등록에는 3이 사용됩니다.</p>
               <p>- 목표 투표수에 도달하면 구단에 전달됩니다.</p>
               <p>- 14일 이내에 목표에 도달하지 못하면 자동 소멸됩니다.</p>
             </div>

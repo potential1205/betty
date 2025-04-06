@@ -45,6 +45,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            maxWidth: '360px',
+            maxHeight: '743px',
+            margin: 'auto',
+            left: '0',
+            right: '0'
+          }}
         >
           {/* 배경 오버레이 */}
           <div 
@@ -57,7 +64,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="relative mx-4 bg-gray-900 rounded-xl p-6 w-full max-w-sm z-10"
+            className="relative mx-4 bg-gray-900 rounded-xl p-6 w-full max-w-[328px] z-10"
           >
             <h2 className="text-xl font-['Giants-Bold'] text-white mb-4 text-center">
               제안에 투표하기
@@ -75,8 +82,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 이 제안에 {requiredTokens} {formatTeamCode(team)}을 사용하여 투표하시겠습니까?
               </p>
               <p className="text-gray-400 text-sm">
-                - 투표한 토큰은 반환되지 않습니다.<br />
-                - 투표 완료 후 취소할 수 없습니다.
+                - 투표한 토큰은 구단에서 거절시 반환됩니다.<br />
               </p>
             </div>
             

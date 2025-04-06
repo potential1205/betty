@@ -290,7 +290,7 @@ export const formatTeamCode = (team: string) => {
     'LG': 'LGT',      // LG 트윈스
     '한화': 'HHE',    // 한화 이글스
     'SSG': 'SSG',     // SSG 랜더스
-    '삼성': 'SAL',    // 삼성 라이온즈
+    '삼성': 'SSL',    // 삼성 라이온즈
     'NC': 'NCD',      // NC 다이노스
     'KT': 'KTW'       // KT 위즈
   };

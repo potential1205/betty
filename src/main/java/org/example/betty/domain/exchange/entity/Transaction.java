@@ -31,12 +31,10 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "token_from")
-    @NotNull
     private Token tokenFrom;
 
     @ManyToOne
     @JoinColumn(name = "token_to")
-    @NotNull
     private Token tokenTo;
 
     @Column(name = "amount_in", precision = 18, scale = 8)
@@ -58,6 +56,10 @@ public class Transaction {
             throw new IllegalArgumentException("트랜잭션 상태는 null일 수 없습니다.");
         }
         this.transactionStatus = newStatus;
+    }
+
+    public void updateAmountOut(BigDecimal amountOut) {
+        this.amountOut = amountOut;
     }
 
 }

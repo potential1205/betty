@@ -24,8 +24,10 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.gas.DefaultGasProvider;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -49,9 +51,15 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(null) // KRW
+                .tokenTo(btc)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -67,6 +75,9 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
             TransactionReceipt receipt = contract.add(transaction.getAmountIn().toBigInteger()).send();
+            // 1BTC = 100KRW
+            BigDecimal btc = transaction.getAmountIn().divide(BigDecimal.valueOf(100)); // amountIn == KRW
+            transaction.updateAmountOut(btc);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -84,9 +95,15 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(btc)
+                .tokenTo(null) // KRW
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -102,6 +119,9 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
             TransactionReceipt receipt = contract.remove(transaction.getAmountIn().toBigInteger()).send();
+            // 1BTC = 100KRW
+            BigDecimal krw = transaction.getAmountIn().multiply(BigDecimal.valueOf(100)); // amountIn == BTC
+            transaction.updateAmountOut(krw);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -122,11 +142,15 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
+                .tokenFrom(btc)
                 .tokenTo(token)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -144,6 +168,12 @@ public class ExchangeServiceImpl implements ExchangeService {
             String tokenName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.buy(tokenName, amount).send();
+            // 이벤트에서 amountOut 파싱
+            List<Exchange.BuyExecutedEventResponse> events = Exchange.getBuyExecutedEvents(receipt);
+            if(!events.isEmpty()) {
+                BigInteger amountOut = events.get(0).amountOut;
+                transaction.updateAmountOut(new BigDecimal(amountOut));
+            }
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -162,11 +192,15 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        Token btc = tokenRepository.findByTokenName("BTC")
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
                 .tokenFrom(token)
+                .tokenTo(btc)
                 .amountIn(request.getAmountIn())
+                .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -184,6 +218,12 @@ public class ExchangeServiceImpl implements ExchangeService {
             String tokenName = transaction.getTokenFrom().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.sell(tokenName, amount).send();
+            // 이벤트에서 amountOut 파싱
+            List<Exchange.SellExecutedEventResponse> events = Exchange.getSellExecutedEvents(receipt);
+            if(!events.isEmpty()) {
+                BigInteger amountOut = events.get(0).amountOut;
+                transaction.updateAmountOut(new BigDecimal(amountOut));
+            }
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -232,6 +272,11 @@ public class ExchangeServiceImpl implements ExchangeService {
             String tokenToName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.swap(tokenFromName, tokenToName, amount).send();
+            List<Exchange.SwapExecutedEventResponse> events = Exchange.getSwapExecutedEvents(receipt);
+            if (!events.isEmpty()) {
+                BigInteger amountOut = events.get(0).amountOut;
+                transaction.updateAmountOut(new BigDecimal(amountOut));
+            }
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {

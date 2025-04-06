@@ -6,8 +6,6 @@ import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +16,6 @@ import java.util.List;
 public class GameReadServiceImpl implements GameReadService {
 
     private final GameRepository gamesRepository;
-    private final GameRepository gameRepository;
 
     @Override
     public List<RedisGameSchedule> getTodayGameSchedules() {

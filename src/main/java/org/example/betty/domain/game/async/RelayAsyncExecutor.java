@@ -1,6 +1,5 @@
 package org.example.betty.domain.game.async;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.example.betty.domain.game.service.GameProblemServiceImpl;

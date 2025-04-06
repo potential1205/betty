@@ -45,6 +45,7 @@ public class DisplayController {
                 .body(MyDisplayResponse.of(myDisplayList));
     }
 
+    @Operation(summary = "전광판 접근 권한 조회", description = "사용자가 전광판에 접근할 수 있는지 확인합니다.")
     @GetMapping("/games/{gameId}/teams/{teamId}/access")
     public ResponseEntity<SuccessResponse> checkDisplayAccess(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
@@ -55,6 +56,7 @@ public class DisplayController {
         return ResponseEntity.ok(SuccessResponse.of(true));
     }
 
+    @Operation(summary = "전광판 접근 권한 생성", description = "사용자의 전광판 접근 권한을 생성합니다.")
     @PostMapping("/games/{gameId}/teams/{teamId}/access")
     public ResponseEntity<SuccessResponse> crateDisplayAccess(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,

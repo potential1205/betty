@@ -144,8 +144,11 @@ public class DisplayServiceImpl implements DisplayService{
     public Pixel[][] getDisplay(Long gameId, Long teamId) {
         String key = "display" + ":" + gameId + ":" + teamId;
 
+        log.info("조회된 전광판 key : " + key);
+
         Pixel[][] board = (Pixel[][]) redisTemplate.opsForValue().get(key);
         if (board == null) {
+            log.info("전광판이 조회되지 않아 새로 생성합니다. : " + key);
             board = new Pixel[64][64];
             for (int i = 0; i < 64; i++) {
                 for (int j = 0; j < 64; j++) {

@@ -132,6 +132,7 @@ public class DisplayServiceImpl implements DisplayService{
         messagingTemplate.convertAndSend(destination, "GAME_OVER");
         String key = "display" + ":" + gameId + ":" + teamId;
         redisTemplate3.delete(key);
+        log.info("게임이 정상적으로 종료되었습니다. {},{}", gameId, teamId);
     }
 
     @Override
@@ -139,6 +140,7 @@ public class DisplayServiceImpl implements DisplayService{
         String key = "display" + ":" + gameId + ":" + teamId;
         Pixel[][] display = (Pixel[][]) redisTemplate3.opsForValue().get(key);
         saveDisplay(display, gameId, teamId, inning);
+        log.info("이닝이 정상적으로 종료되었습니다. {},{}", gameId, teamId);
     }
 
     public Pixel[][] getDisplay(Long gameId, Long teamId) {
@@ -189,6 +191,7 @@ public class DisplayServiceImpl implements DisplayService{
                     .createdAt(LocalDateTime.now())
                     .build();
 
+            log.info("게임ID : " + gameId + "팀 ID : "  + teamId + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
             displayRepository.save(newDisplay);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);

@@ -90,19 +90,28 @@ public class DisplayServiceImpl implements DisplayService{
                     .getTransaction()
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TRANSACTION));
 
+            // 정보 출력
+            String findTxHash = tx.getHash();
+            String from = tx.getFrom(); // 지갑 주소
+            String to = tx.getTo(); // 컨트랙트 주소
+
             String input = tx.getInput();
-            String toAddress = "0x" + input.substring(34, 74);
-            String amountHex = input.substring(74);
+            String tokenAddress = "0x" + input.substring(34, 74); // 토큰 주소
+            String amountHex = input.substring(74); // 토큰 양
             BigInteger amount = new BigInteger(amountHex, 16);
 
-            log.info(input);
-            log.info(toAddress);
-            log.info(amountHex);
-            log.info(String.valueOf(amount));
+            log.info("findTxHash: {}", findTxHash);
+            log.info("walletAddress(from): {}", from); // 지갑 주소
+            log.info("contractAddress(to): {}", to); // 컨트랙트 주소
+
+            log.info("Input Data: {}", input);
+            log.info("tokenAddress: {}", tokenAddress);
+            log.info("Amount (Hex): {}", amountHex);
+            log.info("Amount (Decimal): {}", amount);
 
             BigInteger requiredAmount = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
 
-            if (!toAddress.equalsIgnoreCase(wallet.getWalletAddress())) {
+            if (!walletAddress.equalsIgnoreCase(wallet.getWalletAddress())) {
                 throw new BusinessException(ErrorCode.INVALID_TRANSACTION);
             }
 

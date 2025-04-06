@@ -7,7 +7,7 @@ import org.example.betty.domain.game.async.RelayAsyncExecutor;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
-import org.example.betty.domain.game.repository.GamesRepository;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.external.game.scraper.LineupScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
@@ -31,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GameCacheServiceImpl implements GameCacheService {
 
-    private final GamesRepository gameRepository;
+    private final GameRepository gameRepository;
     private final LineupScraper lineupScraper;
     private final TaskScheduler taskScheduler;
     @Qualifier("redisTemplate2")
@@ -40,6 +40,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final RelayAsyncExecutor relayAsyncExecutor;
 
     public static final String REDIS_GAME_PREFIX = "games:";
+
 
     @Override
     @Transactional

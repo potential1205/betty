@@ -3,13 +3,11 @@ package org.example.betty.domain.game.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "game")
+@Table(name = "games")
 @Getter
 @NoArgsConstructor
 public class Game {

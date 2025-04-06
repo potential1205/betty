@@ -19,11 +19,13 @@ public class RedisGameProblem implements Serializable {
     private String problemId;
     private String gameId;
     private String inning;
+    private String attackTeam;
     private String batterName;
-    private String type;
+    private String questionCode;
     private String description;
     private List<String> options;
     private String answer;
+    private boolean push;
     private long timestamp;
 
     // redis 저장x

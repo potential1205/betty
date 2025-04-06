@@ -3,7 +3,7 @@ package org.example.betty.common.init;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.entity.Team;
-import org.example.betty.domain.game.repository.TeamsRepository;
+import org.example.betty.domain.game.repository.TeamRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TeamsDataLoader implements CommandLineRunner {
 
-    private final TeamsRepository teamsRepository;
+    private final TeamRepository teamsRepository;
 
     @Override
     public void run(String... args) {

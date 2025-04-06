@@ -13,11 +13,13 @@ public interface DisplayService {
 
     List<Display> getAllDisplayList(String accessToken);
 
+    List<Display> getAllMyDisplayList(String accessToken);
+
     void checkDisplayAccess(String accessToken, Long gameId, Long teamId);
 
     void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash);
 
-    void gameEnd(Long gameId, Long teamId);
+    void gameEnd(String accessToken, Long gameId, Long teamId);
 
-    void inningEnd(Long gameId, Long teamId, int inning);
+    void inningEnd(String accessToken, Long gameId, Long teamId, int inning);
 }

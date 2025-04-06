@@ -1,5 +1,6 @@
 package org.example.betty.domain.game.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.QuestionCode;
@@ -18,22 +19,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GameProblemServiceImpl implements GameProblemService {
 
     private final ProblemGenerator problemGenerator;
+    @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
     private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
     private final SseService sseService;
-
-    public GameProblemServiceImpl(
-            ProblemGenerator problemGenerator,
-            @Qualifier("redisTemplate2") RedisTemplate<String, Object> redisTemplate2,
-            SseService sseService
-    ) {
-        this.problemGenerator = problemGenerator;
-        this.redisTemplate2 = redisTemplate2;
-        this.sseService = sseService;
-    }
 
     @Override
     public void handleRelayUpdate(String gameId, RedisGameRelay currentRelay) {

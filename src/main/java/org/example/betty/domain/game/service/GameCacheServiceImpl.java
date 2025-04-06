@@ -1,5 +1,6 @@
 package org.example.betty.domain.game.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.async.LineupAsyncExecutor;
 import org.example.betty.domain.game.async.RelayAsyncExecutor;
@@ -27,30 +28,16 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GameCacheServiceImpl implements GameCacheService {
 
     private final GameRepository gameRepository;
     private final LineupScraper lineupScraper;
     private final TaskScheduler taskScheduler;
+    @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
-
-    public GameCacheServiceImpl(
-            GameRepository gameRepository,
-            LineupScraper lineupScraper,
-            TaskScheduler taskScheduler,
-            @Qualifier("redisTemplate2") RedisTemplate<String, Object> redisTemplate2,
-            LineupAsyncExecutor lineupAsyncExecutor,
-            RelayAsyncExecutor relayAsyncExecutor
-    ) {
-        this.gameRepository = gameRepository;
-        this.lineupScraper = lineupScraper;
-        this.taskScheduler = taskScheduler;
-        this.redisTemplate2 = redisTemplate2;
-        this.lineupAsyncExecutor = lineupAsyncExecutor;
-        this.relayAsyncExecutor = relayAsyncExecutor;
-    }
 
     public static final String REDIS_GAME_PREFIX = "games:";
 

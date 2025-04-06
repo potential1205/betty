@@ -60,4 +60,8 @@ public class Transaction {
         this.transactionStatus = newStatus;
     }
 
+    public void updateAmountOut(BigDecimal amountOut) {
+        this.amountOut = amountOut;
+    }
+
 }

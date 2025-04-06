@@ -1,110 +1,165 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { formatTeamCode } from '../constants/dummy';
-import { useStore } from '../stores/useStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formatTeamName, formatTeamCode } from '../constants/dummy';
 
 interface SuggestModalProps {
   isOpen: boolean;
   onClose: () => void;
   team: string;
+  onSubmit: (title: string, content: string, targetCount: number) => Promise<void>;
 }
 
-const SuggestModal: React.FC<SuggestModalProps> = ({ isOpen, onClose, team }) => {
-  const addProposal = useStore(state => state.addProposal);
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
+const SuggestModal: React.FC<SuggestModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  team, 
+  onSubmit 
+}) => {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  // 고정 비용
-  const SUGGEST_COST = 3;
-  const TARGET_VOTES = 5;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    // 유효성 검사
+    if (!title.trim()) {
+      setError('제안 제목을 입력해주세요.');
+      return;
+    }
     
-    // 7일 후 마감
-    const deadline = new Date();
-    deadline.setDate(deadline.getDate() + 7);
+    if (!content.trim()) {
+      setError('제안 내용을 입력해주세요.');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      setError('');
+      // 목표 투표수를 5로 고정
+      await onSubmit(title, content, 5);
+      
+      // 성공적으로 제출 후 폼 초기화 및 모달 닫기
+      setTitle('');
+      setContent('');
+      onClose();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('제안 등록 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    addProposal({
-      team,
-      title,
-      description,
-      requiredTokens: SUGGEST_COST, // 고정 비용 3 SSAFY
-      currentVotes: 0,
-      targetVotes: TARGET_VOTES, // 고정 목표 5표
-      deadline: deadline.toLocaleDateString(),
-      status: 'pending'
-    });
-
-    // 폼 초기화
+  // 모달이 닫힐 때 폼 초기화
+  const handleClose = () => {
     setTitle('');
-    setDescription('');
+    setContent('');
+    setError('');
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.95 }}
-        className="bg-gray-800 rounded-xl w-[calc(100%-32px)] max-h-[80%] overflow-y-auto no-scrollbar"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="p-5">
-          <h2 className="text-xl font-['Giants-Bold'] text-white mb-3">새로운 제안하기</h2>
-          <p className="text-sm text-gray-400 mb-4">
-            이 제안을 등록하기 위해 {SUGGEST_COST} SSAFY 코인이 필요합니다
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            maxWidth: '360px',
+            maxHeight: '743px',
+            margin: 'auto',
+            left: '0',
+            right: '0'
+          }}
+        >
+          {/* 배경 오버레이 */}
+          <div 
+            className="fixed inset-0 bg-black/60"
+            onClick={handleClose}
+          />
+          
+          {/* 모달 컨텐츠 */}
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="relative mx-4 bg-gray-900 rounded-xl p-6 w-full max-w-[328px] z-10"
+          >
+            <h2 className="text-xl font-['Giants-Bold'] text-white mb-6">
+              {formatTeamName(team)} 팀에 제안하기
+            </h2>
+            
+            {/* 에러 메시지 */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-900/40 border border-red-500 rounded-md text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+            
+            {/* 폼 필드 */}
+            <div className="mb-4">
+              <label className="block text-gray-400 text-sm mb-2">제안 제목</label>
               <input
                 type="text"
-                placeholder="제안 제목"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 text-sm"
-                required
+                className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="제안 제목을 입력하세요"
+                maxLength={50}
               />
             </div>
-            <div>
+            
+            <div className="mb-4">
+              <label className="block text-gray-400 text-sm mb-2">제안 내용</label>
               <textarea
-                placeholder="제안 내용을 자세히 설명해주세요"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full bg-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 resize-none text-sm"
-                required
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[120px]"
+                placeholder="구체적인 제안 내용을 작성해주세요"
+                maxLength={500}
               />
             </div>
-            <div className="flex justify-end space-x-2">
+            
+            <div className="mb-6">
+              <label className="block text-gray-400 text-sm mb-2">목표 투표 수</label>
+              <div className="w-full bg-gray-800 py-2 px-3 rounded-md border border-gray-700 text-white">
+                5
+              </div>
+            </div>
+            
+            <div className="text-gray-400 text-sm mb-6">
+              <p>- 제안 등록에는 3이 사용됩니다.</p>
+              <p>- 목표 투표수에 도달하면 구단에 전달됩니다.</p>
+              <p>- 14일 이내에 목표에 도달하지 못하면 자동 소멸됩니다.</p>
+            </div>
+            
+            <div className="flex space-x-3">
               <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-full bg-gray-700 text-white text-sm"
+                onClick={handleClose}
+                className="flex-1 py-3 rounded-full border border-gray-700 text-white hover:bg-gray-800 transition-colors"
               >
                 취소
               </button>
               <button
-                type="submit"
-                className="px-4 py-2 rounded-full bg-white text-black text-sm"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`flex-1 py-3 rounded-full font-['Pretendard-Regular'] transition-colors
+                  ${isSubmitting
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-200'}`}
               >
-                제안하기
+                {isSubmitting ? '제출 중...' : '제안하기'}
               </button>
             </div>
-          </form>
-        </div>
-      </motion.div>
-    </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

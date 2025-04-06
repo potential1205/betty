@@ -4,7 +4,7 @@ import { formatTeamCode, formatTeamName, teamColors, teamTokenPrices } from '../
 import bettyImg from '../assets/bettycoin.png';
 import backImg from '../assets/back_black.png';
 import { useStore } from '../stores/useStore';
-import CandleChart from './CandleChart.tsx';
+import CandleChart from './CandleChart';
 
 const dummyDailyData = [
   { time: '2024-04-01', open: 100, high: 108, low: 98, close: 106 },
@@ -330,11 +330,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
             </div>
             <div className="flex items-center justify-between mb-2">
               <input
-                type="number"
-                inputMode="numeric"
-                pattern="\d*"
+                type="text"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                readOnly
                 placeholder="0"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full text-right outline-none bg-transparent"
               />
@@ -355,6 +353,27 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
 
           {/* 계산기 */}
           <div className="grid grid-cols-3 gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+              <button
+                key={num}
+                onClick={() => handleNumberClick(num.toString())}
+                className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+              >
+                {num}
+              </button>
+            ))}
+            <button
+              onClick={handleDelete}
+              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => handleNumberClick('0')}
+              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
+            >
+              0
+            </button>
             <button
               onClick={handleAction}
               disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)}

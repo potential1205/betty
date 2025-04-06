@@ -1,60 +1,164 @@
 import axios from 'axios';
+import { userTokenDummy, formatTeamName } from '../constants/dummy';
 
-// 로컬 스토리지 키
+// 로컬 스토리지 키 상수
 const ACCESS_TOKEN_KEY = 'accessToken';
 
 const axiosInstance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1`,
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    withCredentials: true,
-})
+  baseURL: 'https://j12a609.p.ssafy.io/api/v1',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true,
+});
 
-// localStorage에만 저장
+// accessToken 설정 함수 (localStorage에만 저장)
 export const setAccessToken = (token: string) => {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
 };
 
+// accessToken 제거 함수
 export const removeAccessToken = () => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
 };
 
+// accessToken 가져오기 함수
 export const getAccessToken = () => {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
-let interceptorLogged = false;
-
-// 모든 요청에 토큰 추가
+// 모든 요청에 토큰 자동 추가
 axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = getAccessToken();
-        if (token) {
-            if (!interceptorLogged) {
-                console.log('Authorization 헤더 설정:', `Bearer ${token}`);
-                interceptorLogged = true;
-            }
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
+  (config) => {
+    const token = getAccessToken();
+    console.log('Current token:', token); // 디버깅용
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log('Request config:', config); // 디버깅용
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
 axiosInstance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const errorCode = error.response?.data?.code;
-
-        // 인증 관련 에러
-        if ([1002, 1003, 1004, 1005].includes(errorCode)) {
-            removeAccessToken();
-            window.location.href = '/';
-        }
-        return Promise.reject(error);
+  (response) => response,
+  async (error) => {
+    const errorCode = error.response?.data?.code;
+    console.log('Response error:', error.response?.data); // 디버깅용
+    
+    // 인증 관련 에러 코드들
+    if ([1002, 1003, 1004, 1005].includes(errorCode)) {
+      removeAccessToken();
+      window.location.href = '/';
     }
+    return Promise.reject(error);
+  }
 );
 
-export default axiosInstance;
+// 지갑 정보 조회
+export const getWalletInfo = async () => {
+  const response = await axiosInstance.get('/wallet');
+  return response.data;
+};
+
+// 지갑 등록
+export const registerWallet = async () => {
+  const response = await axiosInstance.post('/wallet/register');
+  return response.data;
+};
+
+export interface GameSchedule {
+  season: number;
+  gameDate: string;
+  startTime: string;
+  stadium: string;
+  homeTeam: string;
+  awayTeam: string;
+  status: string;
+}
+
+export interface GameSchedulesResponse {
+  schedules: GameSchedule[];
+}
+
+export const getTodayGames = async () => {
+  try {
+    const response = await axiosInstance.get<GameSchedulesResponse>('/home/games/today');
+    return response.data;
+  } catch (error) {
+    console.error('오늘의 경기 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 안건 등록
+export const createProposal = async (teamId: number, title: string, content: string, targetCount: number) => {
+  try {
+    const response = await axiosInstance.post('/proposals', {
+      teamId,
+      title,
+      content,
+      targetCount
+    });
+    return response.data;
+  } catch (error) {
+    console.error('안건 등록 실패:', error);
+    throw error;
+  }
+};
+
+// 안건 투표
+export const voteProposal = async (teamId: number, proposalId: number) => {
+  try {
+    const response = await axiosInstance.post('/proposals/vote', {
+      teamId,
+      proposalId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('안건 투표 실패:', error);
+    throw error;
+  }
+};
+
+// 안건 상세 조회
+export const getProposalDetail = async (teamId: number, proposalId: number) => {
+  try {
+    const response = await axiosInstance.get(`/proposals/${proposalId}/team/${teamId}`);
+    return response.data;
+  } catch (error) {
+    console.error('안건 상세 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 안건 목록 조회
+export const getProposalList = async (teamId: number) => {
+  try {
+    const response = await axiosInstance.get(`/proposals/team/${teamId}`);
+    return response.data;
+  } catch (error) {
+    console.error('안건 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 팀 토큰 개수 조회
+export const getTeamTokenCount = async (teamId: number) => {
+  try {
+    const response = await axiosInstance.get(`/proposals/team/${teamId}/token/count`);
+    return response.data;
+  } catch (error: any) {
+    // 404 에러이고 팬토큰이 없는 경우
+    if (error.response?.status === 404 && error.response?.data?.code === 4001) {
+      return { teamTokenCount: 0 };
+    }
+    console.error('팀 토큰 개수 조회 실패:', error);
+    throw error;
+  }
+};
+
+export default axiosInstance; 

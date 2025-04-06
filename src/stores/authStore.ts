@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { backendLogin, backendLogout, getNickname, registerNickname } from '../apis/authApi';
-import { initWeb3Auth, web3auth } from '../utils/web3auth.ts';
+import { initWeb3Auth, web3auth } from '../utils/web3auth';
 import { WALLET_ADAPTERS } from '@web3auth/base';
 import { useWalletStore } from './walletStore';
+import { useStore } from './useStore';
+import { IProvider } from '@web3auth/base';
 
 interface UserState {
   walletAddress: string | null;
@@ -44,6 +46,8 @@ export const useUserStore = create<UserState>()(
             console.log('Web3Auth 초기화 시작...');
             await web3auth.init();
             console.log('Web3Auth 초기화 완료');
+          } else {
+            console.log('Web3Auth 이미 연결됨');
           }
           
           set({ isInitialized: true, isLoading: false });
@@ -60,24 +64,40 @@ export const useUserStore = create<UserState>()(
 
       checkNickname: async () => {
         try {
-          const response = await getNickname();
-
-          if (response && response.nickname) {
+          // useStore에서 닉네임 확인
+          const { nickname: storeNickname } = useStore.getState();
+          if (storeNickname) {
             set({
-                nickname: response.nickname,
-                needsNickname: false,
-                isAuthenticated: true
+              nickname: storeNickname,
+              needsNickname: false
+            });
+            return true;
+          }
+
+          // 로컬 스토리지에서 닉네임 확인
+          const storedNickname = localStorage.getItem('user-storage');
+          if (storedNickname) {
+            const parsed = JSON.parse(storedNickname);
+            if (parsed.nickname) {
+              set({
+                nickname: parsed.nickname,
+                needsNickname: false
               });
               return true;
-          } else {
-            set({ needsNickname: true, isLoading: false });
-            return false;
+            }
           }
+
+          // 로컬에 없으면 서버에서 조회
+          const response = await getNickname();
+          set({
+            nickname: response.nickname,
+            needsNickname: false
+          });
+          return true;
         } catch (error) {
           console.log('닉네임 등록이 필요합니다');
           set({
-            needsNickname: true,
-            isLoading: false,
+            needsNickname: true
           });
           return false;
         }
@@ -87,6 +107,7 @@ export const useUserStore = create<UserState>()(
         try {
           set({ isLoading: true, error: null });
 
+          // 1단계: Web3Auth 초기화 및 연결
           await initWeb3Auth();
 
           if (!web3auth.connected) {
@@ -107,10 +128,29 @@ export const useUserStore = create<UserState>()(
             throw new Error('ID 토큰을 가져올 수 없습니다');
           }
 
+          // 지갑 주소 가져오기
+          const web3authProvider = await web3auth.provider;
+          if (web3authProvider) {
+            try {
+              const accounts = await web3authProvider.request({
+                method: 'eth_accounts'
+              }) as string[];
+              
+              if (accounts && accounts.length > 0) {
+                console.log('지갑 주소:', accounts[0]);
+                set({ walletAddress: accounts[0].toLowerCase() });
+              }
+            } catch (error) {
+              console.error('지갑 주소 가져오기 실패:', error);
+            }
+          }
+
+          // 2단계: 백엔드 로그인
           console.log('백엔드 로그인 시도...');
           await backendLogin(userInfo.idToken);
           console.log('백엔드 로그인 성공');
 
+          set({ isAuthenticated: true, isLoading: false });
           return true;
         } catch (error: any) {
           console.error('로그인 실패:', error);

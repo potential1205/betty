@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import RPC from '../utils/ethersRPC.ts';
-import { web3auth } from '../utils/web3auth.ts';
+import RPC from '../utils/ethersRPC';
+import { web3auth } from '../utils/web3auth';
 
 interface WalletState {
   isLoading: boolean;

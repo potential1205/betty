@@ -159,7 +159,10 @@ public class ProposalServiceImpl implements ProposalService {
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        return proposalRepository.findAllByTeamId(teamId);
+        return proposalRepository.findAllByTeamId(teamId)
+                .stream()
+                .filter(proposal -> proposal.getTxHash() != null)
+                .toList();
     }
 
     @Override
@@ -169,8 +172,14 @@ public class ProposalServiceImpl implements ProposalService {
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        return proposalRepository.findByIdAndTeamId(proposalId, teamId)
+       Proposal proposal = proposalRepository.findByIdAndTeamId(proposalId, teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_PROPOSAL));
+
+       if (proposal.getTxHash() == null) {
+           throw new BusinessException(ErrorCode.FAILED_CREATE_HASH);
+       }
+
+        return proposal;
     }
 
     public static String generateKeccak256(Long teamId, String title, String content, Long proposalId) {

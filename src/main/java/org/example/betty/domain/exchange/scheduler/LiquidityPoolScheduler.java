@@ -14,7 +14,7 @@ public class LiquidityPoolScheduler {
     private final PriceService priceService;
 
     // 1초마다 팬토큰 가격을 동기화
-    @Scheduled(fixedRate = 1000)
+    // @Scheduled(fixedRate = 1000)
     public void syncTokenPrices() {
         log.info("[LP Scheduler] Price sync started.");
         priceService.syncAllPrices();

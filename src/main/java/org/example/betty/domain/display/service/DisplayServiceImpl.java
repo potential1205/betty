@@ -97,8 +97,8 @@ public class DisplayServiceImpl implements DisplayService{
 
             String input = tx.getInput();
             String tokenAddress = "0x" + input.substring(34, 74); // 토큰 주소
-            Long findGameId = Long.valueOf(input.substring(74, 138)); // 게임 ID
-            Long findTeamId = Long.valueOf(input.substring(138, 202)); // 팀 ID
+            Long findGameId = Long.parseLong(String.valueOf(Long.valueOf(input.substring(74, 138), 16))); // 게임 id
+            Long findTeamId = Long.parseLong(String.valueOf(Long.valueOf(input.substring(138, 202), 16))); // 팀 ID
 
             log.info("findTxHash: {}", findTxHash);
             log.info("walletAddress(from): {}", from); // 지갑 주소

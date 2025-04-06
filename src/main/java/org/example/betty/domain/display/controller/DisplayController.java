@@ -56,7 +56,6 @@ public class DisplayController {
         return ResponseEntity.ok(SuccessResponse.of(true));
     }
 
-
     @Operation(summary = "게임종료", description = "게임이 종료되어 전광판을 이미지로 저장합니다.")
     @PostMapping("/games/{gameId}/teams/{teamId}/end")
     public ResponseEntity<SuccessResponse> gameEnd(@PathVariable Long gameId, @PathVariable Long teamId) {

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract LiquidityPoolScript is Script {
     function run() external {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        address btcAddress = vm.envAddress("BTC_ADDRESS");
+        address betAddress = vm.envAddress("BET_ADDRESS");
 
         string[10] memory tokenNames = ["DSB", "LTG", "LGT", "KWH", "NCD", "KTW", "SSG", "KIA", "SSL", "HWE"];
         address[10] memory fanTokenAddresses = [
@@ -34,8 +34,8 @@ contract LiquidityPoolScript is Script {
             console.log(tokenNames[i], "address:", fanTokenAddresses[i]);
             require(fanTokenAddresses[i] != address(0), string.concat(tokenNames[i], " address is zero"));
 
-            if (btcAddress == fan) {
-                console.log(string.concat(tokenNames[i], " skipped (same address as BTC)"));
+            if (betAddress == fan) {
+                console.log(string.concat(tokenNames[i], " skipped (same address as BET)"));
                 continue;
             }
 
@@ -43,11 +43,11 @@ contract LiquidityPoolScript is Script {
 
             // 배포 시작
             console.log("Creating pool for", tokenNames[i]);
-            LiquidityPool pool = new LiquidityPool(btcAddress, fan);
+            LiquidityPool pool = new LiquidityPool(betAddress, fan);
             console.log(string.concat(tokenNames[i], " Pool deployed at:"), address(pool));
 
             // 토큰 approve
-            require(IERC20(btcAddress).approve(address(pool), 10_000_000 * 1e18), "BTC approve failed");
+            require(IERC20(betAddress).approve(address(pool), 10_000_000 * 1e18), "BET approve failed");
             require(IERC20(fan).approve(address(pool), 1_000_000 * 1e18), "Fan token approve failed");
 
             // 초기 유동성 설정
@@ -57,7 +57,7 @@ contract LiquidityPoolScript is Script {
 
         vm.stopBroadcast();
 
-        console.log("btcAddress:", btcAddress);
+        console.log("betAddress:", betAddress);
         for (uint i = 0; i < 10; i++) {
             console.log(string.concat(tokenNames[i], " address: "), fanTokenAddresses[i]);
         }

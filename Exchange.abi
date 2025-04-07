@@ -3,7 +3,7 @@
         "type":  "constructor",
         "inputs":  [
                        {
-                           "name":  "_btcToken",
+                           "name":  "_betToken",
                            "type":  "address",
                            "internalType":  "address"
                        }
@@ -15,7 +15,22 @@
         "name":  "add",
         "inputs":  [
                        {
-                           "name":  "amountBTC",
+                           "name":  "amountBET",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "addDirect",
+        "inputs":  [
+                       {
+                           "name":  "amountBET",
                            "type":  "uint256",
                            "internalType":  "uint256"
                        }
@@ -52,7 +67,7 @@
     },
     {
         "type":  "function",
-        "name":  "btcToken",
+        "name":  "betToken",
         "inputs":  [
 
                    ],
@@ -75,7 +90,7 @@
                            "internalType":  "string"
                        },
                        {
-                           "name":  "amountBTC",
+                           "name":  "amountBET",
                            "type":  "uint256",
                            "internalType":  "uint256"
                        }
@@ -110,6 +125,25 @@
     },
     {
         "type":  "function",
+        "name":  "getPrice",
+        "inputs":  [
+                       {
+                           "name":  "token_name",
+                           "type":  "string",
+                           "internalType":  "string"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "price",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
         "name":  "liquidityPools",
         "inputs":  [
                        {
@@ -132,7 +166,7 @@
         "name":  "remove",
         "inputs":  [
                        {
-                           "name":  "amountBTC",
+                           "name":  "amountBET",
                            "type":  "uint256",
                            "internalType":  "uint256"
                        }
@@ -197,6 +231,21 @@
     },
     {
         "type":  "function",
+        "name":  "totalBETAdded",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
         "name":  "use",
         "inputs":  [
                        {
@@ -239,6 +288,25 @@
                        },
                        {
                            "name":  "amountOut",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "DirectAdd",
+        "inputs":  [
+                       {
+                           "name":  "sender",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "amount",
                            "type":  "uint256",
                            "indexed":  false,
                            "internalType":  "uint256"

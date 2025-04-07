@@ -19,5 +19,11 @@ export interface TransactionResponse {
 
 // BTC 충전 API
 export const addBettyCoin = async (amountIn: number): Promise<TransactionResponse> => {
-    return (await axiosInstance.post("/exchange/add", { tokenId: 1, amountIn })).data;
-}
+    return (
+        await axiosInstance.post("/exchange/add", {
+            tokenFromId: 0,
+            tokenToId: 1,
+            amountIn,
+        }))
+    .data;
+};

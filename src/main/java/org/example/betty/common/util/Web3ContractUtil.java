@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.ReadonlyTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
@@ -16,6 +17,9 @@ public class Web3ContractUtil {
 
     private final Web3j web3j;
 
+    @Value("${ADMIN_ADDRESS}")
+    private String adminAddress;
+
     @Value("${ADMIN_PRIVATE_KEY}")
     private String adminPrivateKey;
 
@@ -23,6 +27,15 @@ public class Web3ContractUtil {
     public TransactionManager getTransactionManager() {
         Credentials credentials = Credentials.create(adminPrivateKey);
         return new RawTransactionManager(web3j, credentials);
+    }
+
+    // 읽기 전용 트랜잭션 매니저
+    public TransactionManager getReadOnlyTransactionManager() {
+        return new ReadonlyTransactionManager(web3j, adminAddress);
+    }
+
+    public TransactionManager newReadOnlyTransactionManager() {
+        return new ReadonlyTransactionManager(web3j, adminAddress);
     }
 
     // 가스 프로바이더 반환 (수수료 없으므로 기본값 사용 가능)

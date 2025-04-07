@@ -1,6 +1,6 @@
 # generate-all-wrappers.ps1 (최신 web3j CLI용)
 
-$contracts = @("LiquidityPool", "Exchange", "Token")
+$contracts = @("LiquidityPool", "Exchange", "Token", "RewardPool")
 
 $abiBase = "../../BETTY/S12P21A609/"
 $output = "./src/main/java"

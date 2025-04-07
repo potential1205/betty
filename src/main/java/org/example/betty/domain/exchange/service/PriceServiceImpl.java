@@ -13,6 +13,7 @@ import org.web3j.protocol.Web3j;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -60,7 +61,7 @@ public class PriceServiceImpl implements PriceService {
         updatePrice("KTW", ktwPoolAddress);
         updatePrice("KIA", kiaPoolAddress);
         updatePrice("SSL", sslPoolAddress);
-        updatePrice("HWE", hwePoolAddress);
+        // updatePrice("HWE", hwePoolAddress);
     }
 
     @Transactional
@@ -69,7 +70,7 @@ public class PriceServiceImpl implements PriceService {
             LiquidityPool pool = LiquidityPool.load(
                     poolAddress,
                     web3j,
-                    contractUtil.getTransactionManager(),
+                    contractUtil.newReadOnlyTransactionManager(),
                     contractUtil.getContractGasProvider()
             );
 
@@ -82,8 +83,12 @@ public class PriceServiceImpl implements PriceService {
                 return;
             }
 
-            BigDecimal price = new BigDecimal(btcReserve)
-                    .divide(new BigDecimal(fanTokenReserve), 8, BigDecimal.ROUND_HALF_UP);
+            BigDecimal btc = new BigDecimal(btcReserve);
+            BigDecimal fan = new BigDecimal(fanTokenReserve);
+
+            // ✔ 18 decimal 기준 계산
+            BigDecimal price = btc.divide(fan, 18, RoundingMode.HALF_UP)
+                    .setScale(8, RoundingMode.HALF_UP);
 
             TokenPrice tokenPrice = TokenPrice.builder()
                     .tokenName(tokenName)

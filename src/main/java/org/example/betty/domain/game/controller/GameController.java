@@ -34,7 +34,7 @@ public class GameController {
     }
 
     @Operation(summary = "라인업 조회", description = "MVP 베팅을 위한 경기 라인업을 조회합니다.")
-    @PostMapping("/games/{gameId}/lineup")
+    @GetMapping("/games/{gameId}/lineup")
     public ResponseEntity<RedisGameLineup> getLineup(@PathVariable String gameId) {
         RedisGameLineup lineup = gameReadService.getGameLineup(gameId);
         return ResponseEntity.ok(lineup);
@@ -47,12 +47,12 @@ public class GameController {
         return ResponseEntity.ok(status);
     }
 
+    @Operation(summary = "SSE 실시간 스트리밍 요청", description = "실시간 경기 데이터 스트리밍을 요청합니다.")
+    @GetMapping(value = "/games/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@PathVariable String gameId) {
+        return sseService.stream(gameId);
+    }
 
-
-//    @GetMapping(value = "/subscribe/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public SseEmitter subscribe(@PathVariable String gameId) {
-//        return sseService.subscribe(gameId);
-//    }
 
 
 }

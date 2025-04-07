@@ -34,9 +34,8 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<RedisGameSchedule> getTodayGameSchedules() {
-        // 변경해주기!!!!!!
-//        LocalDate today = LocalDate.now();
-        LocalDate today = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now().minusDays(1);
 
         List<Game> games = gameRepository.findByGameDate(today);
         List<RedisGameSchedule> schedules = new ArrayList<>();

@@ -12,10 +12,13 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreVoteMyPick {
+public class PrePick {
     private String teamPick;
     private BigDecimal teamPickBetAmount;
+
     private String mvpPick;
+    private String mvpTeam;
     private BigDecimal mvpPickBetAmount;
+
     private LocalDateTime createdAt;
 }

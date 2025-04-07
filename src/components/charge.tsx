@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import bettyImg from '../assets/bettycoin.png';
+import { addBettyCoin } from '../apis/exchangeApi';
 
 interface ChargeModalProps {
   isOpen: boolean;
@@ -42,17 +43,23 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
     setAmount(Number(newAmount));
   };
 
-  const handleCharge = () => {
+  const handleCharge = async () => {
     if (amount <= 0) return;
-    
-    chargeBetty(amount);
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      setAmount(0);
-      setCustomAmount('');
-      onClose();
-    }, 1500);
+
+    try {
+      await addBettyCoin(amount);
+      chargeBetty(amount / 100);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setAmount(0);
+        setCustomAmount('');
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('충전 실패:', err);
+      alert('충전에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   if (!isOpen) return null;

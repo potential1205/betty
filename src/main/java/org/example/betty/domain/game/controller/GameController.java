@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
-import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
 import org.example.betty.domain.game.service.GameReadService;
 import org.example.betty.domain.game.service.SseService;
@@ -27,14 +26,12 @@ public class GameController {
     private final GameReadService gameReadService;
     private final SseService sseService;
 
-    @Operation(summary = "오늘 경기 일정 조회", description = "전체 경기 일정을 조회합니다.")
+    @Operation(summary = "전체 경기 일정 조회", description = "일일 전체 경기 일정을 조회합니다.")
     @GetMapping("/games")
     public ResponseEntity<GameScheduleListResponse> getTodayGames() {
         List<RedisGameSchedule> schedules = gameReadService.getTodayGameSchedules();
         return ResponseEntity.ok(GameScheduleListResponse.of(schedules));
     }
-
-
 
     @Operation(summary = "라인업 조회", description = "경기 라인업을 조회합니다.")
     @PostMapping("/games/{gameId}/lineup")

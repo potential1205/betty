@@ -98,7 +98,7 @@ services:
     ports:
       - "4444:4444"
       - "5900:5900"
-    shm_size: 1g
+    shm_size: 2g
     environment:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2
@@ -110,7 +110,7 @@ services:
     ports:
       - "4445:4444"
       - "5901:5900"
-    shm_size: 1g
+    shm_size: 2g
     environment:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2
@@ -122,7 +122,7 @@ services:
     ports:
       - "4446:4444"
       - "5902:5900"
-    shm_size: 1g
+    shm_size: 2g
     environment:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2
@@ -134,7 +134,7 @@ services:
     ports:
       - "4447:4444"
       - "5903:5900"
-    shm_size: 1g
+    shm_size: 2g
     environment:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2
@@ -146,7 +146,7 @@ services:
     ports:
       - "4448:4444"
       - "5904:5900"
-    shm_size: 1g
+    shm_size: 2g
     environment:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=2

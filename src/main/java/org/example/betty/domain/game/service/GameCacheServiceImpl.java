@@ -33,6 +33,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
     private final GameRepository gameRepository;
     private final LineupScraper lineupScraper;
+    @Qualifier("taskScheduler")
     private final TaskScheduler taskScheduler;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
@@ -48,7 +49,9 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(1);
+
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -58,8 +61,11 @@ public class GameCacheServiceImpl implements GameCacheService {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
+//            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
+//                    && !"ENDED".equalsIgnoreCase(game.getStatus());
             boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
-                    && !"ENDED".equalsIgnoreCase(game.getStatus());
+                    && "ENDED".equalsIgnoreCase(game.getStatus());
+
 
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
 
@@ -90,10 +96,11 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-                scheduleRelayJob(game);
+//                scheduleRelayJob(game);
             }
             // Redis 키 만료 설정
-            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+            LocalDateTime expireTime = LocalDate.now().plusDays(1).atStartOfDay();
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
             redisTemplate2.expireAt(redisKey, expireDate);
         }
@@ -118,7 +125,9 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
+
 
         final Integer seleniumIndex;
         try {

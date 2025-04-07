@@ -33,7 +33,9 @@ public class GameReadServiceImpl implements GameReadService {
 
     @Override
     public List<RedisGameSchedule> getTodayGameSchedules() {
-        LocalDate today = LocalDate.now();
+        // 변경해주기!!!!!!
+//        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(1);
 
         List<Game> games = gamesRepository.findByGameDate(today);
         List<RedisGameSchedule> schedules = new ArrayList<>();

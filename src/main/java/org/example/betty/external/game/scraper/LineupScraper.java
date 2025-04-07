@@ -45,7 +45,7 @@ public class LineupScraper extends BaseScraper {
             driver1.get(url);
 
             try {
-                new WebDriverWait(driver1, Duration.ofSeconds(30))
+                new WebDriverWait(driver1, Duration.ofSeconds(10))
                         .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".lineup_group")));
             } catch (Exception e) {
                 log.error("[{}] lineup_group 요소 로딩 대기 실패: {}", gameId, e.getMessage(), e);
@@ -123,7 +123,7 @@ public class LineupScraper extends BaseScraper {
         try {
             driver.get("https://www.koreabaseball.com/player/search.aspx");
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
             WebElement input = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("cphContents_cphContents_cphContents_txtSearchPlayerName")));
             input.clear();
             input.sendKeys(playerName);
@@ -145,6 +145,6 @@ public class LineupScraper extends BaseScraper {
             log.warn("[KBO 이미지 조회 실패] 선수명: {}, 이유: {}", playerName, e.getMessage());
         }
 
-        return "선수 기본 이미지로 변경";
+        return "https://a609-betty-bucket.s3.ap-northeast-2.amazonaws.com/player/betty_player_default.png";
     }
 }

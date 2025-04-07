@@ -9,6 +9,9 @@ import java.util.Optional;
 
 public interface Web3jService {
     Web3j getWeb3j();
+
+    long getChainId();
+
     Credentials getCredentials();
 
     String callFunction(String contractAddress, String encodedFunction) throws Exception;

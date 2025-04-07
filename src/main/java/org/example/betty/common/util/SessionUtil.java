@@ -40,7 +40,9 @@ public class SessionUtil {
 
         Object stored = redisTemplate.opsForValue().get(walletAddress);
 
-        log.info("redis 세션 조회:" + walletAddress);
+        log.info("redis 세션 조회:" + walletAddress + " " + stored);
+        log.info("입력된 accessToken: " + accessTokenBody);
+        log.info("둘이 같나: " + accessTokenBody.equals(stored));
 
         if (!Objects.equals(accessTokenBody, stored)) {
             throw new BusinessException(ErrorCode.INVALID_SESSION);

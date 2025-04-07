@@ -330,9 +330,14 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
             </div>
             <div className="flex items-center justify-between mb-2">
               <input
-                type="text"
+                type="number"
                 value={amount}
-                readOnly
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 10) {
+                    setAmount(value);
+                  }
+                }}
                 placeholder="0"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full text-right outline-none bg-transparent"
               />
@@ -351,41 +356,18 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
             )}
           </div>
 
-          {/* 계산기 */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-              <button
-                key={num}
-                onClick={() => handleNumberClick(num.toString())}
-                className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-              >
-                {num}
-              </button>
-            ))}
-            <button
-              onClick={handleDelete}
-              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => handleNumberClick('0')}
-              className="h-11 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-base font-['Giants-Bold'] transition-colors"
-            >
-              0
-            </button>
-            <button
-              onClick={handleAction}
-              disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)}
-              className={`h-11 rounded-lg text-white text-base font-['Giants-Bold'] transition-colors ${
-                !amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
-            >
-              {mode === 'buy' ? '구매하기' : mode === 'swap' ? '스왑하기' : '판매하기'}
-            </button>
-          </div>
+          {/* 구매/스왑/판매 버튼 */}
+          <button
+            onClick={handleAction}
+            disabled={!amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)}
+            className={`w-full h-11 rounded-lg text-white text-base font-['Giants-Bold'] transition-colors ${
+              !amount || (mode === 'sell' ? Number(amount) > (selectedToken ? userTokens.find(t => t.team === selectedToken)?.amount || 0 : 0) : totalPrice > bettyBalance)
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
+          >
+            {mode === 'buy' ? '구매하기' : mode === 'swap' ? '스왑하기' : '판매하기'}
+          </button>
         </div>
       </div>
 

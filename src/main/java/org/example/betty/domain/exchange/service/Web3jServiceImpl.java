@@ -54,7 +54,7 @@ public class Web3jServiceImpl implements Web3jService {
 
     @Override
     public TransactionReceipt sendTransaction(String contractAddress, BigInteger value, String encodedFunction) throws Exception {
-        RawTransactionManager txManager = new RawTransactionManager(web3j, credentials);
+        RawTransactionManager txManager = new RawTransactionManager(web3j, credentials, 14609);
         EthSendTransaction transaction = txManager.sendTransaction(
                 DefaultGasProvider.GAS_PRICE,
                 DefaultGasProvider.GAS_LIMIT,

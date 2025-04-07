@@ -29,7 +29,7 @@ public class ExchangeController {
     public ResponseEntity<TransactionResponse> add(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
             @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(exchangeService.processTransaction(request, accessToken));
+        return ResponseEntity.ok(exchangeService.processAdd(request, accessToken));
     }
 
     @Operation(summary = "베티코인 출금", description = "베티코인을 원화로 출금합니다.")

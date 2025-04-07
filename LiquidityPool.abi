@@ -3,7 +3,7 @@
         "type":  "constructor",
         "inputs":  [
                        {
-                           "name":  "_btcToken",
+                           "name":  "_betToken",
                            "type":  "address",
                            "internalType":  "address"
                        },
@@ -17,7 +17,7 @@
     },
     {
         "type":  "function",
-        "name":  "btcReserve",
+        "name":  "betReserve",
         "inputs":  [
 
                    ],
@@ -32,7 +32,7 @@
     },
     {
         "type":  "function",
-        "name":  "btcToken",
+        "name":  "betToken",
         "inputs":  [
 
                    ],
@@ -50,7 +50,7 @@
         "name":  "buyFanToken",
         "inputs":  [
                        {
-                           "name":  "amountBTCIn",
+                           "name":  "amountBETIn",
                            "type":  "uint256",
                            "internalType":  "uint256"
                        },
@@ -107,12 +107,12 @@
                    ],
         "outputs":  [
                         {
-                            "name":  "btc",
+                            "name":  "betAmount",
                             "type":  "uint256",
                             "internalType":  "uint256"
                         },
                         {
-                            "name":  "fanToken",
+                            "name":  "fanTokenAmount",
                             "type":  "uint256",
                             "internalType":  "uint256"
                         }
@@ -151,7 +151,7 @@
                    ],
         "outputs":  [
                         {
-                            "name":  "btcOut",
+                            "name":  "betOut",
                             "type":  "uint256",
                             "internalType":  "uint256"
                         }
@@ -163,7 +163,7 @@
         "name":  "setInitialLiquidity",
         "inputs":  [
                        {
-                           "name":  "_btcAmount",
+                           "name":  "_betAmount",
                            "type":  "uint256",
                            "internalType":  "uint256"
                        },

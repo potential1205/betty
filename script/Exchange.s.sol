@@ -9,8 +9,8 @@ contract ExchangeScript is Script {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(privateKey);
 
-        address btcAddress = vm.envAddress("BTC_ADDRESS");
-        Exchange exchange = new Exchange(btcAddress);
+        address betAddress = vm.envAddress("BET_ADDRESS");
+        Exchange exchange = new Exchange(betAddress);
         console.log("Exchange deployed at:", address(exchange));
 
         string[10] memory tokenNames = ["DSB", "LTG", "LGT", "KWH", "NCD", "KTW", "SSG", "KIA", "SSL", "HWE"];

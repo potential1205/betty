@@ -33,6 +33,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
     private final GameRepository gameRepository;
     private final LineupScraper lineupScraper;
+    @Qualifier("taskScheduler")
     private final TaskScheduler taskScheduler;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
@@ -41,12 +42,16 @@ public class GameCacheServiceImpl implements GameCacheService {
 
     public static final String REDIS_GAME_PREFIX = "games:";
 
-
+    /**
+     * 당일 경기 정보 DB에서 조회에서 캐싱
+     */
     @Override
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(1);
+
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -56,8 +61,11 @@ public class GameCacheServiceImpl implements GameCacheService {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
+//            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
+//                    && !"ENDED".equalsIgnoreCase(game.getStatus());
             boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
-                    && !"ENDED".equalsIgnoreCase(game.getStatus());
+                    && "ENDED".equalsIgnoreCase(game.getStatus());
+
 
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
 
@@ -88,23 +96,24 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-
-                scheduleRelayJob(game);    // 중계는 무조건 예약 또는 즉시 실행
+//                scheduleRelayJob(game);
             }
-
             // Redis 키 만료 설정
-            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+            LocalDateTime expireTime = LocalDate.now().plusDays(1).atStartOfDay();
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
             redisTemplate2.expireAt(redisKey, expireDate);
         }
     }
 
-
+    /**
+     * 앱 재실행 시 경기 정보 캐싱
+     */
     @Override
     @Transactional
     public boolean recoverTodayGameSchedule(LocalDate targetDate) {
         List<Game> todayGames = gameRepository.findByGameDate(targetDate);
-        log.info("[복구] 오늘 경기 {}개 → 캐시 및 스케줄링 재시도", todayGames.size());
+        log.info("[복구] 오늘 경기 {}개 → 캐싱 및 스케줄링 재시도", todayGames.size());
         cacheDailyGames();
         return true;
     }
@@ -116,40 +125,47 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
 
-        // 테스트용: 지금부터 10초 뒤에 실행하고 싶을 때
-//        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
 
-        Integer seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
-        if (seleniumIndex == null) {
-            log.warn("[라인업 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
+        final Integer seleniumIndex;
+        try {
+            seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
+            if (seleniumIndex == null) {
+                log.warn("[라인업 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
+                return;
+            }
+        } catch (Exception e) {
+            log.error("[라인업 예약 실패] Redis 접근 중 오류 - gameId: {}, error: {}", gameId, e.getMessage(), e);
             return;
         }
 
         Runnable task = () -> {
-//            RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId);
-            RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId, seleniumIndex);
-            if (lineup != null) {
-                redisTemplate2.opsForHash().put(redisKey, "lineup", lineup);
-                log.info("[라인업 저장 완료] - gameId: {}, time: {}", gameId, LocalDateTime.now());
-            } else {
-                log.warn("[라인업 저장 실패] - gameId: {}, time: {}", gameId, LocalDateTime.now());
+            try {
+                RedisGameLineup lineup = lineupScraper.scrapeLineup(gameId, seleniumIndex);
+                if (lineup != null) {
+                    redisTemplate2.opsForHash().put(redisKey, "lineup", lineup);
+                    log.info("[라인업 저장 완료] - gameId: {}, time: {}", gameId, LocalDateTime.now());
+                } else {
+                    log.warn("[라인업 저장 실패] 라인업이 null임 - gameId: {}, time: {}", gameId, LocalDateTime.now());
+                }
+            } catch (Exception e) {
+                log.error("[라인업 크롤링 실패] gameId: {}, error: {}", gameId, e.getMessage(), e);
             }
         };
 
         if (executeTime.isBefore(LocalDateTime.now())) {
             lineupAsyncExecutor.runAsync(task);
+            log.info("[라인업 즉시 실행] 경기 시작 30분 전 이미 지남 - gameId: {}", gameId);
         } else {
             taskScheduler.schedule(
                     () -> lineupAsyncExecutor.runAsync(task),
                     executeTime.atZone(ZoneId.systemDefault()).toInstant()
             );
-            log.info("[라인업 크롤링 예약] 경기 시작 30분 전 - gameId: {}, 실행시각: {}", gameId, executeTime);
+            log.info("[라인업 크롤링 예약] - gameId: {}, 실행시각: {}", gameId, executeTime);
         }
     }
-
-
 
     /**
      * Relay 크롤링 예약: Lineup이 저장된 후에 실행
@@ -159,31 +175,42 @@ public class GameCacheServiceImpl implements GameCacheService {
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
 
-        // 테스트용
-//        LocalDateTime gameStartTime = LocalDateTime.now().plusMinutes(2);
-
-
-        final Integer seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
-        if (seleniumIndex == null) {
-            log.warn("[중계 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
+        final Integer seleniumIndex;
+        try {
+            seleniumIndex = (Integer) redisTemplate2.opsForHash().get(redisKey, "seleniumIndex");
+            if (seleniumIndex == null) {
+                log.warn("[중계 크롤링 취소] seleniumIndex 없음 - gameId: {}", gameId);
+                return;
+            }
+        } catch (Exception e) {
+            log.error("[중계 크롤링 취소] Redis 접근 실패 - gameId: {}, error: {}", gameId, e.getMessage(), e);
             return;
         }
 
         if (gameStartTime.isBefore(LocalDateTime.now())) {
-            relayAsyncExecutor.startRelay(gameId, seleniumIndex);
-            log.info("[중계 크롤링 시작] 경기 시작 시간 지남 - gameId: {}", gameId);
+            try {
+                relayAsyncExecutor.startRelay(gameId, seleniumIndex);
+                log.info("[중계 크롤링 시작] 경기 시작 시간 지남 - gameId: {}", gameId);
+            } catch (Exception e) {
+                log.error("[중계 크롤링 실패] gameId: {}, error: {}", gameId, e.getMessage(), e);
+            }
         } else {
             taskScheduler.schedule(
                     () -> {
-                        relayAsyncExecutor.startRelay(gameId, seleniumIndex);
-                        log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
+                        try {
+                            relayAsyncExecutor.startRelay(gameId, seleniumIndex);
+                            log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
+                        } catch (Exception e) {
+                            log.error("[중계 크롤링 실패] gameId: {}, error: {}", gameId, e.getMessage(), e);
+                        }
                     },
                     gameStartTime.atZone(ZoneId.systemDefault()).toInstant()
             );
             log.info("[중계 크롤링 예약] 경기 시작 전 - gameId: {}, 시각: {}", gameId, gameStartTime);
         }
-//        scheduleRelayStopJob(game);
     }
+
+
 
     private String generateGameId(Game game) {
         return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -191,9 +218,5 @@ public class GameCacheServiceImpl implements GameCacheService {
                 + game.getHomeTeam().getTeamCode()
                 + "0" + game.getSeason();
     }
-
-
-
-    // 타자 교체 감지
 
 }

@@ -6,6 +6,7 @@ import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
 import { ColorPicker } from '../components/ColorPicker';
 import { CollaborativeCanvas } from '../components/CollaborativeCanvas';
+import { Winner } from '../components/Winner';
 
 type Tab = 'LIVE-PICK' | 'WINNER' | 'PIXEL';
 
@@ -77,7 +78,7 @@ const MainPage: React.FC = () => {
       </div>
 
       {/* 컨텐츠 영역 */}
-      <div className="mt-6 px-6 overflow-y-auto h-[calc(100vh-280px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <div className="mt-6 px-6 overflow-y-auto h-[calc(100vh-320px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {activeTab === 'PIXEL' && (
           <div className="flex flex-col h-full">
             <div className="w-full flex items-center mb-4">
@@ -90,6 +91,11 @@ const MainPage: React.FC = () => {
               <CollaborativeCanvas />
             </div>
           </div>
+        )}
+        {activeTab === 'WINNER' && (
+          <Winner
+            homeTeam={currentGame.homeTeam}
+            awayTeam={currentGame.awayTeam}/>
         )}
       </div>
 

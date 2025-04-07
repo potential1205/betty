@@ -62,6 +62,7 @@ interface GameSchedule {
 
 export interface Game {
   id: number;
+  gameId: string;
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -78,6 +79,7 @@ interface AppState {
   todayGames: Game[];
   setTodayGames: (games: Game[]) => void;
   currentGame?: Game;
+  setCurrentGame: (game: Game) => void;
   userTokens: TeamToken[];
   myProposals: Proposal[];
   proposals: Proposal[];
@@ -131,7 +133,6 @@ interface AppState {
   voteForProposal: (teamId: number, proposalId: number) => Promise<void>;
   fetchTeamTokenCount: (teamId: number) => Promise<number>;
   clearError: () => void;
-  setCurrentGame: (game: Game) => void;
 }
 
 const initialWalletInfo: WalletInfo = {
@@ -233,7 +234,8 @@ export const useStore = create<AppState>((set, get) => ({
   })),
   todayGames: [],
   setTodayGames: (games) => set({ todayGames: games }),
-  currentGame: undefined,
+  currentGame: undefined, // 현재 선택된 게임을 저장
+  setCurrentGame: (game) => set({ currentGame: game }), // 현재 게임 설정 함수 추가
   userTokens: userTokenDummy,
   myProposals: [],
   proposals: [],
@@ -455,8 +457,6 @@ export const useStore = create<AppState>((set, get) => ({
       transactions: newInfo.transactions ?? state.walletInfo.transactions ?? [],
     }
   })),
-
-  setCurrentGame: (game: Game) => set({ currentGame: game }),
   
   // API 연동 함수들
   clearError: () => set({ error: null }),

@@ -26,6 +26,7 @@ const teamColors: Record<string, string> = {
 
 // API 응답 타입 정의
 interface GameSchedule {
+  gameId: string;
   season: number;
   gameDate: string;
   startTime: string;
@@ -42,6 +43,7 @@ interface GamesData {
 // 화면에 표시할 게임 데이터 타입
 interface Game {
   id: number;
+  gameId: string;
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -79,6 +81,8 @@ const Home: React.FC = () => {
         }
         
         const data: GamesData = await response.json();
+        console.log('API 응답 전체:', data); // 전체 응답 로깅
+        
         if (!data.schedules || data.schedules.length === 0) {
           setGames([]);
           setTodayGames([]);
@@ -86,9 +90,10 @@ const Home: React.FC = () => {
         }
         
         const formattedGames = data.schedules.map((schedule, index) => {
-          console.log(`Schedule ${index} 상세:`, schedule);
+          console.log(`Schedule ${index} 원본:`, JSON.stringify(schedule, null, 2)); // 각 schedule 상세 로깅
           const game = {
-            id: index,
+            id: index, // 인덱스 ID (내부 식별용)
+            gameId: schedule.gameId, // 원본 gameId 문자열 그대로 보존
             homeTeam: schedule.homeTeam,
             awayTeam: schedule.awayTeam,
             homeScore: 0,
@@ -97,7 +102,7 @@ const Home: React.FC = () => {
             status: schedule.status,
             schedule
           };
-          console.log(`Game ${index} 변환 결과:`, game);
+          console.log(`Game ${index} 변환 결과:`, game); // 변환된 game 객체 로깅
           return game;
         });
         
@@ -421,7 +426,7 @@ const Home: React.FC = () => {
       <div className="absolute bottom-12 left-0 right-0 flex justify-center px-12 z-10">
         <button
           onClick={() => {
-            const currentGame = games[currentIndex];
+            // currentGame을 useStore에 저장하고 페이지 이동
             useStore.setState({ currentGame });
             navigate('/main');
           }}

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigDecimal;
@@ -73,7 +74,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 1-2. add 블록체인 트랜잭션 처리
     private void handleAddTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             TransactionReceipt receipt = contract.add(transaction.getAmountIn().toBigInteger()).send();
             // 1BET = 100KRW
             BigDecimal bet = transaction.getAmountIn().divide(BigDecimal.valueOf(100)); // amountIn == KRW
@@ -117,7 +126,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 2-2. remove 블록체인 트랜잭션 처리
     private void handleRemoveTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             TransactionReceipt receipt = contract.remove(transaction.getAmountIn().toBigInteger()).send();
             // 1BET = 100KRW
             BigDecimal krw = transaction.getAmountIn().multiply(BigDecimal.valueOf(100)); // amountIn == BET
@@ -164,7 +181,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 3-2. buy 블록체인 트랜잭션 처리
     private void handleBuyTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             String tokenName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.buy(tokenName, amount).send();
@@ -214,7 +239,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 4-2. sell 블록체인 트랜잭션 처리
     private void handleSellTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             String tokenName = transaction.getTokenFrom().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.sell(tokenName, amount).send();
@@ -267,7 +300,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 5-2. swap 블록체인 트랜잭션 처리
     private void handleSwapTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             String tokenFromName = transaction.getTokenFrom().getTokenName();
             String tokenToName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
@@ -315,7 +356,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 6-2. use 블록체인 트랜잭션 처리
     private void handleUseTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
+            Exchange contract = Exchange.load(
+                    exchangeAddress,
+                    web3jService.getWeb3j(),
+                    new RawTransactionManager(
+                            web3jService.getWeb3j(),
+                            web3jService.getCredentials(),
+                            web3jService.getChainId()
+                    ),
+                    new DefaultGasProvider());
             String tokenName = transaction.getTokenFrom().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.use(tokenName, amount).send();

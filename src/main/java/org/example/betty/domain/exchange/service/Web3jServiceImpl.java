@@ -26,6 +26,14 @@ public class Web3jServiceImpl implements Web3jService {
     @Value("${admin.private.key}")
     private String adminPrivateKey;
 
+    @Value("${CHAIN_ID}")
+    private long chainId;
+
+    @Override
+    public long getChainId() {
+        return chainId;
+    }
+
     private Credentials credentials;
 
     @Override
@@ -54,7 +62,7 @@ public class Web3jServiceImpl implements Web3jService {
 
     @Override
     public TransactionReceipt sendTransaction(String contractAddress, BigInteger value, String encodedFunction) throws Exception {
-        RawTransactionManager txManager = new RawTransactionManager(web3j, credentials, 14609);
+        RawTransactionManager txManager = new RawTransactionManager(web3j, credentials, chainId);
         EthSendTransaction transaction = txManager.sendTransaction(
                 DefaultGasProvider.GAS_PRICE,
                 DefaultGasProvider.GAS_LIMIT,

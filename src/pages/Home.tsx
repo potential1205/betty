@@ -64,18 +64,24 @@ const Home: React.FC = () => {
   // API에서 데이터 가져오기
   useEffect(() => {
     const fetchGamesData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await fetch('/api/v1/home/games/today');
+        const response = await fetch('http://localhost:8080/api/v1/home/games/today');
         if (!response.ok) {
-          throw new Error('경기 데이터를 불러오는데 실패했습니다.');
+          throw new Error('서버를 불러오지 못했습니다.');
+        }
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("서버를 불러오지 못했습니다.");
         }
         
         const data: GamesData = await response.json();
-        console.log('API Response (전체):', data);
-        console.log('Schedules 데이터:', data.schedules);
+        if (!data.schedules || data.schedules.length === 0) {
+          setGames([]);
+          setTodayGames([]);
+          return;
+        }
         
-        // 가져온 데이터를 Game 객체 배열로 변환
         const formattedGames = data.schedules.map((schedule, index) => {
           console.log(`Schedule ${index} 상세:`, schedule);
           const game = {
@@ -249,43 +255,93 @@ const Home: React.FC = () => {
     );
   }
 
-  // 오류 발생 시 표시
-  if (error && games.length === 0) {
+  // 경기 데이터가 없는 경우 표시
+  if (games.length === 0) {
     return (
-      <div className="h-full flex justify-center items-center bg-gray-100">
-        <div className="text-center px-6">
-          <div className="mb-4 text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-          </div>
-          <p className="text-gray-700">{error}</p>
+      <div 
+        className="relative h-full overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #2B2B2B 0%, #1A1A1A 100%)'
+        }}
+      >
+        {/* 헤더는 유지 */}
+        <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
           <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+            onClick={() => navigate('/my')} 
+            className="w-6 h-6 rounded-full overflow-hidden"
           >
-            새로고침
+            <img src={profileImg} alt="Profile" className="w-full h-full object-cover" />
           </button>
+          <div className="w-5 h-5 flex items-center justify-center">
+            <button 
+              onClick={() => toggleSidebar(true)}
+              className="w-5 h-5"
+            >
+              <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
+            </button>
+          </div>
         </div>
+
+        {/* 경기 없음 메시지 */}
+        <div className="h-full flex flex-col items-center justify-center px-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-['Giants-Bold'] text-white mb-3">
+              오늘은 경기가 없습니다
+            </h2>
+            <p className="text-gray-400 text-sm">
+              다음 경기를 기다려주세요
+            </p>
+          </div>
+        </div>
+
+        <Sidebar />
       </div>
     );
   }
 
-  // 경기 데이터가 없는 경우 표시
-  if (games.length === 0) {
+  // 오류 발생 시 표시
+  if (error) {
     return (
-      <div className="h-full flex justify-center items-center bg-gray-100">
-        <div className="text-center px-6">
-          <p className="text-gray-700">오늘은 예정된 경기가 없습니다.</p>
+      <div 
+        className="relative h-full overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #2B2B2B 0%, #1A1A1A 100%)'
+        }}
+      >
+        {/* 헤더는 유지 */}
+        <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
           <button 
-            onClick={() => navigate('/main')} 
-            className="mt-4 px-4 py-2 bg-black text-white rounded-lg"
+            onClick={() => navigate('/my')} 
+            className="w-6 h-6 rounded-full overflow-hidden"
           >
-            메인으로 이동
+            <img src={profileImg} alt="Profile" className="w-full h-full object-cover" />
           </button>
+          <div className="w-5 h-5 flex items-center justify-center">
+            <button 
+              onClick={() => toggleSidebar(true)}
+              className="w-5 h-5"
+            >
+              <img src={hamburgerImg} alt="Menu" className="w-full h-full" />
+            </button>
+          </div>
         </div>
+
+        {/* 에러 메시지 */}
+        <div className="h-full flex flex-col items-center justify-center px-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-['Giants-Bold'] text-white mb-3">
+              {error}
+            </h2>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-6 py-2 bg-white/10 backdrop-blur-xl rounded-lg text-white hover:bg-white/20 transition-colors"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+
+        <Sidebar />
       </div>
     );
   }

@@ -62,13 +62,14 @@ services:
       STADIUM_URL: ${STADIUM_URL}
 
       # admin
+      ADMIN_ADDRESS: ${ADMIN_ADDRESS}
       ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY}
 
       # Exchange Contract
       EXCHANGE_ADDRESS: ${EXCHANGE_ADDRESS}
 
       # Token Addresses
-      BTC_ADDRESS: ${BTC_ADDRESS}
+      BET_ADDRESS: ${BET_ADDRESS}
       DSB_ADDRESS: ${DSB_ADDRESS}
       SSG_ADDRESS: ${SSG_ADDRESS}
       LGT_ADDRESS: ${LGT_ADDRESS}
@@ -91,6 +92,8 @@ services:
       KIA_POOL: ${KIA_POOL}
       SSL_POOL: ${SSL_POOL}
       HWE_POOL: ${HWE_POOL}
+
+      REWARD_POOL: ${REWARD_POOL}
 
   selenium-chrome-1:
     image: selenium/standalone-chrome:134.0-20250323

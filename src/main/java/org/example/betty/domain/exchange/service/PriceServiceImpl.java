@@ -25,8 +25,8 @@ public class PriceServiceImpl implements PriceService {
     private final Web3ContractUtil contractUtil;
     private final TokenPriceRepository tokenPriceRepository;
 
-    @Value("${BTC_ADDRESS}")
-    private String btcTokenAddress;
+    @Value("${BET_ADDRESS}")
+    private String betTokenAddress;
 
     @Value("${DSB_POOL}")
     private String dsbPoolAddress;
@@ -75,7 +75,7 @@ public class PriceServiceImpl implements PriceService {
             );
 
             var reserves = pool.getReserves().send();
-            BigInteger btcReserve = reserves.component1();
+            BigInteger betReserve = reserves.component1();
             BigInteger fanTokenReserve = reserves.component2();
 
             if (fanTokenReserve.equals(BigInteger.ZERO)) {
@@ -83,11 +83,11 @@ public class PriceServiceImpl implements PriceService {
                 return;
             }
 
-            BigDecimal btc = new BigDecimal(btcReserve);
+            BigDecimal bet = new BigDecimal(betReserve);
             BigDecimal fan = new BigDecimal(fanTokenReserve);
 
             // ✔ 18 decimal 기준 계산
-            BigDecimal price = btc.divide(fan, 18, RoundingMode.HALF_UP)
+            BigDecimal price = bet.divide(fan, 18, RoundingMode.HALF_UP)
                     .setScale(8, RoundingMode.HALF_UP);
 
             TokenPrice tokenPrice = TokenPrice.builder()
@@ -98,7 +98,7 @@ public class PriceServiceImpl implements PriceService {
 
             tokenPriceRepository.save(tokenPrice);
 
-            log.info("Price Sync completed: {} = {} BTC", tokenName, price);
+            log.info("Price Sync completed: {} = {} BET", tokenName, price);
 
         } catch (Exception e) {
             log.error("Price Sync failed: {}", tokenName, e);

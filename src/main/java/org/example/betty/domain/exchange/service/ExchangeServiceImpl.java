@@ -51,13 +51,13 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        Token btc = tokenRepository.findByTokenName("BTC")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
                 .tokenFrom(null) // KRW
-                .tokenTo(btc)
+                .tokenTo(bet)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
@@ -75,9 +75,9 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
             TransactionReceipt receipt = contract.add(transaction.getAmountIn().toBigInteger()).send();
-            // 1BTC = 100KRW
-            BigDecimal btc = transaction.getAmountIn().divide(BigDecimal.valueOf(100)); // amountIn == KRW
-            transaction.updateAmountOut(btc);
+            // 1BET = 100KRW
+            BigDecimal bet = transaction.getAmountIn().divide(BigDecimal.valueOf(100)); // amountIn == KRW
+            transaction.updateAmountOut(bet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -95,12 +95,12 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        Token btc = tokenRepository.findByTokenName("BTC")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .tokenFrom(btc)
+                .tokenFrom(bet)
                 .tokenTo(null) // KRW
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
@@ -119,8 +119,8 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             Exchange contract = Exchange.load(exchangeAddress, web3jService.getWeb3j(), web3jService.getCredentials(), new DefaultGasProvider());
             TransactionReceipt receipt = contract.remove(transaction.getAmountIn().toBigInteger()).send();
-            // 1BTC = 100KRW
-            BigDecimal krw = transaction.getAmountIn().multiply(BigDecimal.valueOf(100)); // amountIn == BTC
+            // 1BET = 100KRW
+            BigDecimal krw = transaction.getAmountIn().multiply(BigDecimal.valueOf(100)); // amountIn == BET
             transaction.updateAmountOut(krw);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
@@ -142,12 +142,12 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-        Token btc = tokenRepository.findByTokenName("BTC")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .tokenFrom(btc)
+                .tokenFrom(bet)
                 .tokenTo(token)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
@@ -192,13 +192,13 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
         Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-        Token btc = tokenRepository.findByTokenName("BTC")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
                 .tokenFrom(token)
-                .tokenTo(btc)
+                .tokenTo(bet)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)

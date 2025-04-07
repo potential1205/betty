@@ -61,12 +61,15 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // 환경 변수에서 API URL 가져오기기
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
   // API에서 데이터 가져오기
   useEffect(() => {
     const fetchGamesData = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:8080/api/v1/home/games/today');
+        const response = await fetch(`${API_URL}/api/v1/home/games/today`);
         if (!response.ok) {
           throw new Error('서버를 불러오지 못했습니다.');
         }

@@ -1,7 +1,9 @@
 package org.example.betty.domain.exchange.service;
 
 import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.PendingTransactionUtil;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.contract.Exchange;
@@ -30,6 +32,7 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExchangeServiceImpl implements ExchangeService {
@@ -40,6 +43,9 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final TokenRepository tokenRepository;
     private final Web3jService web3jService;
     private final PendingTransactionUtil pendingTransactionUtil;
+
+    @Value("${BET_ADDRESS}")
+    private String betTokenAddress;
 
     @Value("${exchange.address}")
     private String exchangeAddress;
@@ -74,25 +80,43 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 1-2. add 블록체인 트랜잭션 처리
     private void handleAddTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(
+            BigDecimal amountKrw = transaction.getAmountIn(); // KRW
+            BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
+            BigInteger amountWei = amountBet.toBigInteger();
+
+            // 운영 지갑 Credentials, GasProvider
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            // 컨트랙트 로드
+            org.example.betty.contract.Token betToken = org.example.betty.contract.Token.load(
+                    betTokenAddress,
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+            Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
-                    web3jService.getWeb3j(),
-                    new RawTransactionManager(
-                            web3jService.getWeb3j(),
-                            web3jService.getCredentials(),
-                            web3jService.getChainId()
-                    ),
-                    new DefaultGasProvider());
-            TransactionReceipt receipt = contract.add(transaction.getAmountIn().toBigInteger()).send();
-            // 1BET = 100KRW
-            BigDecimal bet = transaction.getAmountIn().divide(BigDecimal.valueOf(100)); // amountIn == KRW
-            transaction.updateAmountOut(bet);
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+            // approve
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
+
+            // add
+            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
+            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
+
+            transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
         } catch (Exception e) {
+            log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", web3jService.getCredentials().getAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
-            e.printStackTrace();
         }
     }
 

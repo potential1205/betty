@@ -52,13 +52,17 @@ public class GameCacheServiceImpl implements GameCacheService {
 //        LocalDate today = LocalDate.now();
         LocalDate today = LocalDate.now().minusDays(1);
 
+
         List<Game> todayGames = gameRepository.findByGameDate(today);
+
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
         int index = 0;
 
         for (Game game : todayGames) {
+            log.info("디버깅!!! : {}" ,game.getGameDate().toString());
             String gameId = generateGameId(game);
+            log.info("디버깅!!!!!!!!! : {}" ,gameId);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
 //            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())

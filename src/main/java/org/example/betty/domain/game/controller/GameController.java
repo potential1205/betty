@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
-import org.example.betty.domain.game.service.GameReadService;
+import org.example.betty.domain.game.service.GameService;
 import org.example.betty.domain.game.service.SseService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ import java.util.List;
 @Tag(name = "home-controller", description = "홈화면 경기 정보 API")
 public class GameController {
 
-    private final GameReadService gameReadService;
+    private final GameService gameReadService;
     private final SseService sseService;
 
     @Operation(summary = "전체 경기 일정 조회", description = "일일 전체 경기 일정을 조회합니다.")

@@ -8,4 +8,6 @@ import java.time.LocalDate;
 
 public interface GameRepository extends JpaRepository<Game, Long> {
     List<Game> findByGameDate(LocalDate gameDate);
+
+
 }

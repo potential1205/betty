@@ -69,7 +69,7 @@ const Home: React.FC = () => {
     const fetchGamesData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_URL}/api/v1/home/games/today`);
+        const response = await fetch(`${API_URL}/api/v1/home/games`);
         if (!response.ok) {
           throw new Error('서버를 불러오지 못했습니다.');
         }

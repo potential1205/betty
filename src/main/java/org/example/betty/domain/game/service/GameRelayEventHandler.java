@@ -11,6 +11,9 @@ import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -135,6 +138,12 @@ public class GameRelayEventHandler {
                 listOps.rightPush(redisKey, problem);
                 log.info("[문제 생성] {} | 문제ID: {}", problem.getDescription(), problem.getProblemId());
             }
+
+            // 오늘 자정까지 TTL 설정
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
+            Duration ttl = Duration.between(now, midnight);
+            redisTemplate2.expire(redisKey, ttl);
 
             // SSE 전송용 문제 랜덤 1개 선택
             if (!problems.isEmpty()) {

@@ -33,15 +33,26 @@ public class GameController {
         return ResponseEntity.ok(GameScheduleListResponse.of(schedules));
     }
 
-    @Operation(summary = "라인업 조회", description = "경기 라인업을 조회합니다.")
+    @Operation(summary = "라인업 조회", description = "MVP 베팅을 위한 경기 라인업을 조회합니다.")
     @PostMapping("/games/{gameId}/lineup")
     public ResponseEntity<RedisGameLineup> getLineup(@PathVariable String gameId) {
         RedisGameLineup lineup = gameReadService.getGameLineup(gameId);
         return ResponseEntity.ok(lineup);
     }
 
-    @GetMapping(value = "/subscribe/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@PathVariable String gameId) {
-        return sseService.subscribe(gameId);
+    @Operation(summary = "경기 상태 조회", description = "경기의 현재 상태를 조회합니다.")
+    @GetMapping("/games/{gameId}/status")
+    public ResponseEntity<String> getGameStatus(@PathVariable String gameId) {
+        String status = gameReadService.getGameStatus(gameId);
+        return ResponseEntity.ok(status);
     }
+
+
+
+//    @GetMapping(value = "/subscribe/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public SseEmitter subscribe(@PathVariable String gameId) {
+//        return sseService.subscribe(gameId);
+//    }
+
+
 }

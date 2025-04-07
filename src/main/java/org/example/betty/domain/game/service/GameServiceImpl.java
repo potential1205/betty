@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -23,7 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
 
-    private final GameRepository gamesRepository;
+    private final GameRepository gameRepository;
+
 
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
@@ -36,7 +38,7 @@ public class GameServiceImpl implements GameService {
 //        LocalDate today = LocalDate.now();
         LocalDate today = LocalDate.now().minusDays(1);
 
-        List<Game> games = gamesRepository.findByGameDate(today);
+        List<Game> games = gameRepository.findByGameDate(today);
         List<RedisGameSchedule> schedules = new ArrayList<>();
 
         for (Game game : games) {
@@ -80,8 +82,47 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Transactional
+    public void updateGameStatusToLive(Game game) {
+        game.setStatus("LIVE");
+        gameRepository.save(game);
+        log.info("[경기 상태 변경] gameId={} → LIVE", game.getId());
+    }
+
+    @Override
+    @Transactional
+    public void updateGameStatusToEnded(Game game) {
+        game.setStatus("ENDED");
+        gameRepository.save(game);
+        log.info("[경기 상태 변경] gameId={} → ENDED", game.getId());
+    }
+
+    @Override
+    public Game findGameByGameId(String gameId) {
+        String gameDateStr = gameId.substring(0, 8);
+        String awayTeamCode = gameId.substring(8, 10);
+        String homeTeamCode = gameId.substring(10, 12);
+        String seasonStr = gameId.substring(13); // "02025" 형태
+
+        if (seasonStr.startsWith("0")) {
+            seasonStr = seasonStr.substring(1); // "02025" → "2025"
+        }
+
+        int season = Integer.parseInt(seasonStr); // 🔥 여기가 핵심!
+
+        LocalDate gameDate = LocalDate.parse(gameDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        return gameRepository.findByGameDateAndSeasonAndHomeTeam_TeamCodeAndAwayTeam_TeamCode(
+                gameDate, season, homeTeamCode, awayTeamCode
+        ).orElseThrow(() -> new RuntimeException("gameId로 Game 조회 실패: " + gameId));
+    }
+
+
+
+    @Override
     public String getGameStatus(String gameId) {
-        return "";
+        Game game = findGameByGameId(gameId);
+        return game.getStatus();
     }
 
 

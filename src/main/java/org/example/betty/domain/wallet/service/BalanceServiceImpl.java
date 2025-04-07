@@ -32,6 +32,7 @@ public class BalanceServiceImpl implements BalanceService {
     private final WalletBalanceRepository walletBalanceRepository;
     private final TokenRepository tokenRepository;
 
+    @Value("${BET_ADDRESS}") private String BET_ADDRESS;
     @Value("${DSB_ADDRESS}") private String DSB_ADDRESS;
     @Value("${SSG_ADDRESS}") private String SSG_ADDRESS;
     @Value("${LGT_ADDRESS}") private String LGT_ADDRESS;
@@ -46,6 +47,7 @@ public class BalanceServiceImpl implements BalanceService {
     @Override
     public void syncAllWalletBalances() {
         walletRepository.findAll().forEach(wallet -> {
+            syncWalletBalance(wallet, "BET", BET_ADDRESS);
             syncWalletBalance(wallet, "DSB", DSB_ADDRESS);
             syncWalletBalance(wallet, "SSG", SSG_ADDRESS);
             syncWalletBalance(wallet, "LGT", LGT_ADDRESS);

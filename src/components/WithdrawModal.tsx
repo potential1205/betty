@@ -10,42 +10,51 @@ interface WithdrawModalProps {
 
 const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   const { walletInfo } = useStore();
-  const [amount, setAmount] = useState<number>(0);
-  const [customAmount, setCustomAmount] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [customAmount, setCustomAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const withdrawOptions = [10000, 50000, 100000, 500000];
-
-  const formatBET = (bet: number) => bet.toFixed(2);
-
-  // 소수점 2자리 + 잔고 이하만 허용
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBET || 0)) {
-      setCustomAmount(value);
-      setAmount(Number(value));
-    }
+  // 출금 가능한 금액 옵션들 (현재 보유 BET의 25%, 50%, 75%, 100%)
+  const getWithdrawOptions = () => {
+    const totalBET = walletInfo.totalBET || 0;
+    return [
+      { percent: 25, amount: totalBET * 0.25 },
+      { percent: 50, amount: totalBET * 0.5 },
+      { percent: 75, amount: totalBET * 0.75 },
+      { percent: 100, amount: totalBET }
+    ];
   };
 
   const handleWithdraw = async () => {
-    if (!amount || amount <= 0) return;
-
+    if (!amount) return;
+    
     try {
       setIsLoading(true);
-      await removeBettyCoin(amount);
+
+      const response = await removeBettyCoin(Number(amount));
+      console.log('출금 성공:', response);
+      console.log('Withdrawing', amount, 'BET');
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        setAmount(0);
+        setAmount('');
         setCustomAmount('');
         onClose();
       }, 1500);
     } catch (error) {
       console.error('Withdrawal failed:', error);
-      alert('출금에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 소수점 두 자리까지만 허용하는 정규식
+    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBET || 0)) {
+      setCustomAmount(value);
+      setAmount(value);
     }
   };
 

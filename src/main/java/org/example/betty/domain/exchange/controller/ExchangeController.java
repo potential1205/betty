@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.domain.exchange.dto.req.SwapRequest;
 import org.example.betty.domain.exchange.dto.req.TransactionRequest;
+import org.example.betty.domain.exchange.dto.resp.SwapEstimateResponse;
 import org.example.betty.domain.exchange.dto.resp.TransactionResponse;
 import org.example.betty.domain.exchange.entity.Transaction;
 import org.example.betty.domain.exchange.service.ExchangeService;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -65,4 +67,13 @@ public class ExchangeController {
     public ResponseEntity<List<Transaction>> getTransactions(@RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken) {
         return ResponseEntity.ok(transactionQueryService.getTransactions(accessToken));
     }
+
+    @Operation(summary = "스왑 예상 금액 계산", description = "입력한 팬토큰 수량에 따른 스왑 예상 금액과 환율을 계산합니다.")
+    @GetMapping("/estimate")
+    public ResponseEntity<SwapEstimateResponse> estimateSwapAmount(@RequestParam String fromToken,
+                                                                   @RequestParam String toToken,
+                                                                   @RequestParam BigDecimal amountIn) {
+        return ResponseEntity.ok(exchangeService.getSwapAmount(fromToken, toToken, amountIn));
+    }
+
 }

@@ -9,10 +9,13 @@ import org.example.betty.common.util.SessionUtil;
 import org.example.betty.contract.Exchange;
 import org.example.betty.domain.exchange.dto.req.SwapRequest;
 import org.example.betty.domain.exchange.dto.req.TransactionRequest;
+import org.example.betty.domain.exchange.dto.resp.SwapEstimateResponse;
 import org.example.betty.domain.exchange.dto.resp.TransactionResponse;
 import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.entity.TokenPrice;
 import org.example.betty.domain.exchange.entity.Transaction;
 import org.example.betty.domain.exchange.enums.TransactionStatus;
+import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.exchange.repository.TransactionRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
@@ -32,6 +35,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -47,6 +51,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final Web3jService web3jService;
     private final PendingTransactionUtil pendingTransactionUtil;
     private final BalanceService balanceService;
+    private final TokenPriceRepository tokenPriceRepository;
     private final WalletBalanceRepository walletBalanceRepository;
 
     @Value("${BET_ADDRESS}")
@@ -181,7 +186,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private void handleRemoveTransaction(Transaction transaction) {
         try {
             BigDecimal amountBet = transaction.getAmountIn(); // BET
-            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1BET = 100KRW
+            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1 BET = 100 KRW
             BigInteger amountWei = amountBet.toBigInteger();
 
             Web3j web3j = web3jService.getWeb3j();
@@ -224,6 +229,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.error("[REMOVE TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
+            e.printStackTrace();
         }
     }
 
@@ -455,4 +461,30 @@ public class ExchangeServiceImpl implements ExchangeService {
             e.printStackTrace();
         }
     }
+
+    // 7. Swap 환율 조회
+    @Override
+    public SwapEstimateResponse getSwapAmount(String fromTokenName, String toTokenName, BigDecimal amountIn) {
+        Token fromToken = tokenRepository.findByTokenName(fromTokenName)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        Token toToken = tokenRepository.findByTokenName(toTokenName)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        List<TokenPrice> fromPrices = tokenPriceRepository.findAllByTokenOrderByUpdatedAtDesc(fromToken);
+        List<TokenPrice> toPrices = tokenPriceRepository.findAllByTokenOrderByUpdatedAtDesc(toToken);
+
+        if (fromPrices.isEmpty() || toPrices.isEmpty()) {
+            throw new BusinessException(ErrorCode.TOKEN_PRICE_NOT_FOUND);
+        }
+
+        BigDecimal fromPrice = fromPrices.get(0).getPrice();
+        BigDecimal toPrice = toPrices.get(0).getPrice();
+
+        // 환율 계산 및 예상 수량 계산
+        BigDecimal rate = fromPrice.divide(toPrice, 8, RoundingMode.HALF_UP);
+        BigDecimal expectedAmount = amountIn.multiply(rate).setScale(8, RoundingMode.HALF_UP);
+
+        return new SwapEstimateResponse(expectedAmount, rate);
+    }
+
 }

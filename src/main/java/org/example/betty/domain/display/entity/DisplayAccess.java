@@ -21,10 +21,10 @@ public class DisplayAccess {
     private Long id;
 
     @NotNull
-    private String teamCode;
+    private Long gameId;
 
     @NotNull
-    private String gameCode;
+    private Long teamId;
 
     @NotNull
     private String walletAddress;

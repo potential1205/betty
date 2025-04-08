@@ -55,25 +55,25 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     @Override
-    public void checkDisplayAccess(String accessToken, String gameCode, String teamCode) {
+    public void checkDisplayAccess(String accessToken, Long gameId, Long teamId) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        if (!displayAccessRepository.existsByWalletAddressAndGameCodeAndTeamCode(wallet.getWalletAddress(), gameCode, teamCode)) {
+        if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(wallet.getWalletAddress(), gameId, teamId)) {
             throw new BusinessException(ErrorCode.NOT_FOUND_DISPLAY_ACCESS);
         }
     }
 
     @Override
-    public void createDisplayAccess(String accessToken, String gameCode, String teamCode, String txHash) {
+    public void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        if (displayAccessRepository.existsByWalletAddressAndGameCodeAndTeamCode(walletAddress, gameCode, teamCode)) {
+        if (displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
             throw new BusinessException(ErrorCode.ALREADY_HAS_DISPLAY_ACCESS);
         }
 
@@ -119,33 +119,33 @@ public class DisplayServiceImpl implements DisplayService{
 
         DisplayAccess displayAccess = DisplayAccess.builder()
                 .walletAddress(wallet.getWalletAddress())
-                .gameCode(gameCode)
-                .teamCode(teamCode)
+                .gameId(gameId)
+                .teamId(teamId)
                 .build();
 
         displayAccessRepository.save(displayAccess);
     }
 
     @Override
-    public void gameEnd(String gameCode, String teamCode) {
-        String destination = "/topic/gameEnd/" + gameCode + "/" + teamCode;
+    public void gameEnd(Long gameId, Long teamId) {
+        String destination = "/topic/gameEnd/" + gameId + "/" + teamId;
         messagingTemplate.convertAndSend(destination, "GAME_OVER");
-        String key = "display" + ":" + gameCode + ":" + teamCode;
+        String key = "display" + ":" + gameId + ":" + teamId;
         redisTemplate3.delete(key);
-        log.info("게임이 정상적으로 종료되었습니다. {},{}", gameCode, teamCode);
+        log.info("게임이 정상적으로 종료되었습니다. {},{}", gameId, teamId);
     }
 
     @Override
-    public void inningEnd(String gameCode, String teamCode, String inning) {
-        String key = "display" + ":" + gameCode + ":" + teamCode;
+    public void inningEnd(Long gameId, Long teamId, int inning) {
+        String key = "display" + ":" + gameId + ":" + teamId;
         Pixel[][] display = (Pixel[][]) redisTemplate3.opsForValue().get(key);
-        saveDisplay(display, gameCode, teamCode, inning);
-        log.info("이닝이 정상적으로 종료되었습니다. {},{}", gameCode, teamCode);
+        saveDisplay(display, gameId, teamId, inning);
+        log.info("이닝이 정상적으로 종료되었습니다. {},{}", gameId, teamId);
     }
 
     @Override
-    public Pixel[][] getDisplay(String gameCode, String teamCode) {
-        String key = "display" + ":" + gameCode + ":" + teamCode;
+    public Pixel[][] getDisplay(Long gameId, Long teamId) {
+        String key = "display" + ":" + gameId + ":" + teamId;
 
         log.info("조회된 전광판 key : " + key);
 
@@ -164,15 +164,15 @@ public class DisplayServiceImpl implements DisplayService{
     }
 
     @Override
-    public void updatePixel(String gameCode, String teamCode, int r, int c, Pixel pixel) {
-        String key = "display" + ":" + gameCode + ":" + teamCode;
-        Pixel[][] board = getDisplay(gameCode, teamCode);
+    public void updatePixel(Long gameId, Long teamId, int r, int c, Pixel pixel) {
+        String key = "display" + ":" + gameId + ":" + teamId;
+        Pixel[][] board = getDisplay(gameId, teamId);
         board[r][c] = pixel;
         redisTemplate3.opsForValue().set(key, board);
         log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
     }
 
-    public void saveDisplay(Pixel[][] display, String gameCode, String teamCode, String inning) {
+    public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
         BufferedImage image = createImageFromBoard(display);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -183,17 +183,17 @@ public class DisplayServiceImpl implements DisplayService{
             baos.close();
 
             String contentType = "image/png";
-            String displayUrl = s3Util.upload(imageBytes, contentType, gameCode, teamCode, inning);
+            String displayUrl = s3Util.upload(imageBytes, contentType, gameId, teamId, inning);
 
             Display newDisplay = Display.builder()
-                    .gameCode(gameCode)
-                    .teamCode(teamCode)
+                    .gameId(gameId)
+                    .teamId(teamId)
                     .inning(inning)
                     .displayUrl(displayUrl)
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            log.info("게임ID : " + gameCode + "팀 ID : "  + teamCode + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
+            log.info("게임ID : " + gameId + "팀 ID : "  + teamId + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
             displayRepository.save(newDisplay);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);

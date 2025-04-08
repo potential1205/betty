@@ -36,29 +36,20 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
         }
         token = "Bearer " + token;
 
-        String gameIdStr = queryParams.getFirst("game_id");
-        String teamIdStr = queryParams.getFirst("team_id");
-        if (gameIdStr == null || teamIdStr == null) {
-            log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", gameIdStr, teamIdStr);
+        String gameCode = queryParams.getFirst("game_id");
+        String teamCode = queryParams.getFirst("team_id");
+        if (gameCode == null || teamCode == null) {
+            log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", gameCode, teamCode);
             return false;
         }
 
-        Long gameId;
-        Long teamId;
-        try {
-            gameId = Long.valueOf(gameIdStr);
-            teamId = Long.valueOf(teamIdStr);
-        } catch (NumberFormatException e) {
-            log.error("Invalid format for game_id or team_id: game_id={}, team_id={}", gameIdStr, teamIdStr, e);
-            return false;
-        }
 
         try {
             String walletAddress = sessionUtil.getSession(token);
             log.info("Retrieved walletAddress: {} for token", walletAddress);
 
-            if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
-                log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameId, teamId);
+            if (!displayAccessRepository.existsByWalletAddressAndGameCodeAndTeamCode(walletAddress, gameCode, teamCode)) {
+                log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameCode, teamCode);
                 return false;
             }
 

@@ -10,8 +10,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PixelUpdateMessage {
-    private Long gameId;
-    private Long teamId;
+    private String gameCode;
+    private String teamCode;
     private int r;
     private int c;
     private String walletAddress;

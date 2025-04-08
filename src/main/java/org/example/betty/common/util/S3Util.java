@@ -25,8 +25,8 @@ public class S3Util {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public String upload(byte[] imageBytes, String contentType, Long gameId, Long teamId, int inning) {
-        String key = "display/" + gameId + "/" + teamId + "/" + inning + "/" + UUID.randomUUID() + ".png";
+    public String upload(byte[] imageBytes, String contentType, String gameCode, String teamCode, String inning) {
+        String key = "display/" + gameCode + "/" + teamCode + "/" + inning + "/" + UUID.randomUUID() + ".png";
 
         try {
             PutObjectRequest req = PutObjectRequest.builder()

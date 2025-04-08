@@ -20,14 +20,11 @@ public class Display {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    private Long gameId;
+    private String gameCode;
 
-    @NotNull
-    private Long teamId;
+    private String teamCode;
 
-    @NotNull
-    private int inning;
+    private String inning;
 
     @NotNull
     private String displayUrl;

@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.index.qual.GTENegativeOne;
 
 @Entity
 @Getter
@@ -22,10 +21,10 @@ public class DisplayAccess {
     private Long id;
 
     @NotNull
-    private Long teamId;
+    private String teamCode;
 
     @NotNull
-    private Long gameId;
+    private String gameCode;
 
     @NotNull
     private String walletAddress;

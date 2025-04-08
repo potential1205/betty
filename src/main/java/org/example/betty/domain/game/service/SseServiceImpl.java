@@ -1,6 +1,11 @@
 package org.example.betty.domain.game.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.common.util.SessionUtil;
+import org.example.betty.domain.wallet.repository.WalletRepository;
+import org.example.betty.exception.BusinessException;
+import org.example.betty.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -12,12 +17,19 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SseServiceImpl implements SseService {
 
+    private final SessionUtil sessionUtil;
+    private final WalletRepository walletRepository;
     private final Map<String, Set<SseEmitter>> emitterMap = new ConcurrentHashMap<>();
 
     @Override
-    public SseEmitter stream(String gameId) {
+    public SseEmitter stream(String accessToken, String gameId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
         SseEmitter emitter = new SseEmitter(0L); // 무제한 연결 유지
 
         emitterMap.computeIfAbsent(gameId, key -> new CopyOnWriteArraySet<>()).add(emitter);

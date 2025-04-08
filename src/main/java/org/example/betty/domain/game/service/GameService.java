@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface GameService {
 
-    List<RedisGameSchedule> getTodayGameSchedules();
+    List<RedisGameSchedule> getTodayGameSchedules(String accessToken);
 
-    RedisGameLineup getGameLineup(String gameId);
+    RedisGameLineup getGameLineup(String accessToken, String gameId);
 
     void updateGameStatusToLive(Game game);
 
@@ -19,7 +19,7 @@ public interface GameService {
 
     Game findGameByGameId(String gameId);
 
-    String getGameStatus(String gameId);
+    String getGameStatus(String accessToken, String gameId);
 
 
 }

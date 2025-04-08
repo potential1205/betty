@@ -2,10 +2,12 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
+import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,6 +27,8 @@ import java.util.List;
 public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
+    private final SessionUtil sessionUtil;
+    private final WalletRepository walletRepository;
 
 
     @Qualifier("redisTemplate2")
@@ -33,10 +37,13 @@ public class GameServiceImpl implements GameService {
     private static final String REDIS_GAME_PREFIX = "games:";
 
     @Override
-    public List<RedisGameSchedule> getTodayGameSchedules() {
-        LocalDate today = LocalDate.now();
-//        LocalDate today = LocalDate.now().minusDays(1);
+    public List<RedisGameSchedule> getTodayGameSchedules(String accessToken) {
 
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        LocalDate today = LocalDate.now();
         List<Game> games = gameRepository.findByGameDate(today);
         List<RedisGameSchedule> schedules = new ArrayList<>();
 
@@ -59,7 +66,11 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public RedisGameLineup getGameLineup(String gameId) {
+    public RedisGameLineup getGameLineup(String accessToken, String gameId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
         String gameDate = gameId.substring(0, 4) + "-" + gameId.substring(4, 6) + "-" + gameId.substring(6, 8);
         String redisKey = REDIS_GAME_PREFIX + gameDate + ":" + gameId;
 
@@ -119,7 +130,11 @@ public class GameServiceImpl implements GameService {
 
 
     @Override
-    public String getGameStatus(String gameId) {
+    public String getGameStatus(String accessToken, String gameId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
         Game game = findGameByGameId(gameId);
         return game.getStatus();
     }

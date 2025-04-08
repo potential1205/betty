@@ -75,9 +75,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         // BETTY 잔액 감소 및 토큰 증가
         if (bettyBalance < totalPrice) return;
         setBettyBalance(bettyBalance - totalPrice);
-        // BTC 가치 계산 (1 BETTY = 1 BTC)
-        const btcValue = totalPrice;
-        updateTokenBalance(team, numAmount, btcValue);
+        // BET 가치 계산 (1 BETTY = 1 BET)
+        const betValue = totalPrice;
+        updateTokenBalance(team, numAmount, betValue);
         break;
         
       case 'sell':
@@ -85,7 +85,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         const sellPrice = numAmount * (teamTokenPrices.find(t => t.team === selectedToken)?.price || 0);
         if (useTeamToken(selectedToken!, numAmount)) {
           setBettyBalance(bettyBalance + sellPrice);
-          // BTC 가치 계산 (1 BETTY = 1 BTC)
+          // BET 가치 계산 (1 BETTY = 1 BET)
           const sellBtcValue = sellPrice;
           updateTokenBalance(selectedToken!, -numAmount, -sellBtcValue);
         }
@@ -97,7 +97,7 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
         if (bettyBalance < swapPrice) return;
         if (useTeamToken(selectedToken!, numAmount)) {
           setBettyBalance(bettyBalance - swapPrice);
-          // BTC 가치 계산 (1 BETTY = 1 BTC)
+          // BET 가치 계산 (1 BETTY = 1 BET)
           const swapBtcValue = swapPrice;
           updateTokenBalance(selectedToken!, -numAmount, -swapBtcValue);
           updateTokenBalance(team, numAmount, swapBtcValue);

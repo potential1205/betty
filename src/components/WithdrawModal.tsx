@@ -10,51 +10,42 @@ interface WithdrawModalProps {
 
 const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   const { walletInfo } = useStore();
-  const [amount, setAmount] = useState('');
-  const [customAmount, setCustomAmount] = useState('');
+  const [amount, setAmount] = useState<number>(0);
+  const [customAmount, setCustomAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // 출금 가능한 금액 옵션들 (현재 보유 BTC의 25%, 50%, 75%, 100%)
-  const getWithdrawOptions = () => {
-    const totalBTC = walletInfo.totalBTC || 0;
-    return [
-      { percent: 25, amount: totalBTC * 0.25 },
-      { percent: 50, amount: totalBTC * 0.5 },
-      { percent: 75, amount: totalBTC * 0.75 },
-      { percent: 100, amount: totalBTC }
-    ];
+  const withdrawOptions = [10000, 50000, 100000, 500000];
+
+  const formatBET = (bet: number) => bet.toFixed(2);
+
+  // 소수점 2자리 + 잔고 이하만 허용
+  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBET || 0)) {
+      setCustomAmount(value);
+      setAmount(Number(value));
+    }
   };
 
   const handleWithdraw = async () => {
-    if (!amount) return;
-    
+    if (!amount || amount <= 0) return;
+
     try {
       setIsLoading(true);
-
-      const response = await removeBettyCoin(Number(amount));
-      console.log('출금 성공:', response);
-      console.log('Withdrawing', amount, 'BTC');
+      await removeBettyCoin(amount);
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        setAmount('');
+        setAmount(0);
         setCustomAmount('');
         onClose();
       }, 1500);
     } catch (error) {
       console.error('Withdrawal failed:', error);
+      alert('출금에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // 소수점 두 자리까지만 허용하는 정규식
-    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBTC || 0)) {
-      setCustomAmount(value);
-      setAmount(value);
     }
   };
 
@@ -79,7 +70,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <div className="w-[12px] h-[12px]" />
-        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BTC 출금하기</h1>
+        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BET 출금하기</h1>
         <button 
           onClick={onClose}
           className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
@@ -103,26 +94,26 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       {/* 메인 컨텐츠 */}
       <div className="h-[calc(100%-56px)] flex flex-col justify-center">
         <div className="p-4 flex flex-col">
-          {/* 현재 보유 BTC */}
+          {/* 현재 보유 BET */}
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
-            <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
+            <p className="text-xs text-gray-400 mb-1">현재 보유 BET</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBTC?.toFixed(2) || '0.00'}</p>
-              <p className="text-sm text-gray-400 ml-1">BTC</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBET?.toFixed(2) || '0.00'}</p>
+              <p className="text-sm text-gray-400 ml-1">BET</p>
             </div>
           </div>
 
           {/* 금액 선택 버튼들 */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {getWithdrawOptions().map(({ percent, amount: btcAmount }) => (
+            {getWithdrawOptions().map(({ percent, amount: betAmount }) => (
               <button
                 key={percent}
                 onClick={() => {
-                  setAmount(btcAmount.toFixed(2));
+                  setAmount(betAmount.toFixed(2));
                   setCustomAmount('');
                 }}
                 className={`p-4 rounded-xl text-center transition-colors
-                  ${Number(amount) === Number(btcAmount.toFixed(2)) && !customAmount
+                  ${Number(amount) === Number(betAmount.toFixed(2)) && !customAmount
                     ? 'bg-black text-white' 
                     : 'bg-gray-100 text-black hover:bg-gray-200'}`}
               >
@@ -131,7 +122,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
                   {percent}%
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {btcAmount.toFixed(2)} BTC
+                  {betAmount.toFixed(2)} BET
                 </p>
               </button>
             ))}
@@ -150,7 +141,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
                 placeholder="0.00"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
               />
-              <span className="text-gray-500 ml-2">BTC</span>
+              <span className="text-gray-500 ml-2">BET</span>
             </div>
           </div>
 

@@ -107,28 +107,28 @@ export interface Transaction {
 
 export interface WalletInfo {
   address: string;
-  totalBTC: number;
+  totalBET: number;
   tokens: {
     team: string;
     amount: number;
-    btcValue: number;
+    betValue: number;
   }[];
   transactions: Transaction[];
 }
 
 export const walletDummy: WalletInfo = {
   address: "0x1234...5678",
-  totalBTC: 1000, // 100,000원
+  totalBET: 1000, // 100,000원
   tokens: [
     {
       team: "삼성",
       amount: 5,
-      btcValue: 50 // 10 BTC per token
+      betValue: 50 // 10 BET per token
     },
     {
       team: "두산",
       amount: 3,
-      btcValue: 30 // 10 BTC per token
+      betValue: 30 // 10 BET per token
     }
   ],
   transactions: [

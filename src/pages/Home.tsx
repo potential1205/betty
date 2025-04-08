@@ -6,6 +6,8 @@ import Sidebar from '../components/Sidebar';
 import profileImg from '../assets/profile.png';
 import hamburgerImg from '../assets/hamburger.png';
 import { useStore } from '../stores/useStore';
+import axiosInstance from '../apis/axios';
+import { getAccessToken } from '../apis/axios';
 
 // 팀 색상 정의
 const teamColors: Record<string, string> = {
@@ -71,16 +73,12 @@ const Home: React.FC = () => {
     const fetchGamesData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_URL}/api/v1/home/games`);
-        if (!response.ok) {
-          throw new Error('서버를 불러오지 못했습니다.');
-        }
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("서버를 불러오지 못했습니다.");
-        }
-        
-        const data: GamesData = await response.json();
+        // 디버깅용 로그 추가
+        const token = getAccessToken();
+        console.log('Current access token:', token);
+        const response = await axiosInstance.get('/home/games');
+        console.log('API Response:', response);
+        const data: GamesData = response.data;
         console.log('API 응답 전체:', data); // 전체 응답 로깅
         
         if (!data.schedules || data.schedules.length === 0) {

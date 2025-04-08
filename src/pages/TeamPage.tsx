@@ -8,13 +8,7 @@ import hamburgerImg from '../assets/hamburger.png';
 import Sidebar from '../components/Sidebar';
 import SuggestModal from '../components/suggest';
 import ConfirmModal from '../components/confirm';
-import axiosInstance, {
-  getProposalList,
-  getProposalDetail,
-  createProposal,
-  voteProposal,
-  getTeamTokenCount
-} from '../apis/axios';
+import axiosInstance from '../apis/axios';
 
 // 팀 이름/코드 포맷팅 함수
 const formatTeamName = (teamId: string) => {
@@ -153,12 +147,12 @@ const TeamPage: React.FC = () => {
       try {
         // 병렬로 데이터 불러오기
         const [proposalsData, tokenCountData] = await Promise.all([
-          getProposalList(selectedTeamId),
-          getTeamTokenCount(selectedTeamId)
+          axiosInstance.get(`/proposals/team/${selectedTeamId}`),
+          axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
         ]);
         
-        setProposals(proposalsData.proposalList || []);
-        setTeamTokenCount(tokenCountData.teamTokenCount || 0);
+        setProposals(proposalsData.data.proposalList || []);
+        setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
       } catch (error: any) {
         console.error('팀 데이터 로딩 실패:', error);
         // 더 자세한 에러 정보 출력
@@ -194,16 +188,19 @@ const TeamPage: React.FC = () => {
   // 투표 핸들러
   const handleVote = async (proposalId: number) => {
     try {
-      await voteProposal(selectedTeamId, proposalId);
+      await axiosInstance.post('/proposals/vote', {
+        teamId: selectedTeamId,
+        proposalId
+      });
       
       // 투표 후 데이터 다시 불러오기
       const [proposalsData, tokenCountData] = await Promise.all([
-        getProposalList(selectedTeamId),
-        getTeamTokenCount(selectedTeamId)
+        axiosInstance.get(`/proposals/team/${selectedTeamId}`),
+        axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
       ]);
       
-      setProposals(proposalsData.proposalList || []);
-      setTeamTokenCount(tokenCountData.teamTokenCount || 0);
+      setProposals(proposalsData.data.proposalList || []);
+      setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
     } catch (error) {
       console.error('투표 실패:', error);
     }
@@ -212,16 +209,21 @@ const TeamPage: React.FC = () => {
   // 제안 생성 핸들러
   const handleCreateProposal = async (title: string, content: string, targetCount: number) => {
     try {
-      await createProposal(selectedTeamId, title, content, targetCount);
+      await axiosInstance.post('/proposals', {
+        teamId: selectedTeamId,
+        title,
+        content,
+        targetCount
+      });
       
       // 제안 생성 후 데이터 다시 불러오기
       const [proposalsData, tokenCountData] = await Promise.all([
-        getProposalList(selectedTeamId),
-        getTeamTokenCount(selectedTeamId)
+        axiosInstance.get(`/proposals/team/${selectedTeamId}`),
+        axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
       ]);
       
-      setProposals(proposalsData.proposalList || []);
-      setTeamTokenCount(tokenCountData.teamTokenCount || 0);
+      setProposals(proposalsData.data.proposalList || []);
+      setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
     } catch (error) {
       console.error('제안 생성 실패:', error);
     }

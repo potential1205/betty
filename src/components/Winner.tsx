@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
+import axiosInstance from '../apis/axios';
 
 // 선수 정보 인터페이스
 interface Player {
@@ -62,38 +63,19 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         const gameId = currentGame?.gameId; // 원본 gameId 문자열 사용
         
         console.log('Fetching lineup with gameId:', gameId, '(타입:', typeof gameId, ')');
+        console.log('Current access token:', localStorage.getItem('accessToken'));
         
         if (!gameId) {
           throw new Error('게임 ID가 필요합니다.');
         }
 
-        const response = await fetch(`${API_URL}/api/v1/home/games/${gameId}/lineup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            gameId: gameId
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('API 응답 에러:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorData,
-            gameId: gameId
-          });
-          
-          if (errorData.code === 2001) {
-            setError('라인업 정보가 아직 없습니다!');
-          } else {
-            throw new Error(`라인업 데이터를 불러오지 못했습니다. (${response.status}): ${errorData.message}`);
-          }
-        }
-
-        const data = await response.json();
+        const url = `/home/games/${gameId}/lineup`;
+        console.log('Request URL:', url);
+        
+        const response = await axiosInstance.get(url);
+        console.log('Response:', response);
+        
+        const data = response.data;
         console.log('Received lineup data:', data);
         // 선수 이미지 URL 확인을 위한 로깅 추가
         console.log('Home team pitcher image:', data.home.starterPitcher.imageUrl);
@@ -102,9 +84,16 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         console.log('Away team batters images:', data.away.starterBatters.map((b: Player) => b.imageUrl));
         setLineup(data);
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('라인업 로딩 에러:', error);
-        setError(error instanceof Error ? error.message : '라인업 정보를 불러올 수 없습니다.');
+        console.error('Error response:', error.response);
+        console.error('Error config:', error.config);
+
+        if (error.response?.data?.code === 2001) {
+          setError('라인업 정보가 아직 없습니다!');
+        } else {
+          setError(error.response?.data?.message || '라인업 정보를 불러올 수 없습니다.');
+        }
       } finally {
         setLoading(false);
       }
@@ -134,8 +123,17 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <div className="text-center text-gray-400 mb-6">
-          <p>지금은 정보를 제공할 수 없습니다.</p>
-          <p>잠시 후 다시 시도해 주세요.</p>
+          {error === '라인업 정보가 아직 없습니다!' ? (
+            <>
+              <p className="text-lg font-['Giants-Bold'] mb-2">아직 라인업이 공개되지 않았습니다</p>
+              <p className="text-sm">경기 시작 전에 다시 확인해주세요</p>
+            </>
+          ) : (
+            <>
+              <p>지금은 정보를 제공할 수 없습니다.</p>
+              <p>잠시 후 다시 시도해 주세요.</p>
+            </>
+          )}
         </div>
       </div>
     );

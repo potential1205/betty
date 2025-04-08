@@ -10,6 +10,7 @@ import hamburgerImg from '../assets/hamburger_black.png';
 import Sidebar from '../components/Sidebar';
 import ChargeModal from '../components/charge';
 import RegisterWalletModal from '../components/RegisterWalletModal';
+import WithdrawModal from '../components/WithdrawModal';
 import { Transaction } from '../stores/useStore';
 import axios from 'axios';
 
@@ -42,6 +43,7 @@ const MyPage: React.FC = () => {
   const [showAllSell, setShowAllSell] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 거래 유형별 스타일 정의
@@ -105,7 +107,7 @@ const MyPage: React.FC = () => {
   const tabs = [
     { id: 'ASSETS', label: '보유자산' },
     { id: 'TRANSACTIONS', label: '거래내역' },
-    { id: 'CHARGE', label: '충전' }
+    { id: 'DEPOSIT_WITHDRAW', label: '입출금' }
   ];
 
   const renderTransactionList = (transactions: Transaction[], type: 'BUY' | 'SELL' | 'CHARGE', showAll: boolean, setShowAll: (show: boolean) => void) => {
@@ -420,7 +422,7 @@ const MyPage: React.FC = () => {
           </div>
         );
 
-      case 'CHARGE':
+      case 'DEPOSIT_WITHDRAW':
         return (
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
@@ -430,12 +432,22 @@ const MyPage: React.FC = () => {
                 <p className="text-xl text-gray-400 ml-2">BTC</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsChargeModalOpen(true)}
-              className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-4 rounded-2xl font-['Giants-Bold'] hover:from-gray-800 hover:to-black transition-all shadow-lg"
-            >
-              BTC 충전하기
-            </button>
+            <div className="space-y-4">
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setIsChargeModalOpen(true)}
+                  className="flex-1 bg-gradient-to-r from-black to-gray-800 text-white py-4 rounded-2xl font-['Giants-Bold'] hover:from-gray-800 hover:to-black transition-all shadow-lg"
+                >
+                  입금하기
+                </button>
+                <button
+                  onClick={() => setIsWithdrawModalOpen(true)}
+                  className="flex-1 bg-white text-black py-4 rounded-2xl font-['Giants-Bold'] hover:bg-gray-100 transition-all shadow-lg border border-gray-200"
+                >
+                  출금하기
+                </button>
+              </div>
+            </div>
           </div>
         );
 
@@ -519,7 +531,7 @@ const MyPage: React.FC = () => {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as 'ASSETS' | 'TRANSACTIONS' | 'CHARGE')}
+                  onClick={() => setActiveTab(tab.id as 'ASSETS' | 'TRANSACTIONS' | 'DEPOSIT_WITHDRAW')}
                   className={`flex-1 py-3 rounded-xl text-sm font-['Giants-Bold'] transition-all duration-200
                     ${activeTab === tab.id
                       ? 'bg-black text-white shadow-md'
@@ -541,6 +553,10 @@ const MyPage: React.FC = () => {
         isOpen={isChargeModalOpen}
         onClose={() => setIsChargeModalOpen(false)}
       />
+      <WithdrawModal
+        isOpen={isWithdrawModalOpen}
+        onClose={() => setIsWithdrawModalOpen(false)}
+      />
       <RegisterWalletModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
@@ -550,4 +566,3 @@ const MyPage: React.FC = () => {
 };
 
 export default MyPage;
-

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Token {
+public class FanToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

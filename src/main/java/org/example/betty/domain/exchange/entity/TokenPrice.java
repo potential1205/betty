@@ -17,7 +17,7 @@ public class TokenPrice {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "token_id", nullable = false)
-    private Token token;
+    private FanToken fanToken;
 
     @Column(name = "token_name", nullable = true, length = 20)
     private String tokenName;

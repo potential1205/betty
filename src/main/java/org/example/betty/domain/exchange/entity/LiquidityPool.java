@@ -25,7 +25,7 @@ public class LiquidityPool {
     @ManyToOne
     @JoinColumn(name = "token_id")
     @NotNull
-    private Token token;
+    private FanToken fanToken;
 
     @Column(name = "betty_amount", precision = 18, scale = 8)
     private BigDecimal bettyAmount;

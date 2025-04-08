@@ -3,8 +3,7 @@ package org.example.betty.domain.proposal.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.common.util.SessionUtil;
-import org.example.betty.domain.exchange.dto.req.TransactionRequest;
-import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.entity.FanToken;
 import org.example.betty.domain.exchange.service.ExchangeService;
 import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.domain.proposal.dto.req.SaveProposalHashRequest;
@@ -55,10 +54,10 @@ public class ProposalServiceImpl implements ProposalService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
-        Token token = tokenRepository.findByTokenName(team.getTokenName())
+        FanToken fanToken = tokenRepository.findByTokenName(team.getTokenName())
                 .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
-        WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), token.getId())
+        WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), fanToken.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
 
         return walletBalance.getBalance();

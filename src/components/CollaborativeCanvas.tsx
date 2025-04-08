@@ -24,7 +24,11 @@ const CANVAS_SIZE = GRID_SIZE * PIXEL_SIZE;
 // 컴포넌트 외부에서 초기화 상태 관리
 const isCanvasReset = { current: false };
 
-export function CollaborativeCanvas() {
+interface CollaborativeCanvasProps {
+  team: 'home' | 'away';
+}
+
+const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ team }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement>(null);
   const pixelCanvasRef = useRef<OffscreenCanvas | null>(null);
@@ -330,4 +334,6 @@ export function CollaborativeCanvas() {
       </div>
     </div>
   );
-} 
+}
+
+export default CollaborativeCanvas;

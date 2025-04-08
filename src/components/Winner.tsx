@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import axiosInstance from '../apis/axios';
+import WinnerPay from './WinnerPay';
 
 // 선수 정보 인터페이스
 interface Player {
@@ -51,6 +52,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
   const [error, setError] = useState<string | null>(null);                // 오류 상태 추가
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);  // 선택된 팀
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null); // 선택된 선수
+  const [showWinnerPay, setShowWinnerPay] = useState(false);
+  const [showMvpPay, setShowMvpPay] = useState(false);
 
   // API URL 설정
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -88,7 +91,7 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         console.error('라인업 로딩 에러:', error);
         console.error('Error response:', error.response);
         console.error('Error config:', error.config);
-
+        
         if (error.response?.data?.code === 2001) {
           setError('라인업 정보가 아직 없습니다!');
         } else {
@@ -151,7 +154,10 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         {[homeTeam, awayTeam].map((team) => (
           <motion.button
             key={team}
-            onClick={() => setSelectedTeam(team)}
+            onClick={() => {
+              setSelectedTeam(team);
+              setShowWinnerPay(true);
+            }}
             className={`p-4 rounded-xl border-2 transition-all
               ${selectedTeam === team 
                 ? 'border-white bg-white/20' 
@@ -203,7 +209,10 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             {[lineup.home.starterPitcher, ...(lineup.home.starterBatters || [])].filter(Boolean).map((player, index) => (
               <motion.button
                 key={index}
-                onClick={() => setSelectedPlayer(player)}
+                onClick={() => {
+                  setSelectedPlayer(player);
+                  setShowMvpPay(true);
+                }}
                 className={`w-full p-3 rounded-xl border-2 transition-all flex items-center
                   ${selectedPlayer === player 
                     ? 'border-white bg-white/20' 
@@ -226,7 +235,10 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             {[lineup.away.starterPitcher, ...(lineup.away.starterBatters || [])].filter(Boolean).map((player, index) => (
               <motion.button
                 key={index}
-                onClick={() => setSelectedPlayer(player)}
+                onClick={() => {
+                  setSelectedPlayer(player);
+                  setShowMvpPay(true);
+                }}
                 className={`w-full p-3 rounded-xl border-2 transition-all flex items-center
                   ${selectedPlayer === player 
                     ? 'border-white bg-white/20' 
@@ -253,46 +265,38 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
       {/* 팀 투표 섹션 */}
       <div>
         {renderTeamSelection()}
-        {selectedTeam && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
-              hover:bg-white/90 transition-colors"
-            onClick={() => {
-              console.log('팀 베팅:', { 
-                selectedTeam,
-                gameId: currentGame?.gameId
-              });
-            }}
-          >
-            팀 배팅하기
-          </motion.button>
-        )}
       </div>
 
       {/* MVP 투표 섹션 */}
       <div>
         {renderPlayerSelection()}
-        {selectedPlayer && (
-          <div className="mt-8">
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
-                hover:bg-white/90 transition-colors"
-              onClick={() => {
-                console.log('MVP 베팅:', { 
-                  selectedPlayer,
-                  gameId: currentGame?.gameId
-                });
-              }}
-            >
-              MVP 배팅하기
-            </motion.button>
-          </div>
-        )}
       </div>
+
+      {/* 우승 예측 결제 모달 */}
+      {showWinnerPay && selectedTeam && (
+        <WinnerPay
+          isOpen={showWinnerPay}
+          onClose={() => {
+            setShowWinnerPay(false);
+            setSelectedTeam(null);
+          }}
+          type="winner"
+          team={selectedTeam}
+        />
+      )}
+
+      {/* MVP 예측 결제 모달 */}
+      {showMvpPay && selectedPlayer && (
+        <WinnerPay
+          isOpen={showMvpPay}
+          onClose={() => {
+            setShowMvpPay(false);
+            setSelectedPlayer(null);
+          }}
+          type="mvp"
+          player={selectedPlayer.name}
+        />
+      )}
     </div>
   );
 };

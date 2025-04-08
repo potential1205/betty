@@ -19,6 +19,8 @@ import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.exchange.repository.TransactionRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
+import org.example.betty.domain.wallet.entity.WalletBalance;
+import org.example.betty.domain.wallet.repository.WalletBalanceRepository;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.domain.wallet.service.BalanceService;
 import org.example.betty.exception.BusinessException;
@@ -50,6 +52,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final PendingTransactionUtil pendingTransactionUtil;
     private final BalanceService balanceService;
     private final TokenPriceRepository tokenPriceRepository;
+    private final WalletBalanceRepository walletBalanceRepository;
 
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;
@@ -58,6 +61,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private String exchangeAddress;
 
     // 1-1. add 요청 처리
+    @Override
     public TransactionResponse processAdd(TransactionRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         pendingTransactionUtil.throwIfPending(walletAddress);
@@ -141,6 +145,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     }
 
     // 2-1. remove 요청 처리
+    @Override
     public TransactionResponse processRemove(TransactionRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         pendingTransactionUtil.throwIfPending(walletAddress);
@@ -149,7 +154,17 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
         Token bet = tokenRepository.findByTokenName("BET")
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        WalletBalance walletBalance = walletBalanceRepository.findByWalletAndToken(wallet, bet)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
+
+        BigDecimal currentBalance = walletBalance.getBalance();
+        BigDecimal requestedAmount = request.getAmountIn();
+
+        if (currentBalance.compareTo(requestedAmount) < 0) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_TOKEN_AMOUNT);
+        }
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
@@ -170,22 +185,48 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 2-2. remove 블록체인 트랜잭션 처리
     private void handleRemoveTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(
+            BigDecimal amountBet = transaction.getAmountIn(); // BET
+            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1BET = 100KRW
+            BigInteger amountWei = amountBet.toBigInteger();
+
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.Token betToken = org.example.betty.contract.Token.load(
+                    betTokenAddress,
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+            Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
-                    web3jService.getWeb3j(),
-                    new RawTransactionManager(
-                            web3jService.getWeb3j(),
-                            web3jService.getCredentials(),
-                            web3jService.getChainId()
-                    ),
-                    new DefaultGasProvider());
-            TransactionReceipt receipt = contract.remove(transaction.getAmountIn().toBigInteger()).send();
-            // 1BET = 100KRW
-            BigDecimal krw = transaction.getAmountIn().multiply(BigDecimal.valueOf(100)); // amountIn == BET
-            transaction.updateAmountOut(krw);
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            // 사용자 지갑에서 BET 출금 approve
+            String userWalletAddress = transaction.getWallet().getWalletAddress();
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] user={}, amount={}, txHash={}", userWalletAddress, amountBet, approveReceipt.getTransactionHash());
+
+            // remove
+            TransactionReceipt removeReceipt = exchangeContract.remove(amountWei).send();
+            log.info("[REMOVE SUCCESS] wallet={}, amount={}, txHash={}", userWalletAddress, amountBet, removeReceipt.getTransactionHash());
+
+            // 트랜잭션 업데이트
+            transaction.updateAmountOut(amountKrw);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
+
+            // 잔고 동기화
+            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
+            BigDecimal updatedBet = new BigDecimal(updatedWei);
+            balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
+
         } catch (Exception e) {
+            log.error("[REMOVE TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
             e.printStackTrace();

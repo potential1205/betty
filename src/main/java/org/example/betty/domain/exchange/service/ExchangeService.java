@@ -15,4 +15,6 @@ public interface ExchangeService {
     TransactionResponse processAdd(TransactionRequest request, String accessToken);
     SwapEstimateResponse getSwapAmount(String fromTokenName, String toTokenName, BigDecimal amountIn);
 
+
+    TransactionResponse processRemove(TransactionRequest request, String accessToken);
 }

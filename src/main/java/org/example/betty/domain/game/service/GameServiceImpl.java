@@ -84,7 +84,7 @@ public class GameServiceImpl implements GameService {
         Game game = optionalGame.get();
         LocalDate gameDate = game.getGameDate();
 
-        String redisKey = REDIS_GAME_PREFIX + gameDate + ":" + gameId;
+        String redisKey = REDIS_GAME_PREFIX + gameDate + ":" + generateGameCode(game);
 
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
         Object rawLineup = hashOps.get(redisKey, "lineup");
@@ -156,6 +156,14 @@ public class GameServiceImpl implements GameService {
         Game game = optionalGame.get();
         return game.getStatus();
     }
+
+    private String generateGameCode(Game game) {
+        return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                + game.getAwayTeam().getTeamCode()
+                + game.getHomeTeam().getTeamCode()
+                + "0" + game.getSeason();
+    }
+
 
 
 

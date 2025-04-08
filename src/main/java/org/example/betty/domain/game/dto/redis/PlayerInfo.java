@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlayerInfo {
+    private int id;
     private String name;
     private String position;
     private String handedness;

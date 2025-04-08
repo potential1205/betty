@@ -89,6 +89,8 @@ public class LineupScraper extends BaseScraper {
         List<WebElement> playerItems = teamElement.findElements(By.cssSelector(".Lineup_lineup_item__32s4M"));
         List<PlayerInfo> players = new ArrayList<>();
 
+        int playerIdSeq = 1;
+
         for (WebElement item : playerItems) {
             try {
                 String name = item.findElement(By.cssSelector(".Lineup_name__jV19m")).getText();
@@ -102,6 +104,7 @@ public class LineupScraper extends BaseScraper {
                 String imageUrl = getImageFromKBO(kboDriver, name);
 
                 players.add(PlayerInfo.builder()
+                        .id(playerIdSeq++)
                         .name(name)
                         .position(position)
                         .handedness(handedness)

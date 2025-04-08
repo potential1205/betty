@@ -36,7 +36,7 @@ public class ExchangeController {
     @PostMapping("/remove")
     public ResponseEntity<TransactionResponse> remove(@RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
                                                       @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(exchangeService.processTransaction(request, accessToken));
+        return ResponseEntity.ok(exchangeService.processRemove(request, accessToken));
     }
 
     @Operation(summary = "팬토큰 구매", description = "베티코인으로 특정 팬토큰을 구매합니다.")

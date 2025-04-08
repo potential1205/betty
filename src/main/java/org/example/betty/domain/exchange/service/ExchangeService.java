@@ -10,4 +10,6 @@ public interface ExchangeService {
     TransactionResponse processSwap(SwapRequest request, String accessToken);
     TransactionResponse processUse(TransactionRequest request, String accessToken);
     TransactionResponse processAdd(TransactionRequest request, String accessToken);
+
+    TransactionResponse processRemove(TransactionRequest request, String accessToken);
 }

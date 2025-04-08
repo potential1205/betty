@@ -84,6 +84,8 @@ public class BalanceServiceImpl implements BalanceService {
                             .createdAt(LocalDateTime.now())
                             .build());
 
+            log.info("[DEBUG] WalletBalance ID before save: {}", walletBalance.getId());
+
             walletBalance.setBalance(balance);
             walletBalance.setUpdatedAt(LocalDateTime.now());
 

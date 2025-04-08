@@ -48,6 +48,8 @@ interface GamesData {
 interface Game {
   id: number;
   gameId: string;
+  homeTeamId: number;
+  awayTeamId: number;
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -101,6 +103,8 @@ const Home: React.FC = () => {
           const game = {
             id: index,
             gameId: schedule.gameId.toString(),
+            homeTeamId: schedule.homeTeamId,
+            awayTeamId: schedule.awayTeamId,
             homeTeam: schedule.homeTeamName,
             awayTeam: schedule.awayTeamName,
             homeScore: 0,

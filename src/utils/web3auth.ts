@@ -21,7 +21,7 @@ const chainConfig = {
   chainId: toHexChainId(chainId), 
   rpcTarget: import.meta.env.VITE_RPC_URL, 
   displayName: "StadiumChain",  
-  ticker: "BTC",
+  ticker: "BET",
   tickerName: "Betty",
 };
 

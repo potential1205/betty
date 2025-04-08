@@ -39,12 +39,12 @@ export interface Transaction {
 }
 
 interface WalletInfo {
-  totalBTC: number;
+  totalBET: number;
   transactions: Transaction[];
   tokens?: Array<{
     team: string;
     amount: number;
-    btcValue: number;
+    betValue: number;
   }>;
   address?: string;
   nickname?: string;
@@ -119,7 +119,7 @@ interface AppState {
   setActiveTab: (tab: string) => void;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateWalletBalance: (amount: number) => void;
-  updateTokenBalance: (team: string, amount: number, btcValue: number) => void;
+  updateTokenBalance: (team: string, amount: number, betValue: number) => void;
   nickname: string;
   setNickname: (name: string) => void;
   isChargeModalOpen: boolean;
@@ -136,12 +136,12 @@ interface AppState {
 }
 
 const initialWalletInfo: WalletInfo = {
-  totalBTC: 100,
+  totalBET: 100,
   transactions: [],
   tokens: [
-    { team: '8', amount: 100, btcValue: 1000 },  // 삼성
-    { team: '1', amount: 100, btcValue: 1000 },  // 두산
-    { team: '2', amount: 100, btcValue: 1000 }   // 롯데
+    { team: '8', amount: 100, betValue: 1000 },  // 삼성
+    { team: '1', amount: 100, betValue: 1000 },  // 두산
+    { team: '2', amount: 100, betValue: 1000 }   // 롯데
   ]
 };
 
@@ -384,15 +384,15 @@ export const useStore = create<AppState>((set, get) => ({
   updateWalletBalance: (amount) => set((state) => ({
     walletInfo: {
       ...state.walletInfo,
-      totalBTC: state.walletInfo.totalBTC + amount
+      totalBET: state.walletInfo.totalBET + amount
     }
   })),
-  updateTokenBalance: (team, amount, btcValue) => set((state) => {
+  updateTokenBalance: (team, amount, betValue) => set((state) => {
     const newTransaction: Transaction = {
       id: state.walletInfo.transactions.length + 1,
       type: amount > 0 ? 'BUY' : 'SELL',
       team,
-      amount: Math.abs(btcValue),
+      amount: Math.abs(betValue),
       timestamp: new Date().toISOString(),
       date: new Date().toLocaleDateString(),
       tokenName: team,
@@ -407,10 +407,10 @@ export const useStore = create<AppState>((set, get) => ({
       newTokens[existingTokenIndex] = {
         ...newTokens[existingTokenIndex],
         amount: newTokens[existingTokenIndex].amount + amount,
-        btcValue: newTokens[existingTokenIndex].btcValue + btcValue
+        betValue: newTokens[existingTokenIndex].betValue + betValue
       };
     } else {
-      newTokens.push({ team, amount, btcValue });
+      newTokens.push({ team, amount, betValue });
     }
 
     return {
@@ -443,7 +443,7 @@ export const useStore = create<AppState>((set, get) => ({
       bettyBalance: state.bettyBalance + amount,
       walletInfo: {
         ...state.walletInfo,
-        totalBTC: state.walletInfo.totalBTC + amount,
+        totalBET: state.walletInfo.totalBET + amount,
         transactions: [newTransaction, ...state.walletInfo.transactions]
       }
     };
@@ -452,7 +452,7 @@ export const useStore = create<AppState>((set, get) => ({
     walletInfo: {
       ...state.walletInfo,
       ...newInfo,
-      totalBTC: newInfo.totalBTC ?? state.walletInfo.totalBTC ?? 0,
+      totalBET: newInfo.totalBET ?? state.walletInfo.totalBET ?? 0,
       tokens: newInfo.tokens ?? state.walletInfo.tokens ?? [],
       transactions: newInfo.transactions ?? state.walletInfo.transactions ?? [],
     }

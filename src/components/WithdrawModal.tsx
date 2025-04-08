@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
+import { removeBettyCoin } from '../apis/exchangeApi';
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
     
     try {
       setIsLoading(true);
-      // TODO: Implement withdrawal API call
+
+      const response = await removeBettyCoin(Number(amount));
+      console.log('출금 성공:', response);
       console.log('Withdrawing', amount, 'BTC');
       setShowSuccess(true);
       setTimeout(() => {

@@ -2,54 +2,70 @@ import React, { useState } from 'react';
 import { Quiz, QuizHistory } from '../constants/dummy';
 
 interface QuizModalProps {
-  quiz: Quiz;
+  problem: {
+    problemId: string;
+    gameId: string;
+    inning: string;
+    attackTeam: string;
+    batterName: string;
+    batterNumber: string;
+    questionCode: string;
+    description: string;
+    options: string[];
+    answer: string | null;
+    timestamp: number;
+    push: boolean;
+  };
   isActive: boolean;
-  onAnswer: (answer: number) => void;
+  onAnswer: (answer: string) => void;
   currentTime: number;
-  currentAnswer: number | null;
+  currentAnswer: string | null;
 }
 
-// 실제 퀴즈 모달 컴포넌트
 const QuizModal: React.FC<QuizModalProps> = ({
-  quiz,
+  problem,
   isActive,
   onAnswer,
   currentTime,
   currentAnswer,
 }) => {
+  // 옵션 개수에 따라 레이아웃 결정
+  const isTwoOptions = problem.options.length === 2;
+
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">{quiz.question}</h3>
-        <div className="flex items-center gap-1">
-          <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-            <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"/>
-          </svg>
-          <span className="text-red-500 font-bold">{currentTime}</span>
+    <div className="backdrop-blur-md bg-black/30 rounded-xl p-3 border border-white/10 mb-4">
+      {/* 문제 정보 */}
+      <div className="text-center mb-3">
+        <div className="text-base font-['Pretendard-Regular'] text-white">
+          {problem.description}
         </div>
       </div>
-      <div className="space-y-2">
-        {quiz.options.map((option, index) => {
-          const isSelected = currentAnswer === index;
-          
-          return (
-            <button
-              key={index}
-              onClick={() => onAnswer(index)}
-              disabled={!isActive || currentTime === 0}
-              className={`w-full p-3 text-left rounded-lg transition-colors
-                ${isActive && currentTime > 0
-                  ? isSelected
-                    ? 'bg-blue-600' // 선택된 답변
-                    : 'hover:bg-blue-600 bg-gray-700'
-                  : 'bg-gray-700 opacity-50 cursor-not-allowed'
-                }`}
-            >
-              {option}
-            </button>
-          )}
-        )}
+
+      {/* 타이머 */}
+      <div className="text-center mb-3">
+        <div className="text-lg font-['Pretendard-Regular'] text-red-400">
+          {currentTime}초
+        </div>
+      </div>
+
+      {/* 선택지 */}
+      <div className={`${isTwoOptions ? 'grid grid-cols-2' : 'space-y-2'} gap-2`}>
+        {problem.options.map((option) => (
+          <button
+            key={option}
+            onClick={() => onAnswer(option)}
+            disabled={!isActive || currentAnswer !== null}
+            className={`w-full py-2 rounded-lg text-sm font-['Pretendard-Regular'] transition-all duration-200
+              ${currentAnswer === option 
+                ? 'bg-green-500/20 text-green-300' 
+                : isActive && currentAnswer === null
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-white/5 text-gray-400'
+              }`}
+          >
+            {option}
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigInteger;
@@ -30,8 +31,10 @@ public class RewardServiceImpl implements RewardService {
     public RewardResponse sendReward(RewardRequest request) {
         try {
             Credentials credentials = Credentials.create(AdminPrivateKey);
+
+            RawTransactionManager txManager = new RawTransactionManager(web3j, credentials, 14609);
             RewardPool contract = RewardPool.load(
-                    rewardPool, web3j, credentials, new DefaultGasProvider());
+                    rewardPool, web3j, txManager, new DefaultGasProvider());
 
             var tx = contract.reward(
                     request.getTokenAddress(),

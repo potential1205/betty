@@ -28,13 +28,15 @@ const teamColors: Record<string, string> = {
 
 // API 응답 타입 정의
 interface GameSchedule {
-  gameId: string;
+  gameId: number;
+  homeTeamId: number;
+  awayTeamId: number;
   season: number;
   gameDate: string;
   startTime: string;
   stadium: string;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeamName: string;
+  awayTeamName: string;
   status: string;
 }
 
@@ -73,15 +75,17 @@ const Home: React.FC = () => {
     const fetchGamesData = async () => {
       setLoading(true);
       try {
-        // 디버깅용 로그 추가
         const token = getAccessToken();
         console.log('Current access token:', token);
+        
         const response = await axiosInstance.get('/home/games');
         console.log('API Response:', response);
+        
         const data: GamesData = response.data;
         console.log('API 응답 전체:', data); // 전체 응답 로깅
         
         if (!data.schedules || data.schedules.length === 0) {
+          console.log('No schedules found in response');
           setGames([]);
           setTodayGames([]);
           return;
@@ -89,21 +93,27 @@ const Home: React.FC = () => {
         
         const formattedGames = data.schedules.map((schedule, index) => {
           console.log(`Schedule ${index} 원본:`, JSON.stringify(schedule, null, 2)); // 각 schedule 상세 로깅
+          console.log('gameId type:', typeof schedule.gameId);
+          console.log('homeTeamName:', schedule.homeTeamName);
+          console.log('awayTeamName:', schedule.awayTeamName);
+          console.log('status:', schedule.status);
+          
           const game = {
-            id: index, // 인덱스 ID (내부 식별용)
-            gameId: schedule.gameId, // 원본 gameId 문자열 그대로 보존
-            homeTeam: schedule.homeTeam,
-            awayTeam: schedule.awayTeam,
+            id: index,
+            gameId: schedule.gameId.toString(),
+            homeTeam: schedule.homeTeamName,
+            awayTeam: schedule.awayTeamName,
             homeScore: 0,
             awayScore: 0,
             inning: 0,
             status: schedule.status,
             schedule
           };
-          console.log(`Game ${index} 변환 결과:`, game); // 변환된 game 객체 로깅
+          console.log(`Game ${index} 변환 결과:`, game);
           return game;
         });
         
+        console.log('Formatted games:', formattedGames);
         setGames(formattedGames);
         setTodayGames(formattedGames);
         setError(null);

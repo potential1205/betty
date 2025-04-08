@@ -186,7 +186,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private void handleRemoveTransaction(Transaction transaction) {
         try {
             BigDecimal amountBet = transaction.getAmountIn(); // BET
-            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1BET = 100KRW
+            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1 BET = 100 KRW
             BigInteger amountWei = amountBet.toBigInteger();
 
             Web3j web3j = web3jService.getWeb3j();

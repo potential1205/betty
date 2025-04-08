@@ -2,7 +2,7 @@ package org.example.betty.domain.game.service;
 
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.QuestionCode;
-import org.example.betty.domain.game.dto.redis.RedisGameProblem;
+import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.springframework.stereotype.Component;
 

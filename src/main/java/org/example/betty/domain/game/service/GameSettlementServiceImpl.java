@@ -3,15 +3,28 @@ package org.example.betty.domain.game.service;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.repository.TokenPriceRepository;
+import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
 import org.example.betty.domain.game.dto.redis.PrePick;
+import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
+import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
+import org.example.betty.domain.game.entity.Team;
+import org.example.betty.domain.game.repository.TeamRepository;
+import org.example.betty.domain.reward.dto.RewardRequest;
+import org.example.betty.domain.reward.service.RewardService;
+import org.example.betty.exception.BusinessException;
+import org.example.betty.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +35,71 @@ public class GameSettlementServiceImpl implements GameSettlementService {
 
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
+    private final TokenPriceRepository tokenPriceRepository;
+    private final TokenRepository tokenRepository;
+    private final TeamRepository teamRepository;
+    private final RewardService rewardService;
+
+    public void liveVoteSettle(String gameId, String homeTeamCode, String awayTeamCode) {
+
+        // 1BET 가치에 해당하는 팬 토큰 시세 조회
+        Team homeTeam = teamRepository.findByTeamCode(homeTeamCode);
+        Team awayTeam = teamRepository.findByTeamCode(awayTeamCode);
+
+        Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        BigInteger homeTokenPrice = tokenPriceRepository.findByTokenName(homeTeam.getTokenName()).toBigInteger();
+        BigInteger awayTokenPrice = tokenPriceRepository.findByTokenName(awayTeam.getTokenName()).toBigInteger();
+
+        // 리워드를 보내 줄
+        Map<String, Integer> homeMap = new HashMap<>();
+        Map<String, Integer> awayMap = new HashMap<>();
+
+        // 투표 결과 조회
+        String problemKey = "livevote:result:" + gameId;
+        List<RedisGameLiveResult> list = (List<RedisGameLiveResult>) redisTemplate2.opsForValue().get(problemKey);
+
+        // 투표 결과에 따라 리워드 지급
+        for (RedisGameLiveResult result : list) { // 투표 목록
+
+            // 사용자 정보
+            String walletAddress = result.getWalletAddress();
+
+            // 문제, 정답지
+            String voteResultKey = "livevote:" + gameId + ":" + result.getProblemId();
+            RedisGameProblem problem = (RedisGameProblem) redisTemplate2.opsForValue().get(voteResultKey);
+
+            if (problem.getAnswer().equals(result.getSelect())) {
+                if (result.getMyTeamCode().equals(homeTeamCode)) {
+                    if (homeMap.containsKey(walletAddress)) {
+                        homeMap.put(walletAddress, homeMap.get(walletAddress) + 1);
+                    } else {
+                        homeMap.put(walletAddress, 1);
+                    }
+                } else {
+                    if (awayMap.containsKey(walletAddress)) {
+                        awayMap.put(walletAddress, awayMap.get(walletAddress) + 1);
+                    } else {
+                        awayMap.put(walletAddress, 1);
+                    }
+                }
+            }
+        }
+
+        for (String walletAddress : homeMap.keySet()) {
+            RewardRequest requet = new RewardRequest(homeToken.getTokenAddress(), walletAddress, homeTokenPrice.multiply(new BigInteger(String.valueOf(homeMap.get(walletAddress)))));
+            rewardService.sendReward(requet);
+        }
+
+        for (String walletAddress : awayMap.keySet()) {
+            RewardRequest requet = new RewardRequest(awayToken.getTokenAddress(), walletAddress, awayTokenPrice.multiply(new BigInteger(String.valueOf(awayMap.get(walletAddress)))));
+            rewardService.sendReward(requet);
+        }
+    }
 
     public void preVoteSettle(Long gameId) {
         String resultKey = "prevote:result:" + gameId;

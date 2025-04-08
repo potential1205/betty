@@ -27,4 +27,13 @@ public class TokenPrice {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder
+    public TokenPrice(Token token, String tokenName, BigDecimal price, LocalDateTime updatedAt) {
+        this.token = token;
+        this.tokenName = tokenName;
+        this.price = price;
+        this.updatedAt = updatedAt;
+    }
+
 }

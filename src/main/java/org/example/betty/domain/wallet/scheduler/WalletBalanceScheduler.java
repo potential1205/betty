@@ -14,7 +14,7 @@ public class WalletBalanceScheduler {
     private final BalanceService balanceService;
 
     // 매 1초마다 모든 지갑의 잔고를 동기화한다
-    //@Scheduled(fixedRate = 1000)
+    // @Scheduled(fixedRate = 1000)
     public void runBalanceSync() {
         log.info("[Wallet Scheduler] Balance Sync started.");
         balanceService.syncAllWalletBalances();

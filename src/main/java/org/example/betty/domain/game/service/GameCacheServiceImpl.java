@@ -39,6 +39,8 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final RedisTemplate<String, Object> redisTemplate2;
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
+    private final GameService gameService;
+    private final SseService sseService;
 
     public static final String REDIS_GAME_PREFIX = "games:";
 
@@ -49,10 +51,12 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-//        LocalDate today = LocalDate.now();
-        LocalDate today = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now().minusDays(1);
+
 
         List<Game> todayGames = gameRepository.findByGameDate(today);
+
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
         int index = 0;
@@ -61,10 +65,10 @@ public class GameCacheServiceImpl implements GameCacheService {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
 
-//            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
-//                    && !"ENDED".equalsIgnoreCase(game.getStatus());
             boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
-                    && "ENDED".equalsIgnoreCase(game.getStatus());
+                    && !"ENDED".equalsIgnoreCase(game.getStatus());
+//            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
+//                    && "ENDED".equalsIgnoreCase(game.getStatus());
 
 
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
@@ -96,11 +100,11 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-//                scheduleRelayJob(game);
+                scheduleRelayJob(game);
             }
             // Redis 키 만료 설정
-//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
-            LocalDateTime expireTime = LocalDate.now().plusDays(1).atStartOfDay();
+            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//            LocalDateTime expireTime = LocalDate.now().plusDays(1).atStartOfDay();
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
             redisTemplate2.expireAt(redisKey, expireDate);
         }
@@ -125,8 +129,8 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
-        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
+        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+//        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
 
 
         final Integer seleniumIndex;
@@ -173,7 +177,8 @@ public class GameCacheServiceImpl implements GameCacheService {
     private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
-        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
+//        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
+        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusMinutes(2);
 
         final Integer seleniumIndex;
         try {
@@ -189,6 +194,8 @@ public class GameCacheServiceImpl implements GameCacheService {
 
         if (gameStartTime.isBefore(LocalDateTime.now())) {
             try {
+                gameService.updateGameStatusToLive(game);
+                sseService.send(gameId, "LIVE");
                 relayAsyncExecutor.startRelay(gameId, seleniumIndex);
                 log.info("[중계 크롤링 시작] 경기 시작 시간 지남 - gameId: {}", gameId);
             } catch (Exception e) {
@@ -198,6 +205,8 @@ public class GameCacheServiceImpl implements GameCacheService {
             taskScheduler.schedule(
                     () -> {
                         try {
+                            gameService.updateGameStatusToLive(game);
+                            sseService.send(gameId, "LIVE");
                             relayAsyncExecutor.startRelay(gameId, seleniumIndex);
                             log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
                         } catch (Exception e) {

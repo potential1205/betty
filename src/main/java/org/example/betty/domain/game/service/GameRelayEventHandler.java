@@ -11,7 +11,9 @@ import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,15 +22,43 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GameProblemServiceImpl implements GameProblemService {
+public class GameRelayEventHandler {
 
     private final ProblemGenerator problemGenerator;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
-    private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
     private final SseService sseService;
 
-    @Override
+    private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
+    private final Map<String, String> previousInningMap = new ConcurrentHashMap<>();
+    private final Map<String, String> previousScoreMap = new ConcurrentHashMap<>();
+
+
+    public void handleGameInfoChange(String gameId, RedisGameRelay relayData) {
+        String currentInning = relayData.getInning();
+        String currentScore = relayData.getScore();
+
+        String prevInning = previousInningMap.get(gameId);
+        String prevScore = previousScoreMap.get(gameId);
+
+        // 이닝 변경 감지 또는 최초 전송
+        if (prevInning == null || !prevInning.equals(currentInning)) {
+            log.info("[이닝 상태 업데이트] gameId={} | {} → {}", gameId, prevInning, currentInning);
+            sseService.send(gameId, currentInning); // DTO 없이 문자열만 전송
+            previousInningMap.put(gameId, currentInning);
+        }
+
+        // 점수 변경 감지 또는 최초 전송
+        if (prevScore == null || !prevScore.equals(currentScore)) {
+            log.info("[점수 상태 업데이트] gameId={} | {} → {}", gameId, prevScore, currentScore);
+            sseService.send(gameId, currentScore); // 점수도 문자열만 전송
+            previousScoreMap.put(gameId, currentScore);
+        }
+    }
+
+
+
+
     public void handleRelayUpdate(String gameId, RedisGameRelay currentRelay) {
         PlayerRelayInfo currentBatter = currentRelay.getBatter();
         if (currentBatter == null || currentBatter.getName() == null) return;
@@ -49,8 +79,9 @@ public class GameProblemServiceImpl implements GameProblemService {
             
             // 1. 정답 채점
             if (prevBatter != null && prevBatter.getName() != null) {
-                String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
-                
+//                String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
+                String redisKey = "problems:" + gameId;
+
                 // 일단 전체 생성된 문제 조회
                 ListOperations<String, Object> listOps = redisTemplate2.opsForList();
                 List<Object> problems = listOps.range(redisKey, 0, -1);
@@ -98,7 +129,8 @@ public class GameProblemServiceImpl implements GameProblemService {
 
             // 2. 새 문제 출제
             List<RedisGameProblem> problems = problemGenerator.generateAllProblems(gameId, currentRelay);
-            String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
+//            String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
+            String redisKey = "problems:" + gameId;
             ListOperations<String, Object> listOps = redisTemplate2.opsForList();
 
             // 문제 저장
@@ -107,30 +139,24 @@ public class GameProblemServiceImpl implements GameProblemService {
                 log.info("[문제 생성] {} | 문제ID: {}", problem.getDescription(), problem.getProblemId());
             }
 
+            // 오늘 자정까지 TTL 설정
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
+            Duration ttl = Duration.between(now, midnight);
+            redisTemplate2.expire(redisKey, ttl);
+
             // SSE 전송용 문제 랜덤 1개 선택
             if (!problems.isEmpty()) {
                 int randomIndex = new Random().nextInt(problems.size());
                 RedisGameProblem selected = problems.get(randomIndex);
-                selected.setPush(true); 
 
                 // 해당 문제만 push 여부 업데이트
+                selected.setPush(true);
                 listOps.set(redisKey, redisTemplate2.opsForList().size(redisKey) - problems.size() + randomIndex, selected);
 
-                // SSE 전송
-                // SSE 전송
+                // 선택된 문제 SSE 전송
                 sseService.send(gameId, selected);
-
-                // 콘솔 확인용 출력 (description 포함)
-                System.out.println("📢 [SSE 전송됨] gameId=" + gameId +
-                        " | 문제ID=" + selected.getProblemId() +
-                        " | 내용=" + selected.getDescription());
-
-                log.info("[SSE 문제 전송] gameId={} | 문제ID={} | 내용={}",
-                        gameId, selected.getProblemId(), selected.getDescription());
-
             }
-
-
             previousBatterMap.put(gameId, currentBatterName);
         }
     }

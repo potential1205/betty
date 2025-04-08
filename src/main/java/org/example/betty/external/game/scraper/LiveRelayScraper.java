@@ -53,17 +53,11 @@ public class LiveRelayScraper extends BaseScraper {
                     String endText = endMessage.getText();
                     if (endText.contains("경기가 종료되었습니다.")) {
                         log.info("[{}] 경기 종료 감지 → WebDriver 종료 및 크롤링 중단", gameId);
+
                         driver.quit();
                         driverMap.remove(gameId);
                         return null;
                     }
-//                    String pageSource = driver.getPageSource();
-//                    if (pageSource.contains("경기가 종료되었습니다")) {
-//                        log.info("[{}] 종료 경기 감지 (pageSource로)", gameId);
-//                        driver.quit();
-//                        driverMap.remove(gameId);
-//                        return null;
-//                    }
 
                 } catch (NoSuchElementException ignored) {}
 

@@ -31,11 +31,11 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "token_from")
-    private FanToken fanTokenFrom;
+    private Token tokenFrom;
 
     @ManyToOne
     @JoinColumn(name = "token_to")
-    private FanToken fanTokenTo;
+    private Token tokenTo;
 
     @Column(name = "amount_in", precision = 18, scale = 8)
     private BigDecimal amountIn;

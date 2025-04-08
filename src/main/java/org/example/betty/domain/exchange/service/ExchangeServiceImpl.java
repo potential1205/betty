@@ -7,11 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.PendingTransactionUtil;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.contract.Exchange;
-import org.example.betty.contract.Token;
 import org.example.betty.domain.exchange.dto.req.SwapRequest;
 import org.example.betty.domain.exchange.dto.req.TransactionRequest;
 import org.example.betty.domain.exchange.dto.resp.TransactionResponse;
-import org.example.betty.domain.exchange.entity.FanToken;
+import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.entity.Transaction;
 import org.example.betty.domain.exchange.enums.TransactionStatus;
 import org.example.betty.domain.exchange.repository.TokenRepository;
@@ -59,13 +58,13 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        FanToken bet = tokenRepository.findByTokenName("BET")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(null) // KRW
-                .fanTokenTo(bet)
+                .tokenFrom(null) // KRW
+                .tokenTo(bet)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
@@ -91,7 +90,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             long chainId = web3jService.getChainId();
 
             // 컨트랙트 로드
-            Token betToken = Token.load(
+            org.example.betty.contract.Token betToken = org.example.betty.contract.Token.load(
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
@@ -129,13 +128,13 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        FanToken bet = tokenRepository.findByTokenName("BET")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(bet)
-                .fanTokenTo(null) // KRW
+                .tokenFrom(bet)
+                .tokenTo(null) // KRW
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
@@ -182,15 +181,15 @@ public class ExchangeServiceImpl implements ExchangeService {
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-        FanToken fanToken = tokenRepository.findById(request.getTokenId())
+        Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-        FanToken bet = tokenRepository.findByTokenName("BET")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(bet)
-                .fanTokenTo(fanToken)
+                .tokenFrom(bet)
+                .tokenTo(token)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
@@ -215,7 +214,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                             web3jService.getChainId()
                     ),
                     new DefaultGasProvider());
-            String tokenName = transaction.getFanTokenTo().getTokenName();
+            String tokenName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.buy(tokenName, amount).send();
             // 이벤트에서 amountOut 파싱
@@ -240,15 +239,15 @@ public class ExchangeServiceImpl implements ExchangeService {
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-        FanToken fanToken = tokenRepository.findById(request.getTokenId())
+        Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-        FanToken bet = tokenRepository.findByTokenName("BET")
+        Token bet = tokenRepository.findByTokenName("BET")
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(fanToken)
-                .fanTokenTo(bet)
+                .tokenFrom(token)
+                .tokenTo(bet)
                 .amountIn(request.getAmountIn())
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
@@ -273,7 +272,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                             web3jService.getChainId()
                     ),
                     new DefaultGasProvider());
-            String tokenName = transaction.getFanTokenFrom().getTokenName();
+            String tokenName = transaction.getTokenFrom().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.sell(tokenName, amount).send();
             // 이벤트에서 amountOut 파싱
@@ -301,16 +300,16 @@ public class ExchangeServiceImpl implements ExchangeService {
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        FanToken fanTokenFrom = tokenRepository.findById(request.getTokenFromId())
+        Token tokenFrom = tokenRepository.findById(request.getTokenFromId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
-        FanToken fanTokenTo = tokenRepository.findById(request.getTokenToId())
+        Token tokenTo = tokenRepository.findById(request.getTokenToId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(fanTokenFrom)
-                .fanTokenTo(fanTokenTo)
+                .tokenFrom(tokenFrom)
+                .tokenTo(tokenTo)
                 .amountIn(request.getAmountIn())
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -334,8 +333,8 @@ public class ExchangeServiceImpl implements ExchangeService {
                             web3jService.getChainId()
                     ),
                     new DefaultGasProvider());
-            String tokenFromName = transaction.getFanTokenFrom().getTokenName();
-            String tokenToName = transaction.getFanTokenTo().getTokenName();
+            String tokenFromName = transaction.getTokenFrom().getTokenName();
+            String tokenToName = transaction.getTokenTo().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.swap(tokenFromName, tokenToName, amount).send();
             List<Exchange.SwapExecutedEventResponse> events = Exchange.getSwapExecutedEvents(receipt);
@@ -361,12 +360,12 @@ public class ExchangeServiceImpl implements ExchangeService {
 
         Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-        FanToken fanToken = tokenRepository.findById(request.getTokenId())
+        Token token = tokenRepository.findById(request.getTokenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         Transaction transaction = Transaction.builder()
                 .wallet(wallet)
-                .fanTokenFrom(fanToken)
+                .tokenFrom(token)
                 .amountIn(request.getAmountIn())
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -390,7 +389,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                             web3jService.getChainId()
                     ),
                     new DefaultGasProvider());
-            String tokenName = transaction.getFanTokenFrom().getTokenName();
+            String tokenName = transaction.getTokenFrom().getTokenName();
             BigInteger amount = transaction.getAmountIn().toBigInteger();
             TransactionReceipt receipt = contract.use(tokenName, amount).send();
             transaction.updateStatus(TransactionStatus.SUCCESS);

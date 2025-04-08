@@ -3,7 +3,7 @@ package org.example.betty.domain.wallet.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.example.betty.domain.exchange.entity.FanToken;
+import org.example.betty.domain.exchange.entity.Token;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,7 +29,7 @@ public class WalletBalance {
     @ManyToOne
     @JoinColumn(name = "token_id")
     @NotNull
-    private FanToken fanToken;
+    private Token token;
 
     @Column(precision = 36, scale = 18)
     private BigDecimal balance;

@@ -2,8 +2,7 @@ package org.example.betty.domain.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.contract.Token;
-import org.example.betty.domain.exchange.entity.FanToken;
+import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.entity.WalletBalance;
 import org.example.betty.domain.wallet.repository.WalletBalanceRepository;
@@ -63,12 +62,12 @@ public class BalanceServiceImpl implements BalanceService {
     private void syncWalletBalance(Wallet wallet, String tokenName, String tokenAddress) {
         try {
             ReadonlyTransactionManager txManager = new ReadonlyTransactionManager(web3j, wallet.getWalletAddress());
-            Token contract = Token.load(tokenAddress, web3j, txManager, null);
+            org.example.betty.contract.Token contract = org.example.betty.contract.Token.load(tokenAddress, web3j, txManager, null);
 
             BigInteger rawBalance = contract.balanceOf(wallet.getWalletAddress()).send();
             BigDecimal balance = new BigDecimal(rawBalance);
 
-            Optional<FanToken> tokenOpt = tokenRepository.findByTokenName(tokenName);
+            Optional<Token> tokenOpt = tokenRepository.findByTokenName(tokenName);
             if (tokenOpt.isEmpty()) {
                 log.warn("Token not found in DB: {}", tokenName);
                 return;
@@ -77,7 +76,7 @@ public class BalanceServiceImpl implements BalanceService {
             WalletBalance walletBalance = walletBalanceRepository.findByWalletAndToken(wallet, tokenOpt.get())
                     .orElse(WalletBalance.builder()
                             .wallet(wallet)
-                            .fanToken(tokenOpt.get())
+                            .token(tokenOpt.get())
                             .build());
 
             walletBalance.setBalance(balance);

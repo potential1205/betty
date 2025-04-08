@@ -2,7 +2,7 @@ package org.example.betty.domain.exchange.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.betty.common.util.SessionUtil;
-import org.example.betty.domain.exchange.entity.FanToken;
+import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.game.repository.TeamRepository;
@@ -30,9 +30,9 @@ public class TokenServiceImpl implements TokenService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
-        FanToken fanToken = tokenRepository.findByTokenName(team.getTokenName())
+        Token token = tokenRepository.findByTokenName(team.getTokenName())
                 .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
-        return fanToken.getTokenAddress();
+        return token.getTokenAddress();
     }
 }

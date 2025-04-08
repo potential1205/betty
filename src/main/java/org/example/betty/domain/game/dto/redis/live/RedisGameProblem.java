@@ -1,4 +1,4 @@
-package org.example.betty.domain.game.dto.redis;
+package org.example.betty.domain.game.dto.redis.live;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.QuestionCode;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
-import org.example.betty.domain.game.dto.redis.RedisGameProblem;
+import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;

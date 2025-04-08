@@ -100,7 +100,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-//                scheduleRelayJob(game);
+                scheduleRelayJob(game);
             }
             // Redis 키 만료 설정
             LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);

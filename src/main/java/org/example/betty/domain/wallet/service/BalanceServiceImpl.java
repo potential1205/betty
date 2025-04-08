@@ -59,7 +59,8 @@ public class BalanceServiceImpl implements BalanceService {
         });
     }
 
-    private void syncWalletBalance(Wallet wallet, String tokenName, String tokenAddress) {
+    @Override
+    public void syncWalletBalance(Wallet wallet, String tokenName, String tokenAddress) {
         try {
             ReadonlyTransactionManager txManager = new ReadonlyTransactionManager(web3j, wallet.getWalletAddress());
             org.example.betty.contract.Token contract = org.example.betty.contract.Token.load(tokenAddress, web3j, txManager, null);

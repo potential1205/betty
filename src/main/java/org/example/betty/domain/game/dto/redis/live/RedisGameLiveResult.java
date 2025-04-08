@@ -10,7 +10,7 @@ public class RedisGameLiveResult {
     private String walletAddress;
     private String select;
     private String problemId;
-    private String homeTeamCode;
-    private String awayTeamCode;
-    private String myTeamCode;
+    private Long homeTeamId;
+    private Long awayTeamId;
+    private Long myTeamId;
 }

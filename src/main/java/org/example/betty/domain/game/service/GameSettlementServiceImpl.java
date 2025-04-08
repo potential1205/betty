@@ -1,13 +1,10 @@
 package org.example.betty.domain.game.service;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
-import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
-import org.example.betty.domain.game.dto.redis.PrePick;
 import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
 import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.example.betty.domain.game.entity.Team;
@@ -37,15 +34,16 @@ public class GameSettlementServiceImpl implements GameSettlementService {
     private final TeamRepository teamRepository;
     private final RewardService rewardService;
 
-    public void liveVoteSettle(String gameId, String homeTeamCode, String awayTeamCode) {
+    public void liveVoteSettle(Long gameId, Long homeTeamId, Long awayTeamId) {
 
         // 1BET 가치에 해당하는 팬 토큰 시세 조회
-        Team homeTeam = teamRepository.findByTeamCode(homeTeamCode);
-        Team awayTeam = teamRepository.findByTeamCode(awayTeamCode);
+        Team homeTeam = teamRepository.findById(homeTeamId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+        Team awayTeam = teamRepository.findById(awayTeamId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 
         Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-
         Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
@@ -71,7 +69,7 @@ public class GameSettlementServiceImpl implements GameSettlementService {
             RedisGameProblem problem = (RedisGameProblem) redisTemplate2.opsForValue().get(voteResultKey);
 
             if (problem.getAnswer().equals(result.getSelect())) {
-                if (result.getMyTeamCode().equals(homeTeamCode)) {
+                if (result.getMyTeamId().equals(homeTeamId)) {
                     if (homeMap.containsKey(walletAddress)) {
                         homeMap.put(walletAddress, homeMap.get(walletAddress) + 1);
                     } else {
@@ -101,4 +99,5 @@ public class GameSettlementServiceImpl implements GameSettlementService {
     public void preVoteSettle(Long gameId) {
 
     }
+
 }

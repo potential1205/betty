@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
+import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
 import org.example.betty.domain.game.service.GameService;
 import org.example.betty.domain.game.service.SseService;
@@ -29,18 +30,18 @@ public class GameController {
 
     @Operation(summary = "전체 경기 일정 조회", description = "일일 전체 경기 일정을 조회합니다.")
     @GetMapping("/games")
-    public ResponseEntity<GameScheduleListResponse> getTodayGames(
+    public ResponseEntity<List<GameInfoResponse>> getTodayGames(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
 
-        List<RedisGameSchedule> schedules = gameReadService.getTodayGameSchedules(accessToken);
-        return ResponseEntity.ok(GameScheduleListResponse.of(schedules));
+        List<GameInfoResponse> schedules = gameReadService.getTodayGameSchedules(accessToken);
+        return ResponseEntity.ok(schedules);
     }
 
     @Operation(summary = "라인업 조회", description = "MVP 베팅을 위한 경기 라인업을 조회합니다.")
     @GetMapping("/games/{gameId}/lineup")
     public ResponseEntity<RedisGameLineup> getLineup(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
-            @PathVariable String gameId) {
+            @PathVariable Long gameId) {
 
         RedisGameLineup lineup = gameReadService.getGameLineup(accessToken, gameId);
         return ResponseEntity.ok(lineup);
@@ -50,7 +51,7 @@ public class GameController {
     @GetMapping("/games/{gameId}/status")
     public ResponseEntity<String> getGameStatus(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
-            @PathVariable String gameId) {
+            @PathVariable Long gameId) {
 
         String status = gameReadService.getGameStatus(accessToken, gameId);
         return ResponseEntity.ok(status);
@@ -60,7 +61,7 @@ public class GameController {
     @GetMapping(value = "/games/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
-            @PathVariable String gameId) {
+            @PathVariable Long gameId) {
 
         return sseService.stream(accessToken, gameId);
     }

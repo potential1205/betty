@@ -69,8 +69,11 @@
 //                log.info("[{}] 결과: MVP={}, MVP팀={}, 승리팀={}", gameId, mvp, mvpTeam, winner);
 //
 //                return PreVoteAnswer.builder()
-//                        .winner(winner)
-//                        .mvp(mvp)
+//                        .teamA()
+//                        .teamB()
+//                        .winnerTeam(winner)
+//                        .loserTeam()
+//                        .mvpName(mvp)
 //                        .mvpTeam(mvpTeam)
 //                        .build();
 //            }

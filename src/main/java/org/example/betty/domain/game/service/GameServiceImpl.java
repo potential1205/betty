@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
+import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.wallet.repository.WalletRepository;
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,7 +39,7 @@ public class GameServiceImpl implements GameService {
     private static final String REDIS_GAME_PREFIX = "games:";
 
     @Override
-    public List<RedisGameSchedule> getTodayGameSchedules(String accessToken) {
+    public List<GameInfoResponse> getTodayGameSchedules(String accessToken) {
 
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         walletRepository.findByWalletAddress(walletAddress)
@@ -45,18 +47,19 @@ public class GameServiceImpl implements GameService {
 
         LocalDate today = LocalDate.now();
         List<Game> games = gameRepository.findByGameDate(today);
-        List<RedisGameSchedule> schedules = new ArrayList<>();
+        List<GameInfoResponse> schedules = new ArrayList<>();
 
         for (Game game : games) {
-            String gameId = generateGameId(game);
-            RedisGameSchedule schedule = RedisGameSchedule.builder()
-                    .gameId(gameId)
+            GameInfoResponse schedule = GameInfoResponse.builder()
+                    .gameId(game.getId())
+                    .homeTeamId(game.getHomeTeam().getId())
+                    .awayTeamId(game.getAwayTeam().getId())
                     .season(game.getSeason())
                     .gameDate(game.getGameDate().toString())
                     .startTime(game.getStartTime().toString())
                     .stadium(game.getStadium())
-                    .homeTeam(game.getHomeTeam().getTeamName().split(" ")[0])
-                    .awayTeam(game.getAwayTeam().getTeamName().split(" ")[0])
+                    .homeTeamName(game.getHomeTeam().getTeamName().split(" ")[0])
+                    .awayTeamName(game.getAwayTeam().getTeamName().split(" ")[0])
                     .status(game.getStatus())
                     .build();
 
@@ -66,12 +69,21 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public RedisGameLineup getGameLineup(String accessToken, String gameId) {
+    public RedisGameLineup getGameLineup(String accessToken, Long gameId) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        String gameDate = gameId.substring(0, 4) + "-" + gameId.substring(4, 6) + "-" + gameId.substring(6, 8);
+        Optional<Game> optionalGame = gameRepository.findById(gameId);
+
+        if (optionalGame.isEmpty()) {
+            log.warn("[Game 없음] gameId: {}", gameId);
+            return null;
+        }
+
+        Game game = optionalGame.get();
+        LocalDate gameDate = game.getGameDate();
+
         String redisKey = REDIS_GAME_PREFIX + gameDate + ":" + gameId;
 
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
@@ -90,6 +102,7 @@ public class GameServiceImpl implements GameService {
         log.info("[GameReadService] 라인업 조회 성공 - gameId: {}", gameId);
         return (RedisGameLineup) rawLineup;
     }
+
 
     @Override
     @Transactional
@@ -118,7 +131,7 @@ public class GameServiceImpl implements GameService {
             seasonStr = seasonStr.substring(1); // "02025" → "2025"
         }
 
-        int season = Integer.parseInt(seasonStr); // 🔥 여기가 핵심!
+        int season = Integer.parseInt(seasonStr);
 
         LocalDate gameDate = LocalDate.parse(gameDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
@@ -127,24 +140,24 @@ public class GameServiceImpl implements GameService {
         ).orElseThrow(() -> new RuntimeException("gameId로 Game 조회 실패: " + gameId));
     }
 
-
-
     @Override
-    public String getGameStatus(String accessToken, String gameId) {
+    public String getGameStatus(String accessToken, Long gameId) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        Game game = findGameByGameId(gameId);
+        Optional<Game> optionalGame = gameRepository.findById(gameId);
+
+        if (optionalGame.isEmpty()) {
+            log.warn("[Game 없음] gameId: {}", gameId);
+            return null;
+        }
+
+        Game game = optionalGame.get();
         return game.getStatus();
     }
 
 
-    private String generateGameId(Game game) {
-        return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                + game.getAwayTeam().getTeamCode()
-                + game.getHomeTeam().getTeamCode()
-                + "0" + game.getSeason();
-    }
+
 
 }

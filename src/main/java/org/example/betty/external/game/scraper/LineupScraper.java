@@ -145,6 +145,6 @@ public class LineupScraper extends BaseScraper {
             log.warn("[KBO 이미지 조회 실패] 선수명: {}, 이유: {}", playerName, e.getMessage());
         }
 
-        return "https://a609-betty-bucket.s3.ap-northeast-2.amazonaws.com/player/betty_player_default.png";
+        return "https://a609-betty-bucket.s3.ap-northeast-2.amazonaws.com/player/player_default_image.png";
     }
 }

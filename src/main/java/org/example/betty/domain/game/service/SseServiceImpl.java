@@ -3,6 +3,8 @@ package org.example.betty.domain.game.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.SessionUtil;
+import org.example.betty.domain.game.entity.Game;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
@@ -10,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -23,29 +27,34 @@ public class SseServiceImpl implements SseService {
     private final SessionUtil sessionUtil;
     private final WalletRepository walletRepository;
     private final Map<String, Set<SseEmitter>> emitterMap = new ConcurrentHashMap<>();
+    private final GameRepository gameRepository;
+
 
     @Override
-    public SseEmitter stream(String accessToken, String gameId) {
+    public SseEmitter stream(String accessToken, Long gameId) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
+        Optional<Game> optionalGame = gameRepository.findById(gameId);
+        String gameCode = generateGameId(optionalGame.get());
+
         SseEmitter emitter = new SseEmitter(0L); // 무제한 연결 유지
 
-        emitterMap.computeIfAbsent(gameId, key -> new CopyOnWriteArraySet<>()).add(emitter);
+        emitterMap.computeIfAbsent(gameCode, key -> new CopyOnWriteArraySet<>()).add(emitter);
 
         emitter.onCompletion(() -> {
-            removeEmitter(gameId, emitter);
+            removeEmitter(gameCode, emitter);
             log.info("SSE 연결 종료: gameId={}", gameId);
         });
 
         emitter.onTimeout(() -> {
-            removeEmitter(gameId, emitter);
+            removeEmitter(gameCode, emitter);
             log.info("SSE 타임아웃: gameId={}", gameId);
         });
 
         emitter.onError(e -> {
-            removeEmitter(gameId, emitter);
+            removeEmitter(gameCode, emitter);
             log.warn("SSE 오류 발생: gameId={} | {}", gameId, e.getMessage());
         });
 
@@ -105,5 +114,12 @@ public class SseServiceImpl implements SseService {
             if (stringData.contains(":")) return "score";
         }
         return "problem";
+    }
+
+    private String generateGameId(Game game) {
+        return game.getGameDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                + game.getAwayTeam().getTeamCode()
+                + game.getHomeTeam().getTeamCode()
+                + "0" + game.getSeason();
     }
 }

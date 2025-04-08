@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedisGameSchedule {
-    private String gameId;
-    private int season;
+    private int season;   // 2025
     private String gameDate; // "2025-03-27"
     private String startTime; // "18:30"
     private String stadium;   // "잠실"

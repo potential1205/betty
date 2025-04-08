@@ -42,7 +42,7 @@ contract Exchange {
 
     // 베티코인 출금 (BETTY → WON 전환용)
     function remove(uint256 amountBET) external {
-        betToken.transfer(msg.sender, amountBET);
+        betToken.transferFrom(msg.sender, address(this), amountBET);
     }
 
     // BETTY → 팬토큰 매수

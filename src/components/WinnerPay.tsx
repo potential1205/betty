@@ -115,7 +115,7 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
             <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBET)}</p>
               <p className="text-sm text-gray-400 ml-1">BTC</p>
             </div>
           </div>

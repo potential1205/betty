@@ -45,7 +45,7 @@ public class DisplayController {
     }
 
     @Operation(summary = "전광판 접근 권한 생성", description = "사용자의 전광판 접근 권한을 생성합니다.")
-    @PostMapping("/games/{gameCode}/teams/{teamCode}/access")
+    @PostMapping("/games/{gameId}/teams/{teamId}/access")
     public ResponseEntity<SuccessResponse> crateDisplayAccess(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             @PathVariable Long gameId, @PathVariable Long teamId,
@@ -57,7 +57,7 @@ public class DisplayController {
     }
 
     @Operation(summary = "게임종료", description = "게임이 종료되어 전광판을 이미지로 저장합니다.")
-    @PostMapping("/games/{gameCode}/teams/{teamCode}/end")
+    @PostMapping("/games/{gameId}/teams/{teamId}/end")
     public ResponseEntity<SuccessResponse> gameEnd(@PathVariable Long gameId, @PathVariable Long teamId) {
 
         displayService.gameEnd(gameId, teamId);
@@ -67,7 +67,7 @@ public class DisplayController {
     }
 
     @Operation(summary = "이닝종료", description = "이닝이 종료되어 전광판을 이미지로 저장합니다.")
-    @PostMapping("/games/{gameCode}/teams/{teamCode}/inning/{inning}/end")
+    @PostMapping("/games/{gameId}/teams/{teamId}/inning/{inning}/end")
     public ResponseEntity<SuccessResponse> inningEnd(
             @PathVariable Long gameId, @PathVariable Long teamId, @PathVariable int inning) {
 

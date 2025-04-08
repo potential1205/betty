@@ -1,64 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
-import bettyImg from '../assets/bettycoin.png';
-import { addBettyCoin } from '../apis/exchangeApi';
 
-interface ChargeModalProps {
+interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
-  const [amount, setAmount] = React.useState<number>(0);
-  const [customAmount, setCustomAmount] = React.useState<string>('');
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const { chargeBetty, walletInfo } = useStore();
-  
-  // 원화를 BTC로 변환하는 함수 (1 BTC = 100원 기준)
-  const convertToBTC = (won: number) => won / 100;
-  
-  // BTC 금액 포맷팅 함수
-  const formatBTC = (btc: number) => btc.toFixed(2);
-  
-  const amounts = [10000, 50000, 100000, 500000];
+const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
+  const { walletInfo } = useStore();
+  const [amount, setAmount] = useState('');
+  const [customAmount, setCustomAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    setCustomAmount(value);
-    setAmount(Number(value));
+  // 출금 가능한 금액 옵션들 (현재 보유 BTC의 25%, 50%, 75%, 100%)
+  const getWithdrawOptions = () => {
+    const totalBTC = walletInfo.totalBTC || 0;
+    return [
+      { percent: 25, amount: totalBTC * 0.25 },
+      { percent: 50, amount: totalBTC * 0.5 },
+      { percent: 75, amount: totalBTC * 0.75 },
+      { percent: 100, amount: totalBTC }
+    ];
   };
 
-  const handleNumberClick = (num: string) => {
-    if (customAmount.length < 10) {
-      const newAmount = customAmount + num;
-      setCustomAmount(newAmount);
-      setAmount(Number(newAmount));
-    }
-  };
-
-  const handleDelete = () => {
-    const newAmount = customAmount.slice(0, -1);
-    setCustomAmount(newAmount);
-    setAmount(Number(newAmount));
-  };
-
-  const handleCharge = async () => {
-    if (amount <= 0) return;
-
+  const handleWithdraw = async () => {
+    if (!amount) return;
+    
     try {
-      await addBettyCoin(amount);
-      chargeBetty(amount / 100);
+      setIsLoading(true);
+      // TODO: Implement withdrawal API call
+      console.log('Withdrawing', amount, 'BTC');
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        setAmount(0);
+        setAmount('');
         setCustomAmount('');
         onClose();
       }, 1500);
-    } catch (err) {
-      console.error('충전 실패:', err);
-      alert('충전에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      console.error('Withdrawal failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 소수점 두 자리까지만 허용하는 정규식
+    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBTC || 0)) {
+      setCustomAmount(value);
+      setAmount(value);
     }
   };
 
@@ -83,7 +76,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <div className="w-[12px] h-[12px]" />
-        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BTC 충전하기</h1>
+        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BTC 출금하기</h1>
         <button 
           onClick={onClose}
           className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
@@ -111,31 +104,31 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
             <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBTC?.toFixed(2) || '0.00'}</p>
               <p className="text-sm text-gray-400 ml-1">BTC</p>
             </div>
           </div>
 
           {/* 금액 선택 버튼들 */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {amounts.map((value) => (
+            {getWithdrawOptions().map(({ percent, amount: btcAmount }) => (
               <button
-                key={value}
+                key={percent}
                 onClick={() => {
-                  setAmount(value);
+                  setAmount(btcAmount.toFixed(2));
                   setCustomAmount('');
                 }}
                 className={`p-4 rounded-xl text-center transition-colors
-                  ${amount === value && !customAmount
+                  ${Number(amount) === Number(btcAmount.toFixed(2)) && !customAmount
                     ? 'bg-black text-white' 
                     : 'bg-gray-100 text-black hover:bg-gray-200'}`}
               >
-                <p className="text-sm mb-1">충전금액</p>
+                <p className="text-sm mb-1">출금금액</p>
                 <p className="text-lg font-['Giants-Bold']">
-                  {value.toLocaleString()}원
+                  {percent}%
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {formatBTC(convertToBTC(value))} BTC
+                  {btcAmount.toFixed(2)} BTC
                 </p>
               </button>
             ))}
@@ -151,33 +144,24 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
                 type="text"
                 value={customAmount}
                 onChange={handleCustomAmountChange}
-                placeholder="0"
+                placeholder="0.00"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
               />
-              <span className="text-gray-500 ml-2">원</span>
+              <span className="text-gray-500 ml-2">BTC</span>
             </div>
-            {customAmount && (
-              <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-gray-500">BTC 환산</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-800 font-['Giants-Bold']">{formatBTC(convertToBTC(Number(customAmount)))}</span>
-                  <span className="text-gray-500">BTC</span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* 버튼 */}
           <button
-            onClick={handleCharge}
-            disabled={amount === 0}
+            onClick={handleWithdraw}
+            disabled={isLoading || !amount}
             className={`w-full py-4 rounded-xl text-white text-base font-['Giants-Bold'] transition-colors ${
-              amount > 0
+              amount
                 ? 'bg-black hover:bg-gray-800'
                 : 'bg-gray-300 cursor-not-allowed'
             }`}
           >
-            충전하기
+            {isLoading ? '처리중...' : '출금하기'}
           </button>
         </div>
       </div>
@@ -213,7 +197,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
                 transition={{ delay: 0.5 }}
                 className="text-sm sm:text-base font-['Giants-Bold'] text-gray-800 mt-2 sm:mt-3"
               >
-                충전되었습니다
+                출금이 완료되었습니다
               </motion.p>
             </div>
           </motion.div>
@@ -223,4 +207,4 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default ChargeModal;
+export default WithdrawModal; 

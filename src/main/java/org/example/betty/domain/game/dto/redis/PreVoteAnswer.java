@@ -10,7 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PreVoteAnswer {
-    private String winner;
-    private String mvp;
+
+    private String teamA;
+    private String teamB;
+
+    private String winnerTeam;
+    private String loserTeam;
+
+    private String mvpName;
     private String mvpTeam;
 }

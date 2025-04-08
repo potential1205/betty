@@ -17,6 +17,7 @@ import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.exchange.repository.TransactionRepository;
 import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
+import org.example.betty.domain.wallet.service.BalanceService;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final TokenRepository tokenRepository;
     private final Web3jService web3jService;
     private final PendingTransactionUtil pendingTransactionUtil;
+    private final BalanceService balanceService;
 
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;
@@ -102,6 +104,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
             );
+
             // approve
             TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
             log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
@@ -110,9 +113,21 @@ public class ExchangeServiceImpl implements ExchangeService {
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
             log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
 
+            // 사용자 지갑으로 전송
+            String userWalletAddress = transaction.getWallet().getWalletAddress();
+            TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
+            log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountBet, transferReceipt.getTransactionHash());
+
+            // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
+
+            // 온체인 기준 DB 잔고 업데이트
+            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
+            BigDecimal updatedBet = new BigDecimal(updatedWei);
+            balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
+
         } catch (Exception e) {
             log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", web3jService.getCredentials().getAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);

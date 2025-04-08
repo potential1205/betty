@@ -20,7 +20,8 @@ public class WebConfig {
                                 "http://localhost:5174",
                                 "http://localhost:5175",
                                 "http://localhost:5176",
-                                "https://j12a609.p.ssafy.io"
+                                "https://j12a609.p.ssafy.io",
+                                "https://bettybase.site"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")

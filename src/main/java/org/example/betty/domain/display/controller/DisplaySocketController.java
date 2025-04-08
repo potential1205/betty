@@ -31,17 +31,17 @@ public class DisplaySocketController {
         }
 
         Pixel pixel = new Pixel(walletAddress, message.getColor());
-        displayService.updatePixel(message.getGameId(), message.getTeamId(), message.getR(), message.getC(), pixel);
+        displayService.updatePixel(message.getGameCode(), message.getTeamCode(), message.getR(), message.getC(), pixel);
         message.setWalletAddress(walletAddress);
 
-        String destination = "/topic/pixelUpdate/" + message.getGameId() + "/" + message.getTeamId();
+        String destination = "/topic/pixelUpdate/" + message.getGameCode() + "/" + message.getTeamCode();
         messagingTemplate.convertAndSend(destination, message);
     }
 
-    @MessageMapping("/getBoard/{gameId}/{teamId}")
-    @SendTo("/topic/board/{gameId}/{teamId}")
-    public Pixel[][] getBoard(@DestinationVariable Long gameId, @DestinationVariable Long teamId) {
-        log.info("display 조회 요청 도착" + gameId + "," + teamId);
-        return displayService.getDisplay(gameId, teamId);
+    @MessageMapping("/getBoard/{gameCode}/{teamCode}")
+    @SendTo("/topic/board/{gameCode}/{teamCode}")
+    public Pixel[][] getBoard(@DestinationVariable String gameCode, @DestinationVariable String teamCode) {
+        log.info("display 조회 요청 도착" + gameCode + "," + teamCode);
+        return displayService.getDisplay(gameCode, teamCode);
     }
 }

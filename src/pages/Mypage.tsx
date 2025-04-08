@@ -26,12 +26,12 @@ type TeamColors = {
 interface WalletInfo {
   address?: string;
   nickname?: string;
-  totalBTC?: number;
+  totalBET?: number;
   transactions: Transaction[];
   tokens?: Array<{
     team: string;
     amount: number;
-    btcValue?: number;
+    betValue?: number;
   }>;
 }
 
@@ -65,10 +65,10 @@ const MyPage: React.FC = () => {
     }
   };
 
-  // BTC 금액 포맷팅 함수
-  const formatBTC = (btc: number | undefined) => {
-    if (btc === undefined || btc === null) return '0.00';
-    return btc.toFixed(2);
+  // BET 금액 포맷팅 함수
+  const formatBET = (bet: number | undefined) => {
+    if (bet === undefined || bet === null) return '0.00';
+    return bet.toFixed(2);
   };
 
   // 컴포넌트 마운트 시 사이드바를 닫힌 상태로 설정
@@ -85,7 +85,7 @@ const MyPage: React.FC = () => {
         updateWalletInfo({
           address: data.address,
           nickname: data.nickname,
-          totalBTC: data.totalBTC,
+          totalBET: data.totalBET,
           transactions: [],
           tokens: []
         });
@@ -154,7 +154,7 @@ const MyPage: React.FC = () => {
               <p className="text-lg font-['Giants-Bold']">
                 {type === 'CHARGE' 
                   ? `${transaction.amount.toLocaleString()}원`
-                  : `${formatBTC(transaction.amount)} BTC`}
+                  : `${formatBET(transaction.amount)} BET`}
               </p>
               {transaction.tokenName && (
                 <div className="flex items-center text-sm text-gray-500">
@@ -165,7 +165,7 @@ const MyPage: React.FC = () => {
                   </div>
                   <span>{transaction.tokenAmount}개</span>
                   <span className="mx-2">•</span>
-                  <span>{formatBTC(transaction.tokenPrice || 0)} BTC/개</span>
+                  <span>{formatBET(transaction.tokenPrice || 0)} BET/개</span>
                 </div>
               )}
             </div>
@@ -192,8 +192,8 @@ const MyPage: React.FC = () => {
             <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
               <p className="text-sm text-gray-400 mb-2">총 보유자산</p>
               <div className="flex items-baseline">
-                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo?.totalBTC)}</p>
-                <p className="text-xl text-gray-400 ml-2">BTC</p>
+                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBET(walletInfo?.totalBET)}</p>
+                <p className="text-xl text-gray-400 ml-2">BET</p>
               </div>
             </div>
 
@@ -230,12 +230,12 @@ const MyPage: React.FC = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-500 mb-1">BTC 가치</p>
+                          <p className="text-xs text-gray-500 mb-1">BET 가치</p>
                           <div className="flex items-baseline">
                             <p className="text-base font-['Giants-Bold'] text-black">
-                              {formatBTC(tokenInfo?.btcValue)}
+                              {formatBET(tokenInfo?.betValue)}
                             </p>
-                            <p className="text-xs text-gray-500 ml-1">BTC</p>
+                            <p className="text-xs text-gray-500 ml-1">BET</p>
                           </div>
                         </div>
                       </div>
@@ -285,7 +285,7 @@ const MyPage: React.FC = () => {
                           </p>
                         ) : transaction.tokenName ? (
                           <p className="text-sm font-['Giants-Bold'] text-black">
-                            {formatBTC(transaction.amount)} BTC
+                            {formatBET(transaction.amount)} BET
                           </p>
                         ) : null}
                       </div>
@@ -336,7 +336,7 @@ const MyPage: React.FC = () => {
                                 <div className="flex items-center space-x-1 min-w-0">
                                   <span className="truncate">{transaction.tokenAmount}개</span>
                                   <span className="mx-1 flex-shrink-0">•</span>
-                                  <span className="truncate">10 BTC/개</span>
+                                  <span className="truncate">10 BET/개</span>
                                 </div>
                               </div>
                             </div>
@@ -345,7 +345,7 @@ const MyPage: React.FC = () => {
                       </div>
                       <div className="text-right ml-3 flex-shrink-0">
                         <p className="text-sm font-['Giants-Bold'] text-black">
-                          {formatBTC((transaction.tokenAmount || 0) * 10)} BTC
+                          {formatBET((transaction.tokenAmount || 0) * 10)} BET
                         </p>
                       </div>
                     </motion.div>
@@ -395,7 +395,7 @@ const MyPage: React.FC = () => {
                                 <div className="flex items-center space-x-1 min-w-0">
                                   <span className="truncate">{transaction.tokenAmount}개</span>
                                   <span className="mx-1 flex-shrink-0">•</span>
-                                  <span className="truncate">10 BTC/개</span>
+                                  <span className="truncate">10 BET/개</span>
                                 </div>
                               </div>
                             </div>
@@ -404,7 +404,7 @@ const MyPage: React.FC = () => {
                       </div>
                       <div className="text-right ml-3 flex-shrink-0">
                         <p className="text-sm font-['Giants-Bold'] text-black">
-                          {formatBTC((transaction.tokenAmount || 0) * 10)} BTC
+                          {formatBET((transaction.tokenAmount || 0) * 10)} BET
                         </p>
                       </div>
                     </motion.div>
@@ -426,10 +426,10 @@ const MyPage: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 shadow-lg">
-              <p className="text-sm text-gray-400 mb-2">현재 보유 BTC</p>
+              <p className="text-sm text-gray-400 mb-2">현재 보유 BET</p>
               <div className="flex items-baseline">
-                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
-                <p className="text-xl text-gray-400 ml-2">BTC</p>
+                <p className="text-3xl font-['Giants-Bold'] text-white">{formatBET(walletInfo.totalBET)}</p>
+                <p className="text-xl text-gray-400 ml-2">BET</p>
               </div>
             </div>
             <div className="space-y-4">

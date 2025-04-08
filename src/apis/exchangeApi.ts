@@ -17,12 +17,12 @@ export interface TransactionResponse {
     transactionId: number;
 }
 
-// BTC 충전 API
+// BET 충전 API
 export const addBettyCoin = async (amountIn: number): Promise<TransactionResponse> => {
     return (await axiosInstance.post("/exchange/add", { tokenId: 1, amountIn })).data;
 }
 
-// BTC 출금 API
+// BET 출금 API
 export const removeBettyCoin = async (amountIn: number) : Promise<TransactionResponse> => {
     return (await axiosInstance.post("/exchange/remove", { amountIn })).data;
 }

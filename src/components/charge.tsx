@@ -15,11 +15,11 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
   const [showSuccess, setShowSuccess] = React.useState(false);
   const { chargeBetty, walletInfo } = useStore();
   
-  // 원화를 BTC로 변환하는 함수 (1 BTC = 100원 기준)
-  const convertToBTC = (won: number) => won / 100;
+  // 원화를 BET로 변환하는 함수 (1 BET = 100원 기준)
+  const convertToBET = (won: number) => won / 100;
   
-  // BTC 금액 포맷팅 함수
-  const formatBTC = (btc: number) => btc.toFixed(2);
+  // BET 금액 포맷팅 함수
+  const formatBET = (bet: number) => bet.toFixed(2);
   
   const amounts = [10000, 50000, 100000, 500000];
 
@@ -83,7 +83,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <div className="w-[12px] h-[12px]" />
-        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BTC 충전하기</h1>
+        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BET 충전하기</h1>
         <button 
           onClick={onClose}
           className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
@@ -107,12 +107,12 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
       {/* 메인 컨텐츠 */}
       <div className="h-[calc(100%-56px)] flex flex-col justify-center">
         <div className="p-4 flex flex-col">
-          {/* 현재 보유 BTC */}
+          {/* 현재 보유 BET */}
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
-            <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
+            <p className="text-xs text-gray-400 mb-1">현재 보유 BET</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBTC)}</p>
-              <p className="text-sm text-gray-400 ml-1">BTC</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">{formatBET(walletInfo.totalBET)}</p>
+              <p className="text-sm text-gray-400 ml-1">BET</p>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
                   {value.toLocaleString()}원
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {formatBTC(convertToBTC(value))} BTC
+                  {formatBET(convertToBET(value))} BET
                 </p>
               </button>
             ))}
@@ -158,10 +158,10 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
             </div>
             {customAmount && (
               <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-gray-500">BTC 환산</span>
+                <span className="text-gray-500">BET 환산</span>
                 <div className="flex items-center gap-1">
-                  <span className="text-gray-800 font-['Giants-Bold']">{formatBTC(convertToBTC(Number(customAmount)))}</span>
-                  <span className="text-gray-500">BTC</span>
+                  <span className="text-gray-800 font-['Giants-Bold']">{formatBET(convertToBET(Number(customAmount)))}</span>
+                  <span className="text-gray-500">BET</span>
                 </div>
               </div>
             )}

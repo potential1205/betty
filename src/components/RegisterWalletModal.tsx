@@ -22,7 +22,7 @@ const RegisterWalletModal: React.FC<RegisterWalletModalProps> = ({ isOpen, onClo
       const response = await registerWallet();
       updateWalletInfo({
         address: response.address,
-        totalBTC: 0,
+        totalBET: 0,
         transactions: [],
         tokens: []
       });

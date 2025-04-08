@@ -1,5 +1,6 @@
 package org.example.betty.domain.wallet.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.entity.Token;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BalanceServiceImpl implements BalanceService {
 
     private final Web3j web3j;
@@ -78,6 +80,8 @@ public class BalanceServiceImpl implements BalanceService {
                     .orElse(WalletBalance.builder()
                             .wallet(wallet)
                             .token(tokenOpt.get())
+                            .balance(BigDecimal.ZERO)
+                            .createdAt(LocalDateTime.now())
                             .build());
 
             walletBalance.setBalance(balance);

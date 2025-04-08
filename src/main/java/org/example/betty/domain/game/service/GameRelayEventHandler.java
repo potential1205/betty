@@ -2,6 +2,7 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.domain.display.service.DisplayService;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.QuestionCode;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
@@ -28,6 +29,7 @@ public class GameRelayEventHandler {
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
     private final SseService sseService;
+    private final DisplayService displayService;
 
     private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
     private final Map<String, String> previousInningMap = new ConcurrentHashMap<>();
@@ -45,6 +47,11 @@ public class GameRelayEventHandler {
         if (prevInning == null || !prevInning.equals(currentInning)) {
             log.info("[이닝 상태 업데이트] gameId={} | {} → {}", gameId, prevInning, currentInning);
             sseService.send(gameId, currentInning); // DTO 없이 문자열만 전송
+
+            // 이닝변경 전광판 저장
+//            displayService.inningEnd(gameId, gameId.substring(8, 10), currentInning.replaceAll("[^0-9]", ""));
+//            displayService.gameEnd(gameId, gameId.substring(10, 12), currentInning.replaceAll("[^0-9]", ""));
+
             previousInningMap.put(gameId, currentInning);
         }
 

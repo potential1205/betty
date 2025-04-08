@@ -104,7 +104,6 @@ public class GameCacheServiceImpl implements GameCacheService {
             }
             // Redis 키 만료 설정
             LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
-//            LocalDateTime expireTime = LocalDate.now().plusDays(1).atStartOfDay();
             Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
             redisTemplate2.expireAt(redisKey, expireDate);
         }

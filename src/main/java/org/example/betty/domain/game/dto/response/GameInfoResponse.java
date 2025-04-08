@@ -11,10 +11,12 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @ToString
 public class GameInfoResponse {
-
+    private Long gameId;
+    private Long homeTeamId;
+    private Long awayTeamId;
     private int season;
-    private LocalDate gameDate;
-    private LocalTime startTime;
+    private String gameDate;
+    private String startTime;
     private String stadium;
     private String homeTeamName;
     private String awayTeamName;

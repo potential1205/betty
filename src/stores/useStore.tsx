@@ -62,7 +62,9 @@ interface GameSchedule {
 
 export interface Game {
   id: number;
-  gameId: string;
+  gameId: number;
+  homeTeamId: number;
+  awayTeamId: number;
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -70,8 +72,16 @@ export interface Game {
   inning: number;
   status: string;
   schedule: {
-    stadium: string;
+    gameId: number;
+    homeTeamId: number;
+    awayTeamId: number;
+    season: number;
+    gameDate: string;
     startTime: string;
+    stadium: string;
+    homeTeamName: string;
+    awayTeamName: string;
+    status: String;
   };
   homeTeamCode?: string;
   awayTeamCode?: string;

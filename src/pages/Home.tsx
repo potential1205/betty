@@ -38,6 +38,9 @@ interface GameSchedule {
   homeTeamName: string;
   awayTeamName: string;
   status: string;
+  homeScore: number;
+  awayScore: number;
+  inning: number;
 }
 
 interface GamesData {
@@ -47,7 +50,7 @@ interface GamesData {
 // 화면에 표시할 게임 데이터 타입
 interface Game {
   id: number;
-  gameId: string;
+  gameId: number;
   homeTeamId: number;
   awayTeamId: number;
   homeTeam: string;
@@ -69,7 +72,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // 환경 변수에서 API URL 가져오기기
+  // 환경 변수에서 API URL 가져오기
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
   // API에서 데이터 가져오기
@@ -83,33 +86,36 @@ const Home: React.FC = () => {
         const response = await axiosInstance.get('/home/games');
         console.log('API Response:', response);
         
-        const data: GamesData = response.data;
-        console.log('API 응답 전체:', data); // 전체 응답 로깅
+        const schedules = response.data; // API 응답이 직접 배열로 옴옴
+        console.log('API 응답 전체:', schedules);
         
-        if (!data.schedules || data.schedules.length === 0) {
+        if (!schedules || schedules.length === 0) {
           console.log('No schedules found in response');
           setGames([]);
           setTodayGames([]);
           return;
         }
         
-        const formattedGames = data.schedules.map((schedule, index) => {
-          console.log(`Schedule ${index} 원본:`, JSON.stringify(schedule, null, 2)); // 각 schedule 상세 로깅
+        const formattedGames = schedules.map((schedule: GameSchedule, index: number) => {
+          console.log(`Schedule ${index} 원본:`, JSON.stringify(schedule, null, 2));
           console.log('gameId type:', typeof schedule.gameId);
           console.log('homeTeamName:', schedule.homeTeamName);
           console.log('awayTeamName:', schedule.awayTeamName);
           console.log('status:', schedule.status);
+          console.log('homeScore:', schedule.homeScore);
+          console.log('awayScore:', schedule.awayScore);
+          console.log('inning:', schedule.inning)
           
           const game = {
             id: index,
-            gameId: schedule.gameId.toString(),
+            gameId: schedule.gameId,
             homeTeamId: schedule.homeTeamId,
             awayTeamId: schedule.awayTeamId,
             homeTeam: schedule.homeTeamName,
             awayTeam: schedule.awayTeamName,
-            homeScore: 0,
-            awayScore: 0,
-            inning: 0,
+            homeScore: schedule.homeScore || 0,
+            awayScore: schedule.awayScore || 0,
+            inning: schedule.inning || 0,
             status: schedule.status,
             schedule
           };
@@ -178,7 +184,7 @@ const Home: React.FC = () => {
       case 'CANCELED':
         return '경기취소';
       default:
-        return '';
+        return '알 수 없음';
     }
   };
 

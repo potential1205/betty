@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DisplayAccessRepository extends JpaRepository<DisplayAccess, Long> {
 
-    boolean existsByWalletAddressAndGameCodeAndTeamCode(String walletAddress, String gameCode, String teamCode);
+    boolean existsByWalletAddressAndGameIdAndTeamId(String walletAddress, Long gameId, Long teamId);
 }

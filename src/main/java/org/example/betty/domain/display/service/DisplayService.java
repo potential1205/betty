@@ -7,17 +7,17 @@ import java.util.List;
 
 public interface DisplayService {
 
-    Pixel[][] getDisplay(String gameCode, String teamCode);
+    Pixel[][] getDisplay(Long gameId, Long teamId);
 
-    void updatePixel(String gameCode, String teamCode, int r, int c, Pixel pixel);
+    void updatePixel(Long gameId, Long teamId, int r, int c, Pixel pixel);
 
     List<Display> getAllDisplayList(String accessToken);
 
-    void checkDisplayAccess(String accessToken, String gameCode, String teamCode);
+    void checkDisplayAccess(String accessToken, Long gameId, Long teamId);
 
-    void createDisplayAccess(String accessToken, String gameCode, String teamCode, String txHash);
+    void createDisplayAccess(String accessToken, Long gameId, Long teamId, String txHash);
 
-    void gameEnd(String gameId, String teamCode);
+    void gameEnd(Long gameId, Long teamId);
 
-    void inningEnd(String gameId, String teamCode, String inning);
+    void inningEnd(Long gameId, Long teamId, int inning);
 }

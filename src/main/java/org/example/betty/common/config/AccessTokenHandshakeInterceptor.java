@@ -36,20 +36,22 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
         }
         token = "Bearer " + token;
 
-        String gameCode = queryParams.getFirst("game_id");
-        String teamCode = queryParams.getFirst("team_id");
-        if (gameCode == null || teamCode == null) {
-            log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", gameCode, teamCode);
+        String strGameId = queryParams.getFirst("game_id");
+        String strTeamId = queryParams.getFirst("team_id");
+        if (strGameId == null || strTeamId == null) {
+            log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", strGameId, strTeamId);
             return false;
         }
 
+        Long gameId = Long.parseLong(strGameId);
+        Long teamId =Long.parseLong(strTeamId);
 
         try {
             String walletAddress = sessionUtil.getSession(token);
             log.info("Retrieved walletAddress: {} for token", walletAddress);
 
-            if (!displayAccessRepository.existsByWalletAddressAndGameCodeAndTeamCode(walletAddress, gameCode, teamCode)) {
-                log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameCode, teamCode);
+            if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
+                log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameId, teamId);
                 return false;
             }
 

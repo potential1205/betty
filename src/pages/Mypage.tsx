@@ -37,7 +37,7 @@ interface WalletInfo {
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice, userTokens, updateWalletInfo } = useStore();
+  const { toggleSidebar, walletInfo, activeTab, setActiveTab, isChargeModalOpen, setIsChargeModalOpen, nickname, bettyPrice, updateWalletInfo } = useStore();
   const [showAllCharge, setShowAllCharge] = useState(false);
   const [showAllBuy, setShowAllBuy] = useState(false);
   const [showAllSell, setShowAllSell] = useState(false);
@@ -201,29 +201,27 @@ const MyPage: React.FC = () => {
             <div>
               <h3 className="text-base font-['Giants-Bold'] mb-4">보유 팬토큰</h3>
               <div className="space-y-3">
-                {userTokens.map((token) => {
-                  const tokenInfo = walletInfo?.tokens?.find(t => t.team === token.team);
-                  return (
-                    <motion.div
-                      key={token.team}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="flex items-center mb-2">
-                            <div 
-                              className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
-                              style={{ backgroundColor: (teamColors as TeamColors)[token.team].bg }}
-                            >
-                              <span className="text-sm font-['Giants-Bold']" style={{ color: (teamColors as TeamColors)[token.team].text }}>
-                                {formatTeamCode(token.team)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-black">
-                              {formatTeamName(token.team)}
-                            </p>
+                {walletInfo.tokens?.map((token) => (
+                  <motion.div
+                    key={token.team}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-2xl p-6 shadow-md border border-gray-100"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                            style={{ backgroundColor: (teamColors as TeamColors)[token.team]?.bg || '#eee' }}
+                          >
+                            <span className="text-sm font-['Giants-Bold']" style={{ color: (teamColors as TeamColors)[token.team]?.text || '#333' }}>
+                              {formatTeamCode(token.team)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-black">
+                            {formatTeamName(token.team)}
+                          </p>
                           </div>
                           <p className="text-base text-black">
                             {token.amount}개
@@ -233,15 +231,14 @@ const MyPage: React.FC = () => {
                           <p className="text-xs text-gray-500 mb-1">BET 가치</p>
                           <div className="flex items-baseline">
                             <p className="text-base font-['Giants-Bold'] text-black">
-                              {formatBET(tokenInfo?.betValue)}
+                              {formatBET(token.betValue)}
                             </p>
                             <p className="text-xs text-gray-500 ml-1">BET</p>
                           </div>
                         </div>
                       </div>
                     </motion.div>
-                  );
-                })}
+                  ))}
               </div>
             </div>
           </div>

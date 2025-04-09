@@ -3,6 +3,7 @@ package org.example.betty.domain.game.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.entity.TokenPrice;
 import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.exchange.service.SettlementService;
@@ -51,8 +52,11 @@ public class GameSettleServiceImpl implements GameSettleService {
         Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
-        BigInteger homeTokenPrice = tokenPriceRepository.findByTokenName(homeTeam.getTokenName()).toBigInteger();
-        BigInteger awayTokenPrice = tokenPriceRepository.findByTokenName(awayTeam.getTokenName()).toBigInteger();
+        BigInteger homeTokenPrice = tokenPriceRepository.findByTokenName(homeToken.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_PRICE_NOT_FOUND)).getPrice().toBigInteger();
+
+        BigInteger awayTokenPrice = tokenPriceRepository.findByTokenName(awayToken.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_PRICE_NOT_FOUND)).getPrice().toBigInteger();
 
         // 리워드를 보내 줄
         Map<String, Integer> homeMap = new HashMap<>();

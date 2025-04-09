@@ -21,6 +21,4 @@ public class GameInfoResponse {
     private String homeTeamName;
     private String awayTeamName;
     private String status;
-
-
 }

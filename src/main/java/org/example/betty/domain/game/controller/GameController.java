@@ -5,12 +5,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
-import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
-import org.example.betty.domain.game.dto.response.GameDetailResponse;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
-import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
-import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.service.GameService;
 import org.example.betty.domain.game.service.SseService;
 import org.springframework.http.HttpHeaders;
@@ -42,11 +38,11 @@ public class GameController {
 
     @Operation(summary = "경기 상세 조회", description = "경기 상세 정보를 조회합니다.")
     @GetMapping("/games/{gameId}")
-    public ResponseEntity<GameDetailResponse> getGameById(
+    public ResponseEntity<GameInfoResponse> getGameById(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             @PathVariable Long gameId) {
 
-        GameDetailResponse response = gameReadService.getGameInfoById(accessToken, gameId);
+        GameInfoResponse response = gameReadService.getGameInfoById(accessToken, gameId);
         return ResponseEntity.ok(response);
     }
 

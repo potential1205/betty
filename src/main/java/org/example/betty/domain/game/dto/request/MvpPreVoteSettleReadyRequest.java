@@ -15,5 +15,4 @@ public class MvpPreVoteSettleReadyRequest {
     private Long gameId;
     private List<Long> playerIds;
     private List<String> tokenAddresses;
-    private Long startTime;
 }

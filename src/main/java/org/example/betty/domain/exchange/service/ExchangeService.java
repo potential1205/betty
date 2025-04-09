@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 public interface ExchangeService {
 
-    TransactionResponse processTransaction(TransactionRequest request, String accessToken);
+    TransactionResponse processBuy(TransactionRequest request, String accessToken);
     TransactionResponse processSwap(SwapRequest request, String accessToken);
     TransactionResponse processUse(TransactionRequest request, String accessToken);
     TransactionResponse processAdd(TransactionRequest request, String accessToken);

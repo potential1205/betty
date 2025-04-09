@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import { teamTokenPrices, teamChartData, teamColors, formatTeamCode, formatTeamName } from '../constants/dummy';
+import { teamToTokenIdMap } from '../constants/tokenMap';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
 import bettyImg from '../assets/bettycoin.png';
@@ -39,6 +40,7 @@ const ExchangePage: React.FC = () => {
           onClose={() => setShowBuyModal(false)}
           team={selectedToken.team}
           price={selectedToken.price}
+          tokenId={teamToTokenIdMap[selectedToken.team]}
         />
       ) : (
         <>

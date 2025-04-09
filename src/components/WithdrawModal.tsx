@@ -19,21 +19,27 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   const formatBET = (bet: number) => bet.toFixed(2);
 
   const handleWithdraw = async () => {
-    if (!amount || Number(amount) <= 0) return;
-
+    if (!amount || isNaN(Number(amount))) return;
+    
     try {
       setIsLoading(true);
-      await removeBettyCoin(Number(amount));
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        setAmount('');
-        setCustomAmount('');
-        onClose();
-      }, 1500);
+      const res = await removeBettyCoin(Number(amount));
+
+      if (res.success) {
+        console.log('출금 성공', res.transactionId);
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          setAmount('');
+          setCustomAmount('');
+          onClose();
+        }, 1500);
+      } else {
+        alert(`출금 실패: ${res.message}`);
+      }
     } catch (error) {
       console.error('Withdrawal failed:', error);
-      alert('출금 실패! 다시 시도해주세요.');
+      alert('서버 오류로 출금에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

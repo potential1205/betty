@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import axiosInstance from '../apis/axios';
+import WinnerPay from './WinnerPay';
 
 // 선수 정보 인터페이스
 interface Player {
@@ -51,6 +52,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
   const [error, setError] = useState<string | null>(null);                // 오류 상태 추가
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);  // 선택된 팀
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null); // 선택된 선수
+  const [showWinnerPay, setShowWinnerPay] = useState(false);
+  const [showMvpPay, setShowMvpPay] = useState(false);
 
   // API URL 설정
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -60,35 +63,48 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
     const fetchLineup = async () => {
       try {
         // Store에서 가져온 currentGame의 gameId 사용
-        const gameId = currentGame?.gameId; // 원본 gameId 문자열 사용
+        const gameId = currentGame?.gameId;
         
-        console.log('Fetching lineup with gameId:', gameId, '(타입:', typeof gameId, ')');
-        console.log('Current access token:', localStorage.getItem('accessToken'));
+        console.log('=== Lineup Request Debug ===');
+        console.log('1. Game ID:', gameId, '(타입:', typeof gameId, ')');
         
-        if (!gameId) {
-          throw new Error('게임 ID가 필요합니다.');
+        // gameId를 number로 변환
+        const numericGameId = Number(gameId);
+        if (isNaN(numericGameId)) {
+          throw new Error('유효하지 않은 게임 ID입니다.');
         }
-
-        const url = `/home/games/${gameId}/lineup`;
-        console.log('Request URL:', url);
         
-        const response = await axiosInstance.get(url);
-        console.log('Response:', response);
+        console.log('2. Numeric Game ID:', numericGameId, '(타입:', typeof numericGameId, ')');
+        console.log('3. Current access token:', localStorage.getItem('accessToken'));
+        console.log('4. Current game status:', currentGame?.status);
+        console.log('5. Request URL:', `/home/games/${numericGameId}/lineup`);
+        
+        const response = await axiosInstance.get(`/home/games/${numericGameId}/lineup`);
+        
+        console.log('6. Response status:', response.status);
+        console.log('7. Response headers:', response.headers);
+        console.log('8. Response data:', response.data);
+        console.log('=== End Debug ===');
         
         const data = response.data;
         console.log('Received lineup data:', data);
         // 선수 이미지 URL 확인을 위한 로깅 추가
-        console.log('Home team pitcher image:', data.home.starterPitcher.imageUrl);
-        console.log('Home team batters images:', data.home.starterBatters.map((b: Player) => b.imageUrl));
-        console.log('Away team pitcher image:', data.away.starterPitcher.imageUrl);
-        console.log('Away team batters images:', data.away.starterBatters.map((b: Player) => b.imageUrl));
+        if (data.home) {
+          console.log('Home team pitcher:', data.home.starterPitcher);
+          console.log('Home team batters:', data.home.starterBatters);
+        }
+        if (data.away) {
+          console.log('Away team pitcher:', data.away.starterPitcher);
+          console.log('Away team batters:', data.away.starterBatters);
+        }
         setLineup(data);
         setError(null);
       } catch (error: any) {
         console.error('라인업 로딩 에러:', error);
         console.error('Error response:', error.response);
         console.error('Error config:', error.config);
-
+        console.error('Error data:', error.response?.data);
+        
         if (error.response?.data?.code === 2001) {
           setError('라인업 정보가 아직 없습니다!');
         } else {
@@ -130,8 +146,9 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             </>
           ) : (
             <>
-              <p>지금은 정보를 제공할 수 없습니다.</p>
-              <p>잠시 후 다시 시도해 주세요.</p>
+              <p className="text-lg font-['Giants-Bold'] mb-2">라인업 정보를 불러올 수 없습니다</p>
+              <p className="text-sm">서버와의 연결에 문제가 있습니다</p>
+              <p className="text-xs mt-2">에러 코드: 404</p>
             </>
           )}
         </div>
@@ -213,8 +230,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
               >
                 {renderPlayerImage(player)}
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="font-['Giants-Bold'] text-sm truncate">{player.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{player.position}</p>
+                  <p className="font-['Giants-Bold'] text-xs truncate">{player.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{player.position}</p>
                 </div>
               </motion.button>
             ))}
@@ -236,8 +253,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
               >
                 {renderPlayerImage(player)}
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="font-['Giants-Bold'] text-sm truncate">{player.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{player.position}</p>
+                  <p className="font-['Giants-Bold'] text-xs truncate">{player.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{player.position}</p>
                 </div>
               </motion.button>
             ))}
@@ -258,13 +275,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
-              hover:bg-white/90 transition-colors"
-            onClick={() => {
-              console.log('팀 베팅:', { 
-                selectedTeam,
-                gameId: currentGame?.gameId
-              });
-            }}
+              hover:bg-white/90 transition-colors mt-4"
+            onClick={() => setShowWinnerPay(true)}
           >
             팀 배팅하기
           </motion.button>
@@ -273,26 +285,50 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
 
       {/* MVP 투표 섹션 */}
       <div>
-        {renderPlayerSelection()}
-        {selectedPlayer && (
-          <div className="mt-8">
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
-                hover:bg-white/90 transition-colors"
-              onClick={() => {
-                console.log('MVP 베팅:', { 
-                  selectedPlayer,
-                  gameId: currentGame?.gameId
-                });
-              }}
-            >
-              MVP 배팅하기
-            </motion.button>
+        {lineup ? renderPlayerSelection() : (
+          <div className="text-center text-gray-400">
+            <p className="text-lg font-['Giants-Bold'] mb-2">아직 라인업이 공개되지 않았습니다</p>
+            <p className="text-sm">경기 시작 전에 다시 확인해주세요</p>
           </div>
         )}
+        {selectedPlayer && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
+              hover:bg-white/90 transition-colors mt-4"
+            onClick={() => setShowMvpPay(true)}
+          >
+            MVP 배팅하기
+          </motion.button>
+        )}
       </div>
+
+      {/* 우승 예측 결제 모달 */}
+      {showWinnerPay && selectedTeam && (
+        <WinnerPay
+          isOpen={showWinnerPay}
+          onClose={() => {
+            setShowWinnerPay(false);
+            setSelectedTeam(null);
+          }}
+          type="winner"
+          team={selectedTeam}
+        />
+      )}
+
+      {/* MVP 예측 결제 모달 */}
+      {showMvpPay && selectedPlayer && (
+        <WinnerPay
+          isOpen={showMvpPay}
+          onClose={() => {
+            setShowMvpPay(false);
+            setSelectedPlayer(null);
+          }}
+          type="mvp"
+          player={selectedPlayer.name}
+        />
+      )}
     </div>
   );
 };

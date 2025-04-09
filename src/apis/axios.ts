@@ -33,21 +33,39 @@ export const getAccessToken = () => {
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
-    console.log('Current token:', token); // 디버깅용
+    console.log('=== Axios Request Interceptor Debug ===');
+    console.log('1. Request URL:', config.url);
+    console.log('2. Request method:', config.method);
+    console.log('3. Access token:', token);
+    console.log('4. Request headers:', config.headers);
+    console.log('=== End Debug ===');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('Request config:', config); // 디버깅용
     return config;
   },
   (error) => Promise.reject(error)
 );
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('=== Axios Response Interceptor Debug ===');
+    console.log('1. Response URL:', response.config.url);
+    console.log('2. Response status:', response.status);
+    console.log('3. Response headers:', response.headers);
+    console.log('=== End Debug ===');
+    return response;
+  },
   async (error) => {
     const errorCode = error.response?.data?.code;
-    console.log('Response error:', error.response?.data); // 디버깅용
+    console.log('=== Axios Error Interceptor Debug ===');
+    console.log('1. Error URL:', error.config?.url);
+    console.log('2. Error status:', error.response?.status);
+    console.log('3. Error code:', errorCode);
+    console.log('4. Error message:', error.response?.data?.message);
+    console.log('5. Error response:', error.response);
+    console.log('=== End Debug ===');
     
     // 인증 관련 에러 코드들
     if ([1002, 1003, 1004, 1005].includes(errorCode)) {

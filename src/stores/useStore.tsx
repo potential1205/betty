@@ -62,14 +62,50 @@ interface GameSchedule {
 
 export interface Game {
   id: number;
-  gameId: string;
+  gameId: number;
+  homeTeamId: number;
+  awayTeamId: number;
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
   awayScore: number;
   inning: number;
   status: string;
-  schedule: GameSchedule;
+  schedule: {
+    gameId: number;
+    homeTeamId: number;
+    awayTeamId: number;
+    season: number;
+    gameDate: string;
+    startTime: string;
+    stadium: string;
+    homeTeamName: string;
+    awayTeamName: string;
+    status: String;
+  };
+  homeTeamCode?: string;
+  awayTeamCode?: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+  homeTeamColor?: string;
+  awayTeamColor?: string;
+}
+
+export interface Problem {
+  problemId: string;
+  gameId: string;
+  inning: string;
+  attackTeam: string;
+  batterName: string;
+  batterNumber: string;
+  questionCode: string;
+  description: string;
+  options: string[];
+  answer: string | null;
+  timestamp: number;
+  push: boolean;
 }
 
 interface AppState {
@@ -78,8 +114,8 @@ interface AppState {
   games: GameData[];
   todayGames: Game[];
   setTodayGames: (games: Game[]) => void;
-  currentGame?: Game;
-  setCurrentGame: (game: Game) => void;
+  currentGame: Game | null;
+  setCurrentGame: (game: Game | null) => void;
   userTokens: TeamToken[];
   myProposals: Proposal[];
   proposals: Proposal[];
@@ -234,8 +270,8 @@ export const useStore = create<AppState>((set, get) => ({
   })),
   todayGames: [],
   setTodayGames: (games) => set({ todayGames: games }),
-  currentGame: undefined, // 현재 선택된 게임을 저장
-  setCurrentGame: (game) => set({ currentGame: game }), // 현재 게임 설정 함수 추가
+  currentGame: null,
+  setCurrentGame: (game) => set({ currentGame: game }),
   userTokens: userTokenDummy,
   myProposals: [],
   proposals: [],

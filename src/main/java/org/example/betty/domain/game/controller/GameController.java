@@ -8,7 +8,6 @@ import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.service.GameService;
-import org.example.betty.domain.game.service.SseService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,6 @@ import java.util.List;
 public class GameController {
 
     private final GameService gameReadService;
-    private final SseService sseService;
 
     @Operation(summary = "전체 경기 일정 조회", description = "일일 전체 경기 일정을 조회합니다.")
     @GetMapping("/games")
@@ -65,21 +63,21 @@ public class GameController {
         return ResponseEntity.ok(status);
     }
 
-    @Operation(summary = "SSE 실시간 스트리밍 요청", description = "실시간 경기 데이터 스트리밍을 요청합니다.")
-    @GetMapping(value = "/games/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(
-            @PathVariable Long gameId) {
-
-        return sseService.stream(gameId);
-    }
-
-    @Operation(summary = "라이브 투표 제출", description = "유저가 실시간 중계 중 라이브 투표를 제출합니다.")
-    @PostMapping("/games/{gameId}/votes/live")
-    public ResponseEntity<Void> submitLiveVote(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
-            @RequestBody SubmitLiveVoteRequest request) {
-        gameReadService.submitLiveVote(accessToken, request);
-        return ResponseEntity.ok().build();
-    }
+//    @Operation(summary = "SSE 실시간 스트리밍 요청", description = "실시간 경기 데이터 스트리밍을 요청합니다.")
+//    @GetMapping(value = "/games/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public SseEmitter stream(
+//            @PathVariable Long gameId) {
+//
+//        return sseService.stream(gameId);
+//    }
+//
+//    @Operation(summary = "라이브 투표 제출", description = "유저가 실시간 중계 중 라이브 투표를 제출합니다.")
+//    @PostMapping("/games/{gameId}/votes/live")
+//    public ResponseEntity<Void> submitLiveVote(
+//            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+//            @RequestBody SubmitLiveVoteRequest request) {
+//        gameReadService.submitLiveVote(accessToken, request);
+//        return ResponseEntity.ok().build();
+//    }
 
 }

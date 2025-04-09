@@ -28,7 +28,6 @@ public class GameRelayEventHandler {
     private final ProblemGenerator problemGenerator;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
-    private final SseService sseService;
     private final GameService gameService;
     private final GameSocketService gameSocketService;
 

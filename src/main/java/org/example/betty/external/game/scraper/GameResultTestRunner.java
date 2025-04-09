@@ -27,7 +27,7 @@
 //            System.out.println("✅ gameDbId: " + gameDbId);
 //
 //            Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-//            System.out.println("✅ teamIds: " + teamIds);
+//            System.out.println("✅ homeTeamId: " + teamIds.get("homeTeamId") + "awayTeamId: " + teamIds.get("awayTeamId"));
 //
 //            gameResultScraper.initDriver(gameId, seleniumIndex);
 //            PreVoteAnswer result = gameResultScraper.scrapeResult(gameId);

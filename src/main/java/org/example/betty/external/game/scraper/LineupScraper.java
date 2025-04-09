@@ -90,7 +90,7 @@ public class LineupScraper extends BaseScraper {
         List<WebElement> playerItems = teamElement.findElements(By.cssSelector(".Lineup_lineup_item__32s4M"));
         List<PlayerInfo> players = new ArrayList<>();
 
-        int playerIdSeq = playerIdStart;
+        long playerIdSeq = playerIdStart;
 
         for (WebElement item : playerItems) {
             try {

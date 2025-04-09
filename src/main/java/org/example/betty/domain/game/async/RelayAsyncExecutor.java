@@ -33,7 +33,6 @@ public class RelayAsyncExecutor {
     private final Map<String, ScheduledFuture<?>> relayTasks = new ConcurrentHashMap<>();
     private final GameRelayEventHandler gameRelayEventHandler;
     private final GameService gameService;
-    private final SseService sseService;
     private final GameResultAsyncExecutor gameResultAsyncExecutor;
     private final DisplayService displayService;
     private final GameSettleService gameSettleService;
@@ -52,10 +51,10 @@ public class RelayAsyncExecutor {
                     stopRelay(gameId);
                     log.info("[중계 중단] gameId: {} - 경기 종료 감지로 반복 크롤링 중단", gameId);
                     
-//                    // 경기 종료 시 호출해야하는 작업을 위한 정보 세팅
-//                    long id = gameService.resolveGameDbId(gameId);
-//                    Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-//                    log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
+                    // 경기 종료 시 호출해야하는 작업을 위한 정보 세팅
+                    long id = gameService.resolveGameDbId(gameId);
+                    Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+                    log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
 //
 //                    // 1. 전광판 종료처리 (홈팀/원정팀)
 //                    displayService.gameEnd(id, teamIds.get("homeTeamId"));

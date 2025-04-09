@@ -19,4 +19,5 @@ public interface SettlementService {
     List<String> getWinningTeamBettors(BigInteger gameId);
 
     TransactionReceipt claimForUser(BigInteger gameId, String userWalletAddress);
+
 }

@@ -10,31 +10,20 @@ interface WithdrawModalProps {
 
 const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   const { walletInfo } = useStore();
-  const [amount, setAmount] = useState('');
-  const [customAmount, setCustomAmount] = useState('');
+  const [amount, setAmount] = useState(''); // BET 단위
+  const [customAmount, setCustomAmount] = useState(''); // 원 단위
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // 출금 가능한 금액 옵션들 (현재 보유 BET의 25%, 50%, 75%, 100%)
-  const getWithdrawOptions = () => {
-    const totalBET = walletInfo.totalBET || 0;
-    return [
-      { percent: 25, amount: totalBET * 0.25 },
-      { percent: 50, amount: totalBET * 0.5 },
-      { percent: 75, amount: totalBET * 0.75 },
-      { percent: 100, amount: totalBET }
-    ];
-  };
+  const options = [10000, 50000, 100000, 500000];
+  const formatBET = (bet: number) => bet.toFixed(2);
 
   const handleWithdraw = async () => {
-    if (!amount) return;
-    
+    if (!amount || Number(amount) <= 0) return;
+
     try {
       setIsLoading(true);
-
-      const response = await removeBettyCoin(Number(amount));
-      console.log('출금 성공:', response);
-      console.log('Withdrawing', amount, 'BET');
+      await removeBettyCoin(Number(amount));
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -44,18 +33,16 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       }, 1500);
     } catch (error) {
       console.error('Withdrawal failed:', error);
+      alert('출금 실패! 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // 소수점 두 자리까지만 허용하는 정규식
-    if (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= (walletInfo.totalBET || 0)) {
-      setCustomAmount(value);
-      setAmount(value);
-    }
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setCustomAmount(value);
+    setAmount((Number(value) / 100).toFixed(2)); // BET 단위 환산
   };
 
   if (!isOpen) return null;
@@ -80,64 +67,57 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
         <div className="w-[12px] h-[12px]" />
         <h1 className="text-lg font-['Giants-Bold'] text-gray-800">BET 출금하기</h1>
-        <button 
+        <button
           onClick={onClose}
           className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
         >
-          <svg
-            className="w-full h-full"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
+          <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      {/* 메인 컨텐츠 */}
+      {/* 메인 */}
       <div className="h-[calc(100%-56px)] flex flex-col justify-center">
         <div className="p-4 flex flex-col">
+
           {/* 현재 보유 BET */}
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
             <p className="text-xs text-gray-400 mb-1">현재 보유 BET</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBET?.toFixed(2) || '0.00'}</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">
+                {formatBET(walletInfo.totalBET || 0)}
+              </p>
               <p className="text-sm text-gray-400 ml-1">BET</p>
             </div>
           </div>
 
-          {/* 금액 선택 버튼들 */}
+          {/* 금액 선택 */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {getWithdrawOptions().map(({ percent, amount: betAmount }) => (
-              <button
-                key={percent}
-                onClick={() => {
-                  setAmount(betAmount.toFixed(2));
-                  setCustomAmount('');
-                }}
-                className={`p-4 rounded-xl text-center transition-colors
-                  ${Number(amount) === Number(betAmount.toFixed(2)) && !customAmount
-                    ? 'bg-black text-white' 
-                    : 'bg-gray-100 text-black hover:bg-gray-200'}`}
-              >
-                <p className="text-sm mb-1">출금금액</p>
-                <p className="text-lg font-['Giants-Bold']">
-                  {percent}%
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {betAmount.toFixed(2)} BET
-                </p>
-              </button>
-            ))}
+            {options.map((won) => {
+              const bet = won / 100;
+              return (
+                <button
+                  key={won}
+                  onClick={() => {
+                    setCustomAmount(String(won));
+                    setAmount(bet.toFixed(2));
+                  }}
+                  className={`p-4 rounded-xl text-center transition-colors ${
+                    Number(customAmount) === won
+                      ? 'bg-black text-white'
+                      : 'bg-gray-100 text-black hover:bg-gray-200'
+                  }`}
+                >
+                  <p className="text-sm mb-1">출금금액</p>
+                  <p className="text-lg font-['Giants-Bold']">{won.toLocaleString()}원</p>
+                  <p className="text-xs text-gray-500 mt-1">{bet.toFixed(2)} BET</p>
+                </button>
+              );
+            })}
           </div>
 
-          {/* 직접 입력 필드 */}
+          {/* 직접 입력 */}
           <div className="bg-gray-100 rounded-lg p-3 mb-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-gray-500">직접 입력하기</span>
@@ -147,19 +127,36 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
                 type="text"
                 value={customAmount}
                 onChange={handleCustomAmountChange}
-                placeholder="0.00"
+                placeholder="0"
                 className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
               />
-              <span className="text-gray-500 ml-2">BET</span>
+              <span className="text-gray-500 ml-2">원</span>
             </div>
+            {customAmount && (
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-gray-500">BET 환산</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-800 font-['Giants-Bold']">
+                    {(Number(customAmount) / 100).toFixed(2)}
+                  </span>
+                  <span className="text-gray-500">BET</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 버튼 */}
           <button
             onClick={handleWithdraw}
-            disabled={isLoading || !amount}
+            disabled={
+              isLoading ||
+              !amount ||
+              isNaN(Number(amount)) ||
+              Number(amount) <= 0 ||
+              Number(amount) > (walletInfo.totalBET || 0)
+            }
             className={`w-full py-4 rounded-xl text-white text-base font-['Giants-Bold'] transition-colors ${
-              amount
+              amount && Number(amount) > 0 && Number(amount) <= (walletInfo.totalBET || 0)
                 ? 'bg-black hover:bg-gray-800'
                 : 'bg-gray-300 cursor-not-allowed'
             }`}
@@ -169,6 +166,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
         </div>
       </div>
 
+      {/* 성공 애니메이션 */}
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -178,12 +176,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
             className="fixed inset-0 bg-white flex items-center justify-center pointer-events-none z-[60]"
           >
             <div className="flex flex-col items-center">
-              <svg
-                className="w-16 h-16 sm:w-24 sm:h-24 text-green-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-16 h-16 sm:w-24 sm:h-24 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <motion.path
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
@@ -210,4 +203,4 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default WithdrawModal; 
+export default WithdrawModal;

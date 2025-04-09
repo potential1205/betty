@@ -122,8 +122,9 @@ const ChargeModal: React.FC<ChargeModalProps> = ({ isOpen, onClose }) => {
               <button
                 key={value}
                 onClick={() => {
+                  const fixed = value.toString();
                   setAmount(value);
-                  setCustomAmount('');
+                  setCustomAmount(fixed);
                 }}
                 className={`p-4 rounded-xl text-center transition-colors
                   ${amount === value && !customAmount

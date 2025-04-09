@@ -85,7 +85,7 @@ public class PriceServiceImpl implements PriceService {
             BigInteger fanTokenReserve = reserves.component2();
 
             if (fanTokenReserve.equals(BigInteger.ZERO)) {
-                log.warn("[{}] 팬토큰 수량 0 → 가격 동기화 생략", tokenName);
+                //log.warn("[{}] 팬토큰 수량 0 → 가격 동기화 생략", tokenName);
                 return;
             }
 
@@ -109,10 +109,10 @@ public class PriceServiceImpl implements PriceService {
 
             tokenPriceRepository.save(tokenPrice);
 
-            log.info("Price Sync completed: {} = {} BET", tokenName, price);
+            //log.info("Price Sync completed: {} = {} BET", tokenName, price);
 
         } catch (Exception e) {
-            log.error("Price Sync failed: {}", tokenName, e);
+            //log.error("Price Sync failed: {}", tokenName, e);
         }
     }
 }

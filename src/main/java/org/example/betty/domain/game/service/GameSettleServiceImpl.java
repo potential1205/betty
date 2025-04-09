@@ -100,20 +100,10 @@ public class GameSettleServiceImpl implements GameSettleService {
         }
     }
 
-    // 사전 투표 정산
-    @Override
-    public void preVoteTeamSettle(Long gameId, Long winnerTeamId) {
-        settlementService.finalizePreVoteTeamSettle(BigInteger.valueOf(gameId), BigInteger.valueOf(winnerTeamId));
-        List<String> winnerWalletAddressList = settlementService.getWinningTeamBettors(BigInteger.valueOf(gameId));
-
-        for (String winnerWalletAddress : winnerWalletAddressList) {
-            settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
-        }
-    }
-
+    // 팀 사전 투표 생성
     @Override
     public void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId, Long startTime, String teamATokenAddress, String teamBTokenAddress) {
-        settlementService.createPreVoteTeamSettle(
+        settlementService.createGame(
                 BigInteger.valueOf(gameId),
                 BigInteger.valueOf(teamAId),
                 BigInteger.valueOf(teamBId),
@@ -121,5 +111,16 @@ public class GameSettleServiceImpl implements GameSettleService {
                 teamATokenAddress,
                 teamBTokenAddress
         );
+    }
+
+    // 팀 사전 투표 정산
+    @Override
+    public void preVoteTeamSettle(Long gameId, Long winnerTeamId) {
+        settlementService.finalize(BigInteger.valueOf(gameId), BigInteger.valueOf(winnerTeamId));
+        List<String> winnerWalletAddressList = settlementService.getWinningTeamBettors(BigInteger.valueOf(gameId));
+
+        for (String winnerWalletAddress : winnerWalletAddressList) {
+            settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
+        }
     }
 }

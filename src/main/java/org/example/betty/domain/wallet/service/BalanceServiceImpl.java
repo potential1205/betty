@@ -72,7 +72,7 @@ public class BalanceServiceImpl implements BalanceService {
 
             Optional<Token> tokenOpt = tokenRepository.findByTokenName(tokenName);
             if (tokenOpt.isEmpty()) {
-                log.warn("Token not found in DB: {}", tokenName);
+                //log.warn("Token not found in DB: {}", tokenName);
                 return;
             }
 
@@ -84,16 +84,16 @@ public class BalanceServiceImpl implements BalanceService {
                             .createdAt(LocalDateTime.now())
                             .build());
 
-            log.info("[DEBUG] WalletBalance ID before save: {}", walletBalance.getId());
+            //log.info("[DEBUG] WalletBalance ID before save: {}", walletBalance.getId());
 
             walletBalance.setBalance(balance);
             walletBalance.setUpdatedAt(LocalDateTime.now());
 
             walletBalanceRepository.save(walletBalance);
 
-            log.info("[BALANCE SYNCED] {} - {}: {}", wallet.getWalletAddress(), tokenName, balance);
+            //log.info("[BALANCE SYNCED] {} - {}: {}", wallet.getWalletAddress(), tokenName, balance);
         } catch (Exception e) {
-            log.error("[BALANCE SYNC FAILED]: {} - {}", wallet.getWalletAddress(), tokenName, e.getMessage());
+            //log.error("[BALANCE SYNC FAILED]: {} - {}", wallet.getWalletAddress(), tokenName, e.getMessage());
         }
     }
 }

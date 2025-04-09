@@ -59,6 +59,14 @@ public class SettlementServiceImpl implements SettlementService {
             );
 
             log.info("createGame 호출");
+            log.info("gameId = {}", gameId);
+            log.info("teamAId = {}", teamAId);
+            log.info("teamBId = {}", teamBId);
+            log.info("startTime = {}", startTime);
+            log.info("teamATokenAddress = {}", teamATokenAddress);
+            log.info("teamBTokenAddress = {}", teamBTokenAddress);
+            log.info("winningTeamVotingAddress = {}", winningTeamVotingAddress);
+
             TransactionReceipt receipt = contract.createGame(gameId, teamAId, teamBId, startTime, teamATokenAddress, teamBTokenAddress)
                     .send();
 

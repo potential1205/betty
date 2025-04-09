@@ -15,13 +15,24 @@ public class TokenController {
 
     private final TokenService tokenService;
 
-    @Operation(summary = "트랜잭션 조회", description = "현재 로그인된 사용자의 전체 트랜잭션 기록을 조회합니다.")
-    @GetMapping("/teams/{teamId}")
+    @Operation(summary = "팀 ID로 토큰 주소 조회", description = "팀 ID로 토큰 주소를 조회합니다.")
+    @GetMapping("/address/teams/{teamId}")
     public ResponseEntity<TokenAddressResponse> getTokenAddressByTeamId(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
             @PathVariable Long teamId) {
 
         String tokenAddress = tokenService.getTokenAddressByTeamId(accessToken, teamId);
+
+        return ResponseEntity.ok(TokenAddressResponse.of(tokenAddress));
+    }
+
+    @Operation(summary = "팀 ID로 토큰 이름 조회", description = "팀 ID로 토큰 이름을 조회합니다.")
+    @GetMapping("/name/teams/{teamId}")
+    public ResponseEntity<TokenAddressResponse> getTokenNameByTeamId(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
+            @PathVariable Long teamId) {
+
+        String tokenAddress = tokenService.getTokenNameByTeamId(accessToken, teamId);
 
         return ResponseEntity.ok(TokenAddressResponse.of(tokenAddress));
     }

@@ -35,4 +35,20 @@ public class TokenServiceImpl implements TokenService {
 
         return token.getTokenAddress();
     }
+
+    @Override
+    public String getTokenNameByTeamId(String accessToken, Long teamId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+        Token token = tokenRepository.findByTokenName(team.getTokenName())
+                .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        return token.getTokenName();
+    }
 }

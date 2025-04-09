@@ -69,7 +69,7 @@ public class RelayAsyncExecutor {
                     log.info("[경기 상태 종료 완료] gameId: {}", gameId);
 
                     // 3. 라이브 투표 정산 호출
-                    gameSettleService.liveVoteSettle(id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
+                    gameSettleService.liveVoteSettle(id);
                     log.info("[LIVE 투표 정산 호출 완료] gameId: {}", gameId);
 
                     // 4. 결과(승리팀&mvp) 스크래핑 시작

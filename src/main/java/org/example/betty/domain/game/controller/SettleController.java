@@ -22,7 +22,7 @@ public class SettleController {
     public ResponseEntity<SuccessResponse> liveVoteSettle(
             @RequestBody LiveVoteSettleRequest request) {
 
-        gameSettleService.liveVoteSettle(request.getGameId(), request.getHomeTeamId(), request.getAwayTeamId());
+        gameSettleService.liveVoteSettle(request.getGameId());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }

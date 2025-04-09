@@ -53,6 +53,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final TeamRepository teamRepository;
     private final TokenRepository tokenRepository;
 
+
     public static final String REDIS_GAME_PREFIX = "games:";
 
     /**
@@ -116,7 +117,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                         .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
                 // 3. 승리팀 베팅 시작
-                gameSettleService.createGame(
+                gameSettleService.createPreVoteTeamSettle(
                         id,
                         teamIds.get("homeTeamId"),
                         teamIds.get("awayTeamId"),
@@ -257,7 +258,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                             Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
                             Long winnerTeamId = winnerTeam.getId();
-                            gameSettleService.preVoteSettle(id, winnerTeamId);
+                            gameSettleService.preVoteTeamSettle(id, winnerTeamId);
                             log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
                             
                             // 2. MVP 베팅 정산 호출

@@ -11,6 +11,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LiveVoteSettleRequest {
     private Long gameId;
-    private Long homeTeamId;
-    private Long awayTeamId;
 }

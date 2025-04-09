@@ -29,6 +29,8 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
         log.info("Handshake request URI: {}", uri);
 
         MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
+
+        // access_token 검증
         String token = queryParams.getFirst("access_token");
         if (token == null || token.trim().isEmpty()) {
             log.warn("Missing or empty access_token parameter");
@@ -36,22 +38,28 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
         }
         token = "Bearer " + token;
 
-        // 세션 검증 및 추가
-        String walletAddress = "";
+        // 세션 검증 및 등록: 실패 시 바로 종료
+        String walletAddress;
         try {
             walletAddress = sessionUtil.getSession(token);
+            if (walletAddress == null || walletAddress.trim().isEmpty()) {
+                log.warn("Session not found for token");
+                return false;
+            }
             attributes.put("walletAddress", walletAddress);
         } catch (Exception e) {
             log.error("Failed Session Check", e);
-        }
-
-        // 요청 파싱
-        String type = queryParams.getFirst("type");
-
-        if (type == null || type.trim().isEmpty()) {
             return false;
         }
 
+        // 요청 파싱: type 파라미터 필수
+        String type = queryParams.getFirst("type");
+        if (type == null || type.trim().isEmpty()) {
+            log.warn("Missing or empty type parameter");
+            return false;
+        }
+
+        // type 별 분기 처리
         if (type.equals("display")) {
             String strGameId = queryParams.getFirst("game_id");
             String strTeamId = queryParams.getFirst("team_id");
@@ -61,8 +69,15 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
-            Long gameId = Long.parseLong(strGameId);
-            Long teamId =Long.parseLong(strTeamId);
+            Long gameId;
+            Long teamId;
+            try {
+                gameId = Long.parseLong(strGameId);
+                teamId = Long.parseLong(strTeamId);
+            } catch (NumberFormatException e) {
+                log.error("Invalid game_id or team_id format", e);
+                return false;
+            }
 
             try {
                 if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
@@ -72,17 +87,16 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
                 log.info("Handshake successful for walletAddress: {}", walletAddress);
                 return true;
             } catch (Exception e) {
-                log.error("Exception during handshake processing", e);
+                log.error("Exception during handshake processing for display", e);
                 return false;
             }
         } else if (type.equals("game")) {
             String strGameId = queryParams.getFirst("game_id");
-
             if (strGameId == null) {
-                log.warn("Missing game_id={}", strGameId);
+                log.warn("Missing game_id parameter for game type");
                 return false;
             }
-
+            // 추가 검증이 필요한 경우 여기에 로직 추가 (예: gameId 파싱 등)
             return true;
         }
 

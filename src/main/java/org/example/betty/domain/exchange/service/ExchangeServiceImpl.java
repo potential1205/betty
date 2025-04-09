@@ -134,8 +134,8 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.info("[APPROVE MAX] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
             // add
-            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
-            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
+            TransactionReceipt addReceipt = exchangeContract.addFrom(credentials.getAddress(), amountWei).send();
+            log.info("[ADD_FROM SUCCESS] operator={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
 
             // 사용자 지갑으로 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();

@@ -542,7 +542,11 @@ const MainPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="w-full">
-                  <CollaborativeCanvas team={displayTeam} />
+                  <CollaborativeCanvas 
+                    team={displayTeam}
+                    gameId={currentGame.gameId.toString()} 
+                    teamId={displayTeam === 'home' ? currentGame.homeTeamId.toString() : currentGame.awayTeamId.toString()}
+                  />
                 </div>
               </div>
             )}

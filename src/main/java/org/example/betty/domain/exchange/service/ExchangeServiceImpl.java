@@ -33,6 +33,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigDecimal;
@@ -55,6 +56,28 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final BalanceService balanceService;
     private final TokenPriceRepository tokenPriceRepository;
     private final WalletBalanceRepository walletBalanceRepository;
+
+    private final ContractGasProvider zeroGasProvider = new ContractGasProvider() {
+        @Override
+        public BigInteger getGasPrice(String contractFunc) {
+            return BigInteger.ZERO;
+        }
+
+        @Override
+        public BigInteger getGasPrice() {
+            return BigInteger.ZERO;
+        }
+
+        @Override
+        public BigInteger getGasLimit(String contractFunc) {
+            return BigInteger.valueOf(5_000_000L);
+        }
+
+        @Override
+        public BigInteger getGasLimit() {
+            return BigInteger.valueOf(5_000_000L);
+        }
+    };
 
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;
@@ -110,13 +133,13 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             // approve
@@ -202,13 +225,13 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             // 사용자 지갑에서 BET 출금 approve
@@ -281,14 +304,14 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             // approve
@@ -319,7 +342,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     fanTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             // 사용자 지갑으로 전송
@@ -385,7 +408,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             String tokenName = transaction.getTokenFrom().getTokenName();
@@ -398,7 +421,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     fanTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
+                    zeroGasProvider
             );
 
             TransactionReceipt approveReceipt = fanToken.approve(exchangeAddress, amountWei).send();
@@ -429,7 +452,6 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.error("[SELL TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
-            e.printStackTrace();
         }
     }
 

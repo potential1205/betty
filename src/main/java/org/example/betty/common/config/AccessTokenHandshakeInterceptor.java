@@ -36,32 +36,57 @@ public class AccessTokenHandshakeInterceptor implements HandshakeInterceptor {
         }
         token = "Bearer " + token;
 
-        String strGameId = queryParams.getFirst("game_id");
-        String strTeamId = queryParams.getFirst("team_id");
-        if (strGameId == null || strTeamId == null) {
-            log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", strGameId, strTeamId);
+        // 세션 검증 및 추가
+        String walletAddress = "";
+        try {
+            walletAddress = sessionUtil.getSession(token);
+            attributes.put("walletAddress", walletAddress);
+        } catch (Exception e) {
+            log.error("Failed Session Check", e);
+        }
+
+        // 요청 파싱
+        String type = queryParams.getFirst("type");
+
+        if (type == null || type.trim().isEmpty()) {
             return false;
         }
 
-        Long gameId = Long.parseLong(strGameId);
-        Long teamId =Long.parseLong(strTeamId);
+        if (type.equals("display")) {
+            String strGameId = queryParams.getFirst("game_id");
+            String strTeamId = queryParams.getFirst("team_id");
 
-        try {
-            String walletAddress = sessionUtil.getSession(token);
-            log.info("Retrieved walletAddress: {} for token", walletAddress);
-
-            if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
-                log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameId, teamId);
+            if (strGameId == null || strTeamId == null) {
+                log.warn("Missing game_id or team_id parameters: game_id={}, team_id={}", strGameId, strTeamId);
                 return false;
             }
 
-            attributes.put("walletAddress", walletAddress);
-            log.info("Handshake successful for walletAddress: {}", walletAddress);
+            Long gameId = Long.parseLong(strGameId);
+            Long teamId =Long.parseLong(strTeamId);
+
+            try {
+                if (!displayAccessRepository.existsByWalletAddressAndGameIdAndTeamId(walletAddress, gameId, teamId)) {
+                    log.warn("Display access not found for walletAddress={}, gameId={}, teamId={}", walletAddress, gameId, teamId);
+                    return false;
+                }
+                log.info("Handshake successful for walletAddress: {}", walletAddress);
+                return true;
+            } catch (Exception e) {
+                log.error("Exception during handshake processing", e);
+                return false;
+            }
+        } else if (type.equals("game")) {
+            String strGameId = queryParams.getFirst("game_id");
+
+            if (strGameId == null) {
+                log.warn("Missing game_id={}", strGameId);
+                return false;
+            }
+
             return true;
-        } catch (Exception e) {
-            log.error("Exception during handshake processing", e);
-            return false;
         }
+
+        return false;
     }
 
     @Override

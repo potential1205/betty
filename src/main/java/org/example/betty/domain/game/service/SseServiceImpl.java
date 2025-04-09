@@ -31,10 +31,7 @@ public class SseServiceImpl implements SseService {
 
 
     @Override
-    public SseEmitter stream(String accessToken, Long gameId) {
-        String walletAddress = sessionUtil.getWalletAddress(accessToken);
-        walletRepository.findByWalletAddress(walletAddress)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+    public SseEmitter stream(Long gameId) {
 
         Optional<Game> optionalGame = gameRepository.findById(gameId);
         String gameCode = generateGameId(optionalGame.get());

@@ -100,7 +100,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
             BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.toBigInteger();
+            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact();
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();

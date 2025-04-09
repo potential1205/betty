@@ -32,12 +32,13 @@ public class SettlementServiceImpl implements SettlementService {
      * @param teamBTokenAddress  팀 B 토큰 주소
      */
     @Override
-    public void createPreVoteTeamSettle(BigInteger gameId,
+    public void createGame(BigInteger gameId,
                                          BigInteger teamAId,
                                          BigInteger teamBId,
                                          BigInteger startTime,
                                          String teamATokenAddress,
                                          String teamBTokenAddress) {
+        log.info("createGame 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -50,6 +51,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("createGame 호출");
             TransactionReceipt receipt = contract.createGame(gameId, teamAId, teamBId, startTime, teamATokenAddress, teamBTokenAddress)
                     .send();
 
@@ -68,7 +70,8 @@ public class SettlementServiceImpl implements SettlementService {
      * @return TransactionReceipt (성공시 트랜잭션 영수증 반환)
      */
     @Override
-    public void finalizePreVoteTeamSettle(BigInteger gameId, BigInteger winningTeamId) {
+    public void finalize(BigInteger gameId, BigInteger winningTeamId) {
+        log.info("finalize 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -81,6 +84,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("finalize 호출");
             TransactionReceipt receipt = contract.finalize(gameId, winningTeamId).send();
 
             log.info("[FINALIZE GAME SUCCESS] gameId={}, txHash={}", gameId, receipt.getTransactionHash());
@@ -97,6 +101,7 @@ public class SettlementServiceImpl implements SettlementService {
      */
     @Override
     public List<String> getWinningTeamBettors(BigInteger gameId) {
+        log.info("getWinningTeamBettors 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -109,6 +114,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("getWinningTeamBettors 호출");
             List<String> bettors = contract.getWinningTeamBettors(gameId).send();
 
             log.info("[GET WINNING TEAM BETTORS SUCCESS] gameId={}, bettors={}", gameId, bettors);
@@ -127,7 +133,8 @@ public class SettlementServiceImpl implements SettlementService {
      * @return TransactionReceipt (성공시 트랜잭션 영수증 반환)
      */
     @Override
-    public TransactionReceipt claimForUser(BigInteger gameId, String userWalletAddress) {
+    public void claimForUser(BigInteger gameId, String userWalletAddress) {
+        log.info("claimForUser 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -140,14 +147,109 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("claimForUser 호출");
+
             TransactionReceipt receipt = contract.claimForUser(gameId, userWalletAddress).send();
 
             log.info("[CLAIM FOR USER SUCCESS] user={}, gameId={}, txHash={}", userWalletAddress, gameId, receipt.getTransactionHash());
-            return receipt;
 
         } catch (Exception e) {
             log.error("[CLAIM FOR USER FAILED] gameId={}, user={}, reason={}", gameId, userWalletAddress, e.getMessage(), e);
+        }
+    }
+
+    // ----------------------------- mvp ---------------------------
+
+    @Override
+    public void createMVPGame(BigInteger gameId, List<BigInteger> playerIds, List<String> tokenAddresses, BigInteger startTime) {
+        try {
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
+                    "",
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            TransactionReceipt receipt = contract.createMVPGame(gameId, playerIds, tokenAddresses, startTime)
+                    .send();
+
+            log.info("[CREATE MVP GAME SUCCESS] gameId={}, txHash={}", gameId, receipt.getTransactionHash());
+
+        } catch (Exception e) {
+            log.error("[CREATE MVP GAME FAILED] gameId={}, reason={}", gameId, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void finalizePreVoteMVP(BigInteger gameId, BigInteger winningPlayerId) {
+        try {
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
+                    "",
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            TransactionReceipt receipt = contract.finalizeMVP(gameId, winningPlayerId).send();
+
+            log.info("[FINALIZE MVP GAME SUCCESS] gameId={}, txHash={}", gameId, receipt.getTransactionHash());
+        } catch (Exception e) {
+            log.error("[FINALIZE MVP GAME FAILED] gameId={}, reason={}", gameId, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<String> getWinningVoters(BigInteger gameId) {
+        try {
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
+                    "",
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            List<String> bettors = contract.getWinningVoters(gameId).send();
+
+            log.info("[GET WINNING MVP BETTORS SUCCESS] gameId={}, bettors={}", gameId, bettors);
+            return bettors;
+        } catch (Exception e) {
+            log.error("[GET WINNING MVP BETTORS FAILED] gameId={}, reason={}", gameId, e.getMessage(), e);
             return null;
+        }
+    }
+
+    @Override
+    public void claimMVPRewardForUser(BigInteger gameId, String user) {
+        try {
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
+                    "",
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            TransactionReceipt receipt = contract.claimMVPRewardForUser(gameId, user).send();
+
+            log.info("[CLAIM FOR USER SUCCESS] user={}, gameId={}, txHash={}", user, gameId, receipt.getTransactionHash());
+
+        } catch (Exception e) {
+            log.error("[CLAIM FOR USER FAILED] gameId={}, user={}, reason={}", gameId, user, e.getMessage(), e);
         }
     }
 }

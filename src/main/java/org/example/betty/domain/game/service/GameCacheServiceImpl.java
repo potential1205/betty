@@ -121,7 +121,6 @@ public class GameCacheServiceImpl implements GameCacheService {
                         id,
                         teamIds.get("homeTeamId"),
                         teamIds.get("awayTeamId"),
-                        0L,
                         homeToken.getTokenAddress(),
                         awayToken.getTokenAddress()
                 );

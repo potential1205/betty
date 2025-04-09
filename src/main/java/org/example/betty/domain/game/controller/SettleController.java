@@ -32,7 +32,7 @@ public class SettleController {
     public ResponseEntity<SuccessResponse> teamPreVoteSettleReady(
             @RequestBody TeamPreVoteSettleReadyRequest request) {
 
-        gameSettleService.createPreVoteTeamSettle(request.getGameId(), request.getTeamAId(), request.getTeamBId(), request.getStartTime(),
+        gameSettleService.createPreVoteTeamSettle(request.getGameId(), request.getTeamAId(), request.getTeamBId(),
                 request.getTeamATokenAddress(), request.getTeamBTokenAddress());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
@@ -54,7 +54,7 @@ public class SettleController {
             @RequestBody MvpPreVoteSettleReadyRequest request) {
 
         gameSettleService.createPreVoteMVPSettle(
-                request.getGameId(), request.getPlayerIds(), request.getTokenAddresses(), request.getStartTime());
+                request.getGameId(), request.getPlayerIds(), request.getTokenAddresses());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }

@@ -36,7 +36,6 @@ public class GameSettleServiceImpl implements GameSettleService {
     private final RewardService rewardService;
     private final SettlementService settlementService;
 
-
     // LIVE 투표 정산
     @Override
     public void liveVoteSettle(Long gameId, Long homeTeamId, Long awayTeamId) {
@@ -101,11 +100,10 @@ public class GameSettleServiceImpl implements GameSettleService {
         }
     }
 
-
     // 사전 투표 정산
     @Override
-    public void preVoteSettle(Long gameId, Long winnerTeamId) {
-        settlementService.finalizeGame(BigInteger.valueOf(gameId), BigInteger.valueOf(winnerTeamId));
+    public void preVoteTeamSettle(Long gameId, Long winnerTeamId) {
+        settlementService.finalizePreVoteTeamSettle(BigInteger.valueOf(gameId), BigInteger.valueOf(winnerTeamId));
         List<String> winnerWalletAddressList = settlementService.getWinningTeamBettors(BigInteger.valueOf(gameId));
 
         for (String winnerWalletAddress : winnerWalletAddressList) {
@@ -114,8 +112,8 @@ public class GameSettleServiceImpl implements GameSettleService {
     }
 
     @Override
-    public void createGame(Long gameId, Long teamAId, Long teamBId, Long startTime, String teamATokenAddress, String teamBTokenAddress) {
-        settlementService.createGame(
+    public void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId, Long startTime, String teamATokenAddress, String teamBTokenAddress) {
+        settlementService.createPreVoteTeamSettle(
                 BigInteger.valueOf(gameId),
                 BigInteger.valueOf(teamAId),
                 BigInteger.valueOf(teamBId),

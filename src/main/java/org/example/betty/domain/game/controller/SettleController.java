@@ -29,23 +29,23 @@ public class SettleController {
         return ResponseEntity.ok(SuccessResponse.of(true));
     }
 
-    @Operation(summary = "사전 투표 정산 준비", description = "사전 투표 정산 준비를 시작합니다.")
-    @PostMapping("/pre/create")
+    @Operation(summary = "팀 사전 투표 정산 준비", description = "팀 사전 투표 정산 준비를 시작합니다.")
+    @PostMapping("/pre/team/ready")
     public ResponseEntity<SuccessResponse> preVoteSettleReady(
             @RequestBody PreVoteSettleCreateRequest request) {
 
-        gameSettleService.createGame(request.getGameId(), request.getTeamAId(), request.getTeamBId(), request.getStartTime(),
+        gameSettleService.createPreVoteTeamSettle(request.getGameId(), request.getTeamAId(), request.getTeamBId(), request.getStartTime(),
                 request.getTeamATokenAddress(), request.getTeamBTokenAddres());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }
 
-    @Operation(summary = "사전 투표 정산", description = "사전 투표를 정산합니다.")
-    @PostMapping("/pre")
+    @Operation(summary = "팀 사전 투표 정산", description = "팀 사전 투표를 정산합니다.")
+    @PostMapping("/pre/team")
     public ResponseEntity<SuccessResponse> preVoteSettle(
             @RequestBody PreVoteSettleRequest request) {
 
-        gameSettleService.preVoteSettle(request.getGameId(), request.getWinningTeamId());
+        gameSettleService.preVoteTeamSettle(request.getGameId(), request.getWinningTeamId());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }

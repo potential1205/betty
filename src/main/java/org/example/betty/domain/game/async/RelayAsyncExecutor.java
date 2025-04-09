@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.display.service.DisplayService;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.example.betty.domain.game.entity.Game;
+import org.example.betty.domain.game.entity.Team;
+import org.example.betty.domain.game.repository.GameRepository;
+import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.domain.game.service.GameRelayEventHandler;
 import org.example.betty.domain.game.service.GameService;
 import org.example.betty.domain.game.service.SseService;
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -37,8 +41,10 @@ public class RelayAsyncExecutor {
     private final RedisTemplate<String, Object> redisTemplate2;
     private final GameService gameService;
     private final SseService sseService;
+    private final GameResultAsyncExecutor gameResultAsyncExecutor;
     private final DisplayService displayService;
-//    private final GameResultAsyncExecutor gameResultAsyncExecutor;
+    private final TeamRepository teamRepository;
+    private final GameRepository gameRepository;
 
     //실시간 중계 크롤링을 5초 간격으로 실행하는 메서드
     @Async
@@ -54,8 +60,10 @@ public class RelayAsyncExecutor {
                     log.info("[중계 중단] gameId: {} - 경기 종료 감지로 반복 크롤링 중단", gameId);
 
                     // 전광판 이미지 저장
-//                    displayService.gameEnd(gameId, gameId.substring(8, 10));
-//                    displayService.gameEnd(gameId, gameId.substring(10, 12));
+                    long id = resolveGameDbId(gameId);
+                    Map<String, Long> teamIds = resolveTeamIdsFromGameId(gameId);
+                    displayService.gameEnd(id, teamIds.get("awayTeamId"));
+                    displayService.gameEnd(id, teamIds.get("homeTeamId"));
 
                     // 경기 종료 상태 업데이트
                     Game game = gameService.findGameByGameId(gameId);
@@ -63,7 +71,7 @@ public class RelayAsyncExecutor {
                     gameService.updateGameStatusToEnded(game);
 
                     // 결과 스크래핑 시작
-//                    gameResultAsyncExecutor.executeResultScraping(gameId, seleniumIndex);
+                    gameResultAsyncExecutor.executeResultScraping(gameId, seleniumIndex);
                     log.info("[결과 크롤링 시작] gameId: {}, seleniumIndex: {}", gameId, seleniumIndex);
                 }
 
@@ -97,5 +105,39 @@ public class RelayAsyncExecutor {
 
         log.info("[중계 저장] gameId: {} - Redis 저장 완료", gameId);
     }
+
+
+    public Map<String, Long> resolveTeamIdsFromGameId(String gameId) {
+        String awayCode = gameId.substring(8, 10);
+        String homeCode = gameId.substring(10, 12);
+
+        Long awayTeamId = teamRepository.findByTeamCode(awayCode).get().getId();  // 예외 처리 없음
+        Long homeTeamId = teamRepository.findByTeamCode(homeCode).get().getId();
+
+        return Map.of(
+                "awayTeamId", awayTeamId,
+                "homeTeamId", homeTeamId
+        );
+    }
+
+    public Long resolveGameDbId(String gameId) {
+        int season = 2000 + Integer.parseInt(gameId.substring(0, 2));
+        int month = Integer.parseInt(gameId.substring(2, 4));
+        int day = Integer.parseInt(gameId.substring(4, 6));
+
+        String awayCode = gameId.substring(6, 8);
+        String homeCode = gameId.substring(8, 10);
+
+        LocalDate gameDate = LocalDate.of(season, month, day);
+
+        return gameRepository
+                .findByGameDateAndSeasonAndHomeTeam_TeamCodeAndAwayTeam_TeamCode(
+                        gameDate, season, homeCode, awayCode
+                )
+                .get()
+                .getId();
+    }
+
+
 
 }

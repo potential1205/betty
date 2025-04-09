@@ -122,7 +122,7 @@ public class GameResultScraper extends BaseScraper {
                             }
                         }
 
-                        log.info("[{}] 결과: 승리팀 = {}, 패배팀 = {}", gameId, winner, loser);
+//                        log.info("[{}] 결과: 승리팀 = {}, 패배팀 = {}", gameId, winner, loser);
 
                         String summaryUrl = game.getAttribute("href");
                         driver.get(summaryUrl);
@@ -139,8 +139,8 @@ public class GameResultScraper extends BaseScraper {
                                 mvpName = mvpLinkElement.getText().trim();
                                 mvpHref = mvpLinkElement.getAttribute("href");
 
-                                log.info("[{}] MVP 이름 파싱 결과: {}", gameId, mvpName);
-                                log.info("[{}] mvpHref: {}", gameId, mvpHref);
+//                                log.info("[{}] MVP 이름 파싱 결과: {}", gameId, mvpName);
+//                                log.info("[{}] mvpHref: {}", gameId, mvpHref);
 
                                 driver.get(mvpHref);
 
@@ -148,7 +148,7 @@ public class GameResultScraper extends BaseScraper {
                                 List<WebElement> spans = conDiv.findElements(By.tagName("span"));
                                 if (!spans.isEmpty()) {
                                     mvpTeam = spans.get(0).getText().trim();
-                                    log.info("[{}] MVP 팀명 파싱 결과: {}", gameId, mvpTeam);
+//                                    log.info("[{}] MVP 팀명 파싱 결과: {}", gameId, mvpTeam);
                                 }
                                 break;
                             }

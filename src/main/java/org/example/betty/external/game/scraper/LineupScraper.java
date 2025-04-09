@@ -67,8 +67,9 @@ public class LineupScraper extends BaseScraper {
             }
 
             // 각각 parse 시도
-            TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0));
-            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1));
+            TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0), 1);   // away: 1~10
+            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1), 10);  // home: 11~20
+
 
             return RedisGameLineup.builder()
                     .away(awayLineup)
@@ -85,11 +86,11 @@ public class LineupScraper extends BaseScraper {
         }
     }
 
-    private TeamLineup parseTeamLineup(WebDriver kboDriver, WebElement teamElement) {
+    private TeamLineup parseTeamLineup(WebDriver kboDriver, WebElement teamElement, int playerIdStart) {
         List<WebElement> playerItems = teamElement.findElements(By.cssSelector(".Lineup_lineup_item__32s4M"));
         List<PlayerInfo> players = new ArrayList<>();
 
-        int playerIdSeq = 1;
+        int playerIdSeq = playerIdStart;
 
         for (WebElement item : playerItems) {
             try {

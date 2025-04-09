@@ -7,6 +7,8 @@ import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -16,7 +18,9 @@ public class ProblemGenerator {
         List<RedisGameProblem> result = new ArrayList<>();
         PlayerRelayInfo batter = relay.getBatter();
         PlayerRelayInfo pitcher = relay.getPitcher();
-        String now = LocalDateTime.now().toString();
+        String now = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
 
         if (batter == null || pitcher == null) return result;
 
@@ -149,24 +153,21 @@ public class ProblemGenerator {
                     .build());
         }
 
-        // 마지막 타자 예측: 9회말 && 동점일 때만
+        // (9이닝 시작 시점 동점인 상황) 9회말까지 경기가 이어질까요?
         if ("9회초".equals(inning) && isTiedScore(relay.getScore())) {
-            List<String> nextBatters = relay.getNextBatters();
-            if (nextBatters != null && !nextBatters.isEmpty()) {
-                String selected = nextBatters.get(new Random().nextInt(nextBatters.size()));
-                result.add(RedisGameProblem.builder()
-                        .problemId(UUID.randomUUID().toString())
-                        .gameId(gameId)
-                        .inning("9회말")
-                        .attackTeam(attackTeam)
-                        .batterName(selected)
-                        .questionCode(QuestionCode.LAST_BATTER.name())
-                        .description(String.format("이번 경기 마지막 타자가 될 가능성이 가장 높은 선수는 %s입니다. 이 선수가 정말 마지막 타자가 될까요?", selected))
-                        .options(List.of("O", "X"))
-                        .timestamp(now)
-                        .build());
-            }
+            result.add(RedisGameProblem.builder()
+                    .problemId(UUID.randomUUID().toString())
+                    .gameId(gameId)
+                    .inning("9회초")
+                    .attackTeam(attackTeam)
+                    .batterName(null)
+                    .questionCode(QuestionCode.GO_TO_BOTTOM_9 .name()) // 새로운 질문 코드 사용하는 걸 추천
+                    .description("경기가 9회말까지 이어질까요?")
+                    .options(List.of("O", "X"))
+                    .timestamp(now)
+                    .build());
         }
+
 
         return result;
     }

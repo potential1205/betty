@@ -16,7 +16,7 @@ public class ProblemGenerator {
         List<RedisGameProblem> result = new ArrayList<>();
         PlayerRelayInfo batter = relay.getBatter();
         PlayerRelayInfo pitcher = relay.getPitcher();
-        LocalDateTime now = LocalDateTime.now();
+        String now = "Ddd";
 
         if (batter == null || pitcher == null) return result;
 

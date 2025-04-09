@@ -96,34 +96,34 @@ public class GameCacheServiceImpl implements GameCacheService {
                 log.info("[캐싱 완료] 경기일정저장 - gameId: {}", gameId);
                 
                 // 2. 호출을 위한 정보 세팅
-                Long id = gameService.resolveGameDbId(gameId);
-                Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-                Long homeTeamId = teamIds.get("homeTeamId");
-                Long awayTeamId = teamIds.get("awayTeamId");
-                log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, homeTeamId, awayTeamId);
-
-                // Team 객체 가져오기 (예외처리 없이 바로 호출)
-                Team homeTeam = teamRepository.findById(homeTeamId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-
-                Team awayTeam = teamRepository.findById(awayTeamId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-
-                // Token 객체 가져오기 (예외처리 없이 바로 호출)
-                Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
-                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-
-                Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
-                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-
-                // 3. 승리팀 베팅 시작
-                gameSettleService.createPreVoteTeamSettle(
-                        id,
-                        teamIds.get("homeTeamId"),
-                        teamIds.get("awayTeamId"),
-                        homeToken.getTokenAddress(),
-                        awayToken.getTokenAddress()
-                );
+//                Long id = gameService.resolveGameDbId(gameId);
+//                Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+//                Long homeTeamId = teamIds.get("homeTeamId");
+//                Long awayTeamId = teamIds.get("awayTeamId");
+//                log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, homeTeamId, awayTeamId);
+//
+//                // Team 객체 가져오기 (예외처리 없이 바로 호출)
+//                Team homeTeam = teamRepository.findById(homeTeamId)
+//                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+//
+//                Team awayTeam = teamRepository.findById(awayTeamId)
+//                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+//
+//                // Token 객체 가져오기 (예외처리 없이 바로 호출)
+//                Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
+//                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+//
+//                Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
+//                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+//
+//                // 3. 승리팀 베팅 시작
+//                gameSettleService.createPreVoteTeamSettle(
+//                        id,
+//                        teamIds.get("homeTeamId"),
+//                        teamIds.get("awayTeamId"),
+//                        homeToken.getTokenAddress(),
+//                        awayToken.getTokenAddress()
+//                );
 
             } else {
                 log.info("[캐싱 스킵] Redis에 이미 존재하는 경기 - gameId: {}", gameId);
@@ -213,7 +213,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
-        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusMinutes(1);
+        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
 
         final Integer seleniumIndex;
         try {
@@ -246,19 +246,19 @@ public class GameCacheServiceImpl implements GameCacheService {
                             log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
 
                             // 1. 승리팀 베팅 정산 호출
-                            Long id = gameService.resolveGameDbId(gameId);
-                            String key = "results:" + gameId;
-                            PreVoteAnswer result = (PreVoteAnswer) redisTemplate2.opsForValue().get(key);
-
-                            if (result == null) {
-                                throw new BusinessException(ErrorCode.NOT_FOUND_GAME_RESULT);
-                            }
-                            String winnerPrefix = result.getWinnerTeam();
-                            Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
-                                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-                            Long winnerTeamId = winnerTeam.getId();
-                            gameSettleService.preVoteTeamSettle(id, winnerTeamId);
-                            log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
+//                            Long id = gameService.resolveGameDbId(gameId);
+//                            String key = "results:" + gameId;
+//                            PreVoteAnswer result = (PreVoteAnswer) redisTemplate2.opsForValue().get(key);
+//
+//                            if (result == null) {
+//                                throw new BusinessException(ErrorCode.NOT_FOUND_GAME_RESULT);
+//                            }
+//                            String winnerPrefix = result.getWinnerTeam();
+//                            Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
+//                                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+//                            Long winnerTeamId = winnerTeam.getId();
+//                            gameSettleService.preVoteTeamSettle(id, winnerTeamId);
+//                            log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
                             
                             // 2. MVP 베팅 정산 호출
                             

@@ -142,15 +142,19 @@ public class ExchangeServiceImpl implements ExchangeService {
                     zeroGasProvider
             );
 
+            BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
+            BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
+            log.info("[DEBUG] ▶ 운영 지갑: {}", credentials.getAddress());
+            log.info("[DEBUG] ▶ BET 잔고: {}", balance);
+            log.info("[DEBUG] ▶ Exchange({}) 에 대한 allowance: {}", exchangeAddress, allowance);
+            log.info("[DEBUG] ▶ 전송 예정 금액 (amountWei): {}", amountWei);
+
             // approve
             TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
             log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
-            BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
-            BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
-            log.info("[DEBUG] 운영 지갑 BET 잔고: {}", balance);
-            log.info("[DEBUG] Exchange에 대한 allowance: {}", allowance);
-            log.info("[DEBUG] 전송할 amountWei: {}", amountWei);
+            BigInteger allowanceAfter = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
+            log.info("[DEBUG] ▶ approve 이후 allowance: {}", allowanceAfter);
 
             // add
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();

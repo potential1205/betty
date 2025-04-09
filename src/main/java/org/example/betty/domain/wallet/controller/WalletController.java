@@ -8,11 +8,18 @@ import org.example.betty.common.resp.BaseResponse;
 import org.example.betty.common.resp.SuccessResponse;
 import org.example.betty.domain.wallet.dto.CheckWalletNicknameResponse;
 import org.example.betty.domain.wallet.dto.RegisterWalletRequest;
+import org.example.betty.domain.wallet.dto.WalletBalanceResponse;
+import org.example.betty.domain.wallet.dto.WalletInfoResponse;
+import org.example.betty.domain.wallet.entity.Wallet;
+import org.example.betty.domain.wallet.entity.WalletBalance;
 import org.example.betty.domain.wallet.service.BalanceService;
 import org.example.betty.domain.wallet.service.WalletService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/wallet")
@@ -50,5 +57,36 @@ public class WalletController {
     public BaseResponse<Void> syncAllWalletBalances() {
         balanceService.syncAllWalletBalances();
         return BaseResponse.success();
+    }
+
+    @Operation(summary = "지갑 잔고 조회", description = "현재 로그인한 사용자의 잔고와 토큰 목록을 반환합니다.")
+    @GetMapping("/balances")
+    public ResponseEntity<WalletInfoResponse> getWalletBalances(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken) {
+
+        Wallet wallet = walletService.findByAccessToken(accessToken);
+        List<WalletBalance> balances = balanceService.getAllByWallet(wallet);
+
+        List<WalletBalanceResponse> tokenList = balances.stream()
+                .map(b -> WalletBalanceResponse.builder()
+                        .tokenName(b.getToken().getTokenName())
+                        .balance(b.getBalance())
+                        .build())
+                .toList();
+
+        BigDecimal total = tokenList.stream()
+                .filter(t -> t.getTokenName().equals("BET"))
+                .map(WalletBalanceResponse::getBalance)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+
+        return ResponseEntity.ok(
+                WalletInfoResponse.builder()
+                        .walletAddress(wallet.getWalletAddress())
+                        .nickname(wallet.getNickname())
+                        .totalBet(total)
+                        .tokens(tokenList)
+                        .build()
+        );
     }
 }

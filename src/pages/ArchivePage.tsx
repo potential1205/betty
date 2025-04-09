@@ -1,10 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
 import { useStore } from '../stores/useStore';
 import Sidebar from '../components/Sidebar';
 
+// axios 인스턴스 (API 호출용)
+const axiosInstance = axios.create({
+  baseURL: 'https://j12a609.p.ssafy.io/api/v1/display',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true,
+});
+
+const ACCESS_TOKEN_KEY = 'accessToken';
+
+export const setAccessToken = (token: string) => {
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+};
+
+export const removeAccessToken = () => {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+};
+
+export const getAccessToken = () => {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+};
+
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getAccessToken();
+    console.log('=== Axios Request Interceptor Debug ===');
+    console.log('1. Request URL:', config.url);
+    console.log('2. Request method:', config.method);
+    console.log('3. Access token:', token);
+    console.log('4. Request headers:', config.headers);
+    console.log('=== End Debug ===');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// API에서 반환하는 타입
+interface Display {
+  id: number;
+  gameId: number;
+  teamId: number;
+  inning: number;
+  displayUrl: string;
+  createdAt: string;
+}
+
+// API 응답 타입
+interface DisplayResponse {
+  displayList: Display[];
+}
+
+// 기존 픽셀 아트 인터페이스 (UI에 맞게 표시)
 interface PixelArt {
   id: number;
   title: string;
@@ -15,56 +75,64 @@ interface PixelArt {
   matchTeams: string[];
 }
 
+const teamNames = [
+  "",
+  "롯데 자이언츠",
+  "키움 히어로즈",
+  "NC 다이노스",
+  "LG 트윈스",
+  "두산 베어스",
+  "KT 위즈",
+  "SSG 랜더스",
+  "KIA 타이거즈",
+  "삼성 라이온즈",
+  "한화 이글스"
+];
+
 const ArchivePage: React.FC = () => {
   const navigate = useNavigate();
   const { toggleSidebar } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [pixelArts, setPixelArts] = useState<PixelArt[]>([]);
 
-  // 임시 데이터 - 실제로는 서버에서 가져올 예정
-  const pixelArts: PixelArt[] = [
-    {
-      id: 1,
-      title: "두산 vs 롯데 승리의 순간",
-      image: "/pixels/doosan-lotte-1.jpg",
-      description: "두산 vs 롯데 경기, 7회 말 역전의 순간을 담은 픽셀 아트",
-      creator: "BETTY #1234",
-      createdAt: "2024-01-15 20:45",
-      matchTeams: ["두산", "롯데"]
-    },
-    {
-      id: 2,
-      title: "롯데 응원 픽셀 아트",
-      image: "/pixels/lotte-cheer.jpg",
-      description: "2024.01.15 롯데 자이언츠 응원단 모습을 담은 픽셀 아트",
-      creator: "BETTY #5678",
-      createdAt: "2024-01-15 19:30",
-      matchTeams: ["두산", "롯데"]
-    },
-    {
-      id: 3,
-      title: "양의지 홈런 순간",
-      image: "/pixels/doosan-homerun.jpg",
-      description: "두산 베어스 양의지 선수의 역전 홈런 순간을 담은 픽셀 아트",
-      creator: "BETTY #9012",
-      createdAt: "2024-01-15 21:15",
-      matchTeams: ["두산", "삼성"]
-    },
-    {
-      id: 4,
-      title: "삼성 라이온즈 끝내기 승리",
-      image: "/pixels/samsung-victory.jpg",
-      description: "삼성 라이온즈의 극적인 끝내기 승리 순간을 담은 픽셀 아트",
-      creator: "BETTY #3456",
-      createdAt: "2024-01-15 22:00",
-      matchTeams: ["삼성", "SSG"]
-    }
-  ];
+  // API를 호출해서 데이터를 불러오고, 이를 PixelArt 형태로 매핑
+  useEffect(() => {
+    const fetchDisplays = async () => {
+      try {
+        // 실제 엔드포인트 주소는 백엔드 문서를 참고하여 수정하세요.
+        const response = await axiosInstance.get<DisplayResponse>('');
+        const displays = response.data.displayList;
+        
 
+        // Display 데이터를 PixelArt 데이터로 매핑
+        const mappedArts: PixelArt[] = displays.map((display) => ({
+          
+          id: display.id,
+          title: `${display.gameId} 번째 [${teamNames[display.teamId]}]`,
+          image: display.displayUrl,
+          description: `Team ${display.teamId} 경기 기록`,
+          // creator 및 matchTeams는 백엔드에서 해당 정보가 없으므로 기본값 처리 (필요에 따라 다른 방식으로 매핑)
+          creator: 'BETTY', 
+          createdAt: new Date(display.createdAt).toLocaleString(),
+          matchTeams: [] // 팀 목록 정보가 없으므로 빈 배열로 처리 (필요시 추가 API 호출 등 고려)
+        }));
+
+        setPixelArts(mappedArts);
+      } catch (error) {
+        console.error('픽셀 아트 데이터를 불러오는데 실패했습니다:', error);
+      }
+    };
+
+    fetchDisplays();
+  }, []);
+
+  // 검색어를 기준으로 필터링
   const filteredArts = pixelArts.filter(art =>
-    art.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    art.matchTeams.some(team => team.toLowerCase().includes(searchTerm.toLowerCase()))
+    art.title.toLowerCase().includes(searchTerm.toLowerCase())
+    // 팀 정보가 있는 경우 matchTeams에서도 검색하도록 할 수 있음.
   );
 
+  // 픽셀 아트 클릭 시 상세 페이지로 이동
   const handleArtClick = (art: PixelArt) => {
     navigate(`/archive/${art.id}`, { state: { art } });
   };
@@ -93,7 +161,7 @@ const ArchivePage: React.FC = () => {
       <div className="pt-20 px-6 pb-3">
         <input
           type="text"
-          placeholder="픽셀 아트 또는 팀 검색"
+          placeholder="픽셀 아트 또는 게임 검색"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 text-sm rounded-full bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500"
@@ -122,9 +190,7 @@ const ArchivePage: React.FC = () => {
                 </div>
                 <div className="p-2">
                   <h3 className="font-['Giants-Bold'] text-xs mb-0.5 truncate">{art.title}</h3>
-                  <p className="text-gray-400 text-[10px] mb-1.5">
-                    {art.matchTeams.join(' vs ')}
-                  </p>
+                  <p className="text-gray-400 text-[10px] mb-1.5">{art.description}</p>
                   <p className="text-gray-500 text-[10px]">{art.createdAt}</p>
                 </div>
               </div>
@@ -138,4 +204,4 @@ const ArchivePage: React.FC = () => {
   );
 };
 
-export default ArchivePage; 
+export default ArchivePage;

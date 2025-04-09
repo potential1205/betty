@@ -5,6 +5,8 @@ import bettyImg from '../assets/bettycoin.png';
 import backImg from '../assets/back_black.png';
 import { useStore } from '../stores/useStore';
 import CandleChart from './CandleChart';
+import { buyFanToken, sellFanToken, swapFanToken } from '../apis/exchangeApi';
+import { teamToTokenIdMap } from '../constants/tokenMap';
 
 const dummyDailyData = [
   { time: '2024-04-01', open: 100, high: 108, low: 98, close: 106 },
@@ -42,11 +44,12 @@ interface BuyFanTokenProps {
   onClose: () => void;
   team: string;
   price: number;
+  tokenId: number;
 }
 
 type Mode = 'buy' | 'swap' | 'sell';
 
-const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price }) => {
+const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price, tokenId }) => {
   const [amount, setAmount] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [mode, setMode] = useState<Mode>('buy');
@@ -64,53 +67,58 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price 
     setAmount(prev => prev.slice(0, -1));
   };
 
-  const handleAction = () => {
-    if (!amount) return;
+  const handleAction = async () => {
+    if (!amount || isNaN(Number(amount))) return;
     
     const { addTransaction, updateWalletBalance, updateTokenBalance, useTeamToken } = useStore.getState();
     const numAmount = Number(amount);
+
+    const fromId = selectedToken ? teamToTokenIdMap[selectedToken] : 0;
     
-    switch (mode) {
-      case 'buy':
-        // BETTY 잔액 감소 및 토큰 증가
-        if (bettyBalance < totalPrice) return;
-        setBettyBalance(bettyBalance - totalPrice);
-        // BET 가치 계산 (1 BETTY = 1 BET)
-        const betValue = totalPrice;
-        updateTokenBalance(team, numAmount, betValue);
-        break;
-        
-      case 'sell':
-        // 토큰 감소 및 BETTY 잔액 증가
-        const sellPrice = numAmount * (teamTokenPrices.find(t => t.team === selectedToken)?.price || 0);
-        if (useTeamToken(selectedToken!, numAmount)) {
-          setBettyBalance(bettyBalance + sellPrice);
-          // BET 가치 계산 (1 BETTY = 1 BET)
-          const sellBtcValue = sellPrice;
-          updateTokenBalance(selectedToken!, -numAmount, -sellBtcValue);
+    try {
+      switch (mode) {
+        case 'buy': {
+          const res = await buyFanToken({
+            tokenId,
+            amountIn: numAmount,
+          });
+          if (!res.success) throw new Error(res.message);
+          break;
         }
-        break;
-        
-      case 'swap':
-        // 현재 토큰 감소 및 새로운 토큰 증가
-        const swapPrice = numAmount * price;
-        if (bettyBalance < swapPrice) return;
-        if (useTeamToken(selectedToken!, numAmount)) {
-          setBettyBalance(bettyBalance - swapPrice);
-          // BET 가치 계산 (1 BETTY = 1 BET)
-          const swapBtcValue = swapPrice;
-          updateTokenBalance(selectedToken!, -numAmount, -swapBtcValue);
-          updateTokenBalance(team, numAmount, swapBtcValue);
+
+        case 'sell': {
+          if (!selectedToken) return;
+          const res = await sellFanToken({
+            tokenId: fromId,
+            amountIn: numAmount,
+          });
+          if (!res.success) throw new Error(res.message);
+          break;
         }
-        break;
+
+        case 'swap': {
+          if (!selectedToken) return;
+          const res = await swapFanToken({
+            tokenFromId: fromId,
+            tokenToId: tokenId,
+            amountIn: numAmount,
+          });
+          if (!res.success) throw new Error(res.message);
+          break;
+        }
+      }
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setAmount('');
+        onClose();
+      }, 1500);
+
+    } catch (err) {
+      console.error('거래 실패:', err);
+      alert('거래 처리 중 오류가 발생했습니다.');
     }
-    
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      setAmount('');
-      onClose();
-    }, 1500);
   };
 
   // 총 가격 계산

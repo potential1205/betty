@@ -18,6 +18,7 @@ import org.web3j.tx.ReadonlyTransactionManager;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -95,5 +96,10 @@ public class BalanceServiceImpl implements BalanceService {
         } catch (Exception e) {
             //log.error("[BALANCE SYNC FAILED]: {} - {}", wallet.getWalletAddress(), tokenName, e.getMessage());
         }
+    }
+
+    @Override
+    public List<WalletBalance> getAllByWallet(Wallet wallet) {
+        return walletBalanceRepository.findAllByWallet(wallet);
     }
 }

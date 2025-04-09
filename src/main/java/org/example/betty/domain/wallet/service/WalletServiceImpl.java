@@ -44,4 +44,11 @@ public class WalletServiceImpl implements WalletService {
 
         walletRepository.save(newWallet);
     }
+
+    @Override
+    public Wallet findByAccessToken(String accessToken) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        return walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+    }
 }

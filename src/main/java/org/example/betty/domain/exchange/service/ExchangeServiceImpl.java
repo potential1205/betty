@@ -121,39 +121,34 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new DefaultGasProvider()
             );
 
-            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-
-            TransactionReceipt resetReceipt = betToken.approve(exchangeAddress, BigInteger.ZERO).send();
-            log.info("[APPROVE RESET] txHash={}", resetReceipt.getTransactionHash());
+//            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+//
+//            TransactionReceipt resetReceipt = betToken.approve(exchangeAddress, BigInteger.ZERO).send();
+//            log.info("[APPROVE RESET] txHash={}", resetReceipt.getTransactionHash());
 
             // approve
 //            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
 //            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
-            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
-            log.info("[APPROVE MAX] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
+            // 1. approve
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] BET -> Exchange, txHash={}", approveReceipt.getTransactionHash());
 
-            log.info("[CREDENTIALS] Using credentials address: {}", credentials.getAddress());
-            log.info("[TOKEN BALANCE] admin BET balance: {}", betToken.balanceOf(credentials.getAddress()).send());
-            log.info("[ALLOWANCE] admin -> exchange allowance: {}", betToken.allowance(credentials.getAddress(), exchangeAddress).send());
+            // 2. add
+            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
+            log.info("[ADD SUCCESS] amount={}, txHash={}", amountBet, addReceipt.getTransactionHash());
 
-            // add
-            TransactionReceipt addReceipt = exchangeContract.addFrom(credentials.getAddress(), amountWei).send();
-            log.info("[ADD_FROM SUCCESS] operator={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
-
-            // 사용자 지갑으로 전송
+            // 3. 사용자 지갑으로 BET 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();
             TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
             log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountBet, transferReceipt.getTransactionHash());
 
-            // 트랜잭션 상태 업데이트
+            // 4. 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
 
             // 온체인 기준 DB 잔고 업데이트
-            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
-            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {

@@ -67,9 +67,6 @@ public class GameCacheServiceImpl implements GameCacheService {
 
             boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
                     && !"ENDED".equalsIgnoreCase(game.getStatus());
-//            boolean isActive = !"CANCELED".equalsIgnoreCase(game.getStatus())
-//                    && "ENDED".equalsIgnoreCase(game.getStatus());
-
 
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
 
@@ -100,7 +97,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-                scheduleRelayJob(game);
+                scheduleRelayJob(game); // 중계 크롤링 예약
             }
             // Redis 키 만료 설정
             LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
@@ -128,8 +125,8 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
-//        LocalDateTime executeTime = LocalDateTime.now().plusSeconds(10);
+//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+        LocalDateTime executeTime = LocalDateTime.now();
 
 
         final Integer seleniumIndex;
@@ -177,7 +174,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
 //        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusMinutes(2);
+        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusMinutes(1);
 
         final Integer seleniumIndex;
         try {

@@ -1,14 +1,12 @@
 package org.example.betty.domain.game.dto.redis;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class PreVoteAnswer {
 
     private String teamA;

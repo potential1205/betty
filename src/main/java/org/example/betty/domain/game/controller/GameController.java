@@ -42,7 +42,6 @@ public class GameController {
     public ResponseEntity<RedisGameLineup> getLineup(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             @PathVariable Long gameId) {
-
         RedisGameLineup lineup = gameReadService.getGameLineup(accessToken, gameId);
         return ResponseEntity.ok(lineup);
     }

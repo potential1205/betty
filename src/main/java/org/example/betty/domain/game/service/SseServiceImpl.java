@@ -45,20 +45,27 @@ public class SseServiceImpl implements SseService {
 
         emitter.onCompletion(() -> {
             removeEmitter(gameCode, emitter);
-            log.info("SSE 연결 종료: gameId={}", gameId);
+            log.info("SSE 연결 종료: gameId={}", gameCode);
         });
 
         emitter.onTimeout(() -> {
             removeEmitter(gameCode, emitter);
-            log.info("SSE 타임아웃: gameId={}", gameId);
+            log.info("SSE 타임아웃: gameId={}", gameCode);
         });
 
         emitter.onError(e -> {
             removeEmitter(gameCode, emitter);
-            log.warn("SSE 오류 발생: gameId={} | {}", gameId, e.getMessage());
+            log.warn("SSE 오류 발생: gameId={} | {}", gameCode, e.getMessage());
         });
 
-        log.info("SSE 연결 수립: gameId={} | 현재 연결 수={}", gameId, emitterMap.get(gameId).size());
+        log.info("SSE 연결 수립: gameId={} | 현재 연결 수={}", gameId, emitterMap.get(gameCode).size());
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("connect")
+                    .data("SSE 연결 성공"));
+        } catch (IOException e) {
+            log.warn("SSE 초기 메시지 전송 실패: gameId={} | {}", gameId, e.getMessage());
+        }
         return emitter;
     }
 

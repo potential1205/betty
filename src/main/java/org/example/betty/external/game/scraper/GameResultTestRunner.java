@@ -13,7 +13,7 @@
 //
 //    @Override
 //    public void run(String... args) throws Exception {
-//        String gameId = "samsung-kt";
+//        String gameId = "20250408LGWO02025";
 //        int seleniumIndex = 0;
 //
 //        gameResultScraper.initDriver(gameId, seleniumIndex);

@@ -13,4 +13,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     Optional<Game> findByGameDateAndSeasonAndHomeTeam_TeamCodeAndAwayTeam_TeamCode(
             LocalDate gameDate, Integer season, String homeTeamCode, String awayTeamCode);
 
+
+
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
-import { addBettyCoin } from '../apis/exchangeApi';
+import axiosInstance from '../apis/axios';
 
 interface WinnerPayProps {
   isOpen: boolean;
@@ -15,13 +15,7 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
   const [amount, setAmount] = useState<number>(0);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const { chargeBetty, walletInfo } = useStore();
-  
-  // 원화를 BTC로 변환하는 함수 (1 BTC = 100원 기준)
-  const convertToBTC = (won: number) => won / 100;
-  
-  // BTC 금액 포맷팅 함수
-  const formatBTC = (btc: number) => btc.toFixed(2);
+  const { currentGame, walletInfo } = useStore();
   
   const amounts = [10000, 50000, 100000, 500000];
 
@@ -46,21 +40,29 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
   };
 
   const handlePay = async () => {
-    if (amount <= 0) return;
+    if (amount <= 0 || !currentGame) return;
 
     try {
-      await addBettyCoin(amount);
-      chargeBetty(amount / 100);
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        setAmount(0);
-        setCustomAmount('');
-        onClose();
-      }, 1500);
+      // 배팅 API 호출
+      const response = await axiosInstance.post('/bets', {
+        gameId: currentGame.gameId,
+        amount: amount,
+        type: type,
+        target: type === 'winner' ? team : player
+      });
+
+      if (response.status === 200) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          setAmount(0);
+          setCustomAmount('');
+          onClose();
+        }, 1500);
+      }
     } catch (err) {
-      console.error('결제 실패:', err);
-      alert('결제에 실패했습니다. 다시 시도해주세요.');
+      console.error('배팅 실패:', err);
+      alert('배팅에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -111,12 +113,12 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
       {/* 메인 컨텐츠 */}
       <div className="h-[calc(100%-56px)] flex flex-col justify-center">
         <div className="p-4 flex flex-col">
-          {/* 현재 보유 BTC */}
+          {/* 현재 보유 금액 */}
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
-            <p className="text-xs text-gray-400 mb-1">현재 보유 BTC</p>
+            <p className="text-xs text-gray-400 mb-1">현재 보유 금액</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{formatBTC(walletInfo.totalBET)}</p>
-              <p className="text-sm text-gray-400 ml-1">BTC</p>
+              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBET.toLocaleString()}</p>
+              <p className="text-sm text-gray-400 ml-1">원</p>
             </div>
           </div>
 
@@ -138,9 +140,6 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
                 <p className="text-lg font-['Giants-Bold']">
                   {value.toLocaleString()}원
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {formatBTC(convertToBTC(value))} BTC
-                </p>
               </button>
             ))}
           </div>
@@ -160,15 +159,6 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
               />
               <span className="text-gray-500 ml-2">원</span>
             </div>
-            {customAmount && (
-              <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-gray-500">BTC 환산</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-800 font-['Giants-Bold']">{formatBTC(convertToBTC(Number(customAmount)))}</span>
-                  <span className="text-gray-500">BTC</span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* 버튼 */}

@@ -67,20 +67,20 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         
         console.log('=== Lineup Request Debug ===');
         console.log('1. Game ID:', gameId, '(타입:', typeof gameId, ')');
- 
+        
         // gameId를 number로 변환
         const numericGameId = Number(gameId);
         if (isNaN(numericGameId)) {
           throw new Error('유효하지 않은 게임 ID입니다.');
         }
-
+        
         console.log('2. Numeric Game ID:', numericGameId, '(타입:', typeof numericGameId, ')');
         console.log('3. Current access token:', localStorage.getItem('accessToken'));
         console.log('4. Current game status:', currentGame?.status);
         console.log('5. Request URL:', `/home/games/${numericGameId}/lineup`);
-         
+        
         const response = await axiosInstance.get(`/home/games/${numericGameId}/lineup`);
-         
+        
         console.log('6. Response status:', response.status);
         console.log('7. Response headers:', response.headers);
         console.log('8. Response data:', response.data);
@@ -168,10 +168,7 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
         {[homeTeam, awayTeam].map((team) => (
           <motion.button
             key={team}
-            onClick={() => {
-              setSelectedTeam(team);
-              setShowWinnerPay(true);
-            }}
+            onClick={() => setSelectedTeam(team)}
             className={`p-4 rounded-xl border-2 transition-all
               ${selectedTeam === team 
                 ? 'border-white bg-white/20' 
@@ -223,10 +220,7 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             {[lineup.home.starterPitcher, ...(lineup.home.starterBatters || [])].filter(Boolean).map((player, index) => (
               <motion.button
                 key={index}
-                onClick={() => {
-                  setSelectedPlayer(player);
-                  setShowMvpPay(true);
-                }}
+                onClick={() => setSelectedPlayer(player)}
                 className={`w-full p-3 rounded-xl border-2 transition-all flex items-center
                   ${selectedPlayer === player 
                     ? 'border-white bg-white/20' 
@@ -236,8 +230,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
               >
                 {renderPlayerImage(player)}
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="font-['Giants-Bold'] text-sm truncate">{player.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{player.position}</p>
+                  <p className="font-['Giants-Bold'] text-xs truncate">{player.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{player.position}</p>
                 </div>
               </motion.button>
             ))}
@@ -249,10 +243,7 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
             {[lineup.away.starterPitcher, ...(lineup.away.starterBatters || [])].filter(Boolean).map((player, index) => (
               <motion.button
                 key={index}
-                onClick={() => {
-                  setSelectedPlayer(player);
-                  setShowMvpPay(true);
-                }}
+                onClick={() => setSelectedPlayer(player)}
                 className={`w-full p-3 rounded-xl border-2 transition-all flex items-center
                   ${selectedPlayer === player 
                     ? 'border-white bg-white/20' 
@@ -262,8 +253,8 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
               >
                 {renderPlayerImage(player)}
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="font-['Giants-Bold'] text-sm truncate">{player.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{player.position}</p>
+                  <p className="font-['Giants-Bold'] text-xs truncate">{player.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{player.position}</p>
                 </div>
               </motion.button>
             ))}
@@ -279,11 +270,38 @@ export const Winner: React.FC<WinnerProps> = ({ homeTeam, awayTeam }) => {
       {/* 팀 투표 섹션 */}
       <div>
         {renderTeamSelection()}
+        {selectedTeam && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
+              hover:bg-white/90 transition-colors mt-4"
+            onClick={() => setShowWinnerPay(true)}
+          >
+            팀 배팅하기
+          </motion.button>
+        )}
       </div>
 
       {/* MVP 투표 섹션 */}
       <div>
-        {renderPlayerSelection()}
+        {lineup ? renderPlayerSelection() : (
+          <div className="text-center text-gray-400">
+            <p className="text-lg font-['Giants-Bold'] mb-2">아직 라인업이 공개되지 않았습니다</p>
+            <p className="text-sm">경기 시작 전에 다시 확인해주세요</p>
+          </div>
+        )}
+        {selectedPlayer && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full py-3 bg-white text-black rounded-xl font-['Giants-Bold'] text-base
+              hover:bg-white/90 transition-colors mt-4"
+            onClick={() => setShowMvpPay(true)}
+          >
+            MVP 배팅하기
+          </motion.button>
+        )}
       </div>
 
       {/* 우승 예측 결제 모달 */}

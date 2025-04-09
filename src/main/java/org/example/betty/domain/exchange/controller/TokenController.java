@@ -3,6 +3,7 @@ package org.example.betty.domain.exchange.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.domain.exchange.dto.resp.TokenAddressResponse;
+import org.example.betty.domain.exchange.dto.resp.TokenNameResponse;
 import org.example.betty.domain.exchange.service.TokenService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +29,12 @@ public class TokenController {
 
     @Operation(summary = "팀 ID로 토큰 이름 조회", description = "팀 ID로 토큰 이름을 조회합니다.")
     @GetMapping("/name/teams/{teamId}")
-    public ResponseEntity<TokenAddressResponse> getTokenNameByTeamId(
+    public ResponseEntity<TokenNameResponse> getTokenNameByTeamId(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
             @PathVariable Long teamId) {
 
-        String tokenAddress = tokenService.getTokenNameByTeamId(accessToken, teamId);
+        String tokenName = tokenService.getTokenNameByTeamId(accessToken, teamId);
 
-        return ResponseEntity.ok(TokenAddressResponse.of(tokenAddress));
+        return ResponseEntity.ok(TokenNameResponse.of(tokenName));
     }
 }

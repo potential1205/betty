@@ -121,7 +121,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
             BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigInteger();
+            BigInteger amountWei = amountBet.toBigInteger();
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();
@@ -143,42 +143,29 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new DefaultGasProvider()
             );
 
-            // 1. transfer (운영자 → 컨트랙트)
-            TransactionReceipt transferReceipt = betToken.transfer(exchangeAddress, amountWei).send();
-            log.info("[TRANSFER TO CONTRACT] 운영자 → 컨트랙트: {} BET, tx={}", amountBet, transferReceipt.getTransactionHash());
-
-            // 2. 블록 반영 대기
-            BigInteger receiptBlock = transferReceipt.getBlockNumber();
-            while (true) {
-                BigInteger latestBlock = web3j.ethBlockNumber().send().getBlockNumber();
-                if (latestBlock.compareTo(receiptBlock.add(BigInteger.ONE)) >= 0) break;
-                Thread.sleep(1000); // 1초씩 대기
+            BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
+            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+            if (allowance.compareTo(amountWei) < 0) {
+                log.info("[APPROVE] Allowance 부족 → 초기화 및 approve");
+                betToken.approve(exchangeAddress, BigInteger.ZERO).send();
+                betToken.approve(exchangeAddress, MAX_UINT256).send();
             }
 
-            // 3. 컨트랙트 잔고 확인
-            BigInteger contractBalance = betToken.balanceOf(exchangeAddress).send();
-            if (contractBalance.compareTo(amountWei) < 0) {
-                log.warn("[ADD_DIRECT FAIL] 컨트랙트 잔고 부족: 필요={}, 실제={}", amountWei, contractBalance);
-                throw new RuntimeException("컨트랙트에 BET 잔고가 부족합니다.");
-            }
-
-            // 4. addDirect 호출
-            TransactionReceipt addReceipt = exchangeContract.addDirect(amountWei).send();
-            log.info("[ADD_DIRECT SUCCESS] 사용자={}, amount={}, txHash={}",
-                    transaction.getWallet().getWalletAddress(), amountWei, addReceipt.getTransactionHash());
-
-            // 5. 사용자 지갑으로 BET 전송
+            // ✅ addFrom(운영자, amount) 호출
             String userWalletAddress = transaction.getWallet().getWalletAddress();
-            TransactionReceipt finalTransfer = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER SUCCESS] 운영자 → 사용자 {}: {} BET (tx={})",
-                    userWalletAddress, amountBet, finalTransfer.getTransactionHash());
+            TransactionReceipt addFromReceipt = exchangeContract.addFrom(credentials.getAddress(), amountWei).send();
+            log.info("[ADD_FROM SUCCESS] txHash={}", addFromReceipt.getTransactionHash());
 
-            // 6. 트랜잭션 업데이트
+            // ✅ 사용자 지갑으로 BET 전송
+            TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
+            log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
+
+            // 트랜잭션 상태 및 DB 업데이트
             transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
 
-            // 7. 지갑 잔고 동기화
+            // DB 잔고 동기화
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {

@@ -181,9 +181,9 @@ public class GameRelayEventHandler {
             case PITCH_COUNT:
                 if (pitchResults == null) return null;
                 int pitchCount = pitchResults.size();
-                if (pitchCount <= 3) return "① 1~3구";
-                else if (pitchCount <= 6) return "② 4~6구";
-                else return "③ 7구 이상";
+                if (pitchCount <= 4) return "① 1~4구";
+                else if (pitchCount <= 8) return "② 5~8구";
+                else return "③ 9구 이상";
 
             case ON_BASE:
                 if (summary == null) return null;

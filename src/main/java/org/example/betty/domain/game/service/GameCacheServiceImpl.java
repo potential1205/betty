@@ -2,7 +2,6 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.async.LineupAsyncExecutor;
 import org.example.betty.domain.game.async.RelayAsyncExecutor;
@@ -33,7 +32,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 
@@ -141,12 +139,12 @@ public class GameCacheServiceImpl implements GameCacheService {
                 } else {
                     log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
                 }
-//                scheduleRelayJob(game); // 중계 크롤링 예약
+                scheduleRelayJob(game); // 중계 크롤링 예약
             }
             // Redis 키 만료 설정
-            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
-            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
-            redisTemplate2.expireAt(redisKey, expireDate);
+//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
+//            redisTemplate2.expireAt(redisKey, expireDate);
         }
     }
 

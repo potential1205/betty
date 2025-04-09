@@ -8,7 +8,6 @@ import org.example.betty.domain.game.service.GameService;
 import org.example.betty.external.game.scraper.GameResultScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 

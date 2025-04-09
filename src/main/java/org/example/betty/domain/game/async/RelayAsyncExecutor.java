@@ -63,7 +63,6 @@ public class RelayAsyncExecutor {
 //
 //                    // 2. 경기 상태 종료 처리 + SSE 알림
 //                    Game game = gameService.findGameByGameId(gameId);
-//                    sseService.send(gameId, "ENDED");
 //                    gameService.updateGameStatusToEnded(game);
 //                    log.info("[경기 상태 종료 완료] gameId: {}", gameId);
 //
@@ -79,6 +78,8 @@ public class RelayAsyncExecutor {
 
                 saveRelayDataToRedis(gameId, relayData);
                 log.info("[중계 크롤링] gameId: {} - 크롤링 완료", gameId);
+
+                // 경기 정보 업데이트 및 소켓 전송
                 gameRelayEventHandler.handleRelayUpdate(gameId, relayData);
                 gameRelayEventHandler.handleGameInfoChange(gameId, relayData);
 

@@ -5,14 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
-import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.service.GameService;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 

@@ -32,7 +32,7 @@ public class SettlementServiceImpl implements SettlementService {
      * @param teamBTokenAddress  팀 B 토큰 주소
      */
     @Override
-    public void createGame(BigInteger gameId,
+    public void createPreVoteTeamSettle(BigInteger gameId,
                                          BigInteger teamAId,
                                          BigInteger teamBId,
                                          BigInteger startTime,
@@ -68,7 +68,7 @@ public class SettlementServiceImpl implements SettlementService {
      * @return TransactionReceipt (성공시 트랜잭션 영수증 반환)
      */
     @Override
-    public void finalizeGame(BigInteger gameId, BigInteger winningTeamId) {
+    public void finalizePreVoteTeamSettle(BigInteger gameId, BigInteger winningTeamId) {
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();

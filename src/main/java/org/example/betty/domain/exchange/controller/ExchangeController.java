@@ -45,14 +45,14 @@ public class ExchangeController {
     @PostMapping("/buy")
     public ResponseEntity<TransactionResponse> buy(@RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
                                                    @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(exchangeService.processTransaction(request, accessToken));
+        return ResponseEntity.ok(exchangeService.processBuy(request, accessToken));
     }
 
     @Operation(summary = "팬토큰 판매", description = "보유한 팬토큰을 판매해 베티코인을 획득합니다.")
     @PostMapping("/sell")
     public ResponseEntity<TransactionResponse> sell(@RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
                                                     @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(exchangeService.processTransaction(request, accessToken));
+        return ResponseEntity.ok(exchangeService.processSell(request, accessToken));
     }
 
     @Operation(summary = "팬토큰 스왑", description = "팬토큰 A를 팬토큰 B로 교환합니다.")

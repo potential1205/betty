@@ -6,7 +6,6 @@ import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
-import org.example.betty.domain.game.dto.response.GameDetailResponse;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
@@ -219,12 +218,21 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public GameDetailResponse getGameInfoById(String accessToken, Long gameId) {
+    public GameInfoResponse getGameInfoById(String accessToken, Long gameId) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_GAME));
 
-        return GameDetailResponse.builder()
-                .game(game)
+        return GameInfoResponse.builder()
+                .gameId(game.getId())
+                .homeTeamId(game.getHomeTeam().getId())
+                .awayTeamId(game.getAwayTeam().getId())
+                .season(game.getSeason())
+                .gameDate(game.getGameDate().toString())
+                .startTime(game.getStartTime().toString())
+                .stadium(game.getStadium())
+                .homeTeamName(game.getHomeTeam().getTeamName().split(" ")[0])
+                .awayTeamName(game.getAwayTeam().getTeamName().split(" ")[0])
+                .status(game.getStatus())
                 .build();
     }
 

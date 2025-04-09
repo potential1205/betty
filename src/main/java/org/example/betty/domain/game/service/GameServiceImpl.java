@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
-import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
+import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
+import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.game.repository.TeamRepository;
-import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
@@ -162,13 +162,22 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void betWinningTeam(String accessToken, Long gameId, Long teamId) {
-
-    }
-
-    @Override
-    public void betMvpPlayer(String accessToken, Long gameId, Long playerId) {
-
+    public void submitLiveVote(String accessToken, SubmitLiveVoteRequest request) {
+//        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+//        walletRepository.findByWalletAddress(walletAddress)
+//                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+//
+//        RedisGameLiveResult result = RedisGameLiveResult.builder()
+//                .walletAddress(walletAddress)
+//                .select(request.getSelectedAnswer())
+//                .problemId(request.getProblemId())
+//                .homeTeamId(request.getHomeTeamId())
+//                .awayTeamId(request.getAwayTeamId())
+//                .myTeamId(request.getMyTeamId())
+//                .build();
+//
+//        String redisKey = "votes:live:" + request.getGameId() + ":" + walletAddress;
+//        redisTemplate2.opsForValue().set(redisKey, result);
     }
 
     @Override
@@ -176,8 +185,14 @@ public class GameServiceImpl implements GameService {
         String awayCode = gameId.substring(8, 10);
         String homeCode = gameId.substring(10, 12);
 
-        Long awayTeamId = teamRepository.findByTeamCode(awayCode).get().getId();  // 예외 처리 없음
-        Long homeTeamId = teamRepository.findByTeamCode(homeCode).get().getId();
+        Long awayTeamId = teamRepository.findByTeamCode(awayCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM))
+                .getId();
+
+        Long homeTeamId = teamRepository.findByTeamCode(homeCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM))
+                .getId();
+
 
         return Map.of(
                 "awayTeamId", awayTeamId,
@@ -200,8 +215,9 @@ public class GameServiceImpl implements GameService {
                 .findByGameDateAndSeasonAndHomeTeam_TeamCodeAndAwayTeam_TeamCode(
                         gameDate, season, homeCode, awayCode
                 )
-                .get()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_GAME))
                 .getId();
+
     }
 
     private String generateGameCode(Game game) {

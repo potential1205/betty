@@ -1,6 +1,5 @@
 package org.example.betty.domain.game.repository;
 
-import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.game.entity.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
 

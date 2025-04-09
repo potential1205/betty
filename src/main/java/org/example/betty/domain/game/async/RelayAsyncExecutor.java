@@ -5,9 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.display.service.DisplayService;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.example.betty.domain.game.entity.Game;
-import org.example.betty.domain.game.entity.Team;
-import org.example.betty.domain.game.repository.GameRepository;
-import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.domain.game.service.*;
 import org.example.betty.external.game.scraper.LiveRelayScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,10 +15,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -73,9 +68,9 @@ public class RelayAsyncExecutor {
                     gameService.updateGameStatusToEnded(game);
                     log.info("[경기 상태 종료 완료] gameId: {}", gameId);
 
-                    // 3. 라이브 투표 정산 시작
+                    // 3. 라이브 투표 정산 호출
                     gameSettleService.liveVoteSettle(id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
-                    log.info("[LIVE 투표 정산 완료] gameId: {}", gameId);
+                    log.info("[LIVE 투표 정산 호출 완료] gameId: {}", gameId);
 
                     // 4. 결과(승리팀&mvp) 스크래핑 시작
                     gameResultAsyncExecutor.executeResultScraping(gameId, seleniumIndex);

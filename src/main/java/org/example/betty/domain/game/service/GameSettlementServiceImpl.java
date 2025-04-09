@@ -106,5 +106,4 @@ public class GameSettlementServiceImpl implements GameSettlementService {
             settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
         }
     }
-
 }

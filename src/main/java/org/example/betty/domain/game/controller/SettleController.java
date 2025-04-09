@@ -32,8 +32,7 @@ public class SettleController {
     public ResponseEntity<SuccessResponse> teamPreVoteSettleReady(
             @RequestBody TeamPreVoteSettleReadyRequest request) {
 
-        gameSettleService.createPreVoteTeamSettle(request.getGameId(), request.getTeamAId(), request.getTeamBId(),
-                request.getTeamATokenAddress(), request.getTeamBTokenAddress());
+        gameSettleService.createPreVoteTeamSettle(request.getGameId(), request.getTeamAId(), request.getTeamBId());
 
         return ResponseEntity.ok(SuccessResponse.of(true));
     }

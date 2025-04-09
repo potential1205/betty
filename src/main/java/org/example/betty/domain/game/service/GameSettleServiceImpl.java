@@ -104,21 +104,31 @@ public class GameSettleServiceImpl implements GameSettleService {
 
     // 팀 사전 투표 생성
     @Override
-    public void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId, String teamATokenAddress, String teamBTokenAddress) {
+    public void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_GAME));
 
         LocalDateTime localDateTime = game.getGameDate().atTime(game.getStartTime());
-
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+
+        Team teamA = teamRepository.findById(teamAId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+        Team teamB = teamRepository.findById(teamBId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+        Token tokenA = tokenRepository.findByTokenName(teamA.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        Token tokenB = tokenRepository.findByTokenName(teamB.getTokenName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         settlementService.createGame(
                 BigInteger.valueOf(gameId),
                 BigInteger.valueOf(teamAId),
                 BigInteger.valueOf(teamBId),
                 BigInteger.valueOf(instant.getEpochSecond()),
-                teamATokenAddress,
-                teamBTokenAddress
+                tokenA.getTokenAddress(),
+                tokenB.getTokenAddress()
         );
     }
 
@@ -140,7 +150,6 @@ public class GameSettleServiceImpl implements GameSettleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_GAME));
 
         LocalDateTime localDateTime = game.getGameDate().atTime(game.getStartTime());
-
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
 
         settlementService.createMVPGame(

@@ -120,9 +120,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                 gameSettleService.createPreVoteTeamSettle(
                         id,
                         teamIds.get("homeTeamId"),
-                        teamIds.get("awayTeamId"),
-                        homeToken.getTokenAddress(),
-                        awayToken.getTokenAddress()
+                        teamIds.get("awayTeamId")
                 );
 
             } else {

@@ -7,14 +7,14 @@ import java.util.List;
 
 public interface SettlementService {
 
-    void createGame(BigInteger gameId,
+    void createPreVoteTeamSettle(BigInteger gameId,
                     BigInteger teamAId,
                     BigInteger teamBId,
                     BigInteger startTime,
                     String teamATokenAddress,
                     String teamBTokenAddress);
 
-    void finalizeGame(BigInteger gameId, BigInteger winningTeamId);
+    void finalizePreVoteTeamSettle(BigInteger gameId, BigInteger winningTeamId);
 
     List<String> getWinningTeamBettors(BigInteger gameId);
 

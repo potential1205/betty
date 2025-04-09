@@ -121,9 +121,17 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new DefaultGasProvider()
             );
 
+            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
+            TransactionReceipt resetReceipt = betToken.approve(exchangeAddress, BigInteger.ZERO).send();
+            log.info("[APPROVE RESET] txHash={}", resetReceipt.getTransactionHash());
+
             // approve
-            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
+//            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+//            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
+
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
+            log.info("[APPROVE MAX] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
             // add
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();

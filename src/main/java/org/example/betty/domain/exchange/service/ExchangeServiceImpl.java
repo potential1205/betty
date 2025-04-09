@@ -57,28 +57,6 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final TokenPriceRepository tokenPriceRepository;
     private final WalletBalanceRepository walletBalanceRepository;
 
-    private final ContractGasProvider zeroGasProvider = new ContractGasProvider() {
-        @Override
-        public BigInteger getGasPrice(String contractFunc) {
-            return BigInteger.ZERO;
-        }
-
-        @Override
-        public BigInteger getGasPrice() {
-            return BigInteger.ZERO;
-        }
-
-        @Override
-        public BigInteger getGasLimit(String contractFunc) {
-            return BigInteger.valueOf(5_000_000L);
-        }
-
-        @Override
-        public BigInteger getGasLimit() {
-            return BigInteger.valueOf(5_000_000L);
-        }
-    };
-
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;
 
@@ -116,6 +94,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         return new TransactionResponse(true, "충전 요청이 처리 중입니다.", transaction.getId());
     }
 
+
     // 1-2. add 블록체인 트랜잭션 처리
     private void handleAddTransaction(Transaction transaction) {
         try {
@@ -135,7 +114,6 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
             );
-
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
@@ -143,37 +121,36 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new DefaultGasProvider()
             );
 
-            BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
-            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-            if (allowance.compareTo(amountWei) < 0) {
-                log.info("[APPROVE] Allowance 부족 → 초기화 및 approve");
-                betToken.approve(exchangeAddress, BigInteger.ZERO).send();
-                betToken.approve(exchangeAddress, MAX_UINT256).send();
-            }
+            // approve
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
-            // ✅ addFrom(운영자, amount) 호출
+            // add
+            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
+            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
+
+            // 사용자 지갑으로 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();
-            TransactionReceipt addFromReceipt = exchangeContract.addFrom(credentials.getAddress(), amountWei).send();
-            log.info("[ADD_FROM SUCCESS] txHash={}", addFromReceipt.getTransactionHash());
-
-            // ✅ 사용자 지갑으로 BET 전송
             TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
+            log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountBet, transferReceipt.getTransactionHash());
 
-            // 트랜잭션 상태 및 DB 업데이트
+            // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
 
-            // DB 잔고 동기화
+            // 온체인 기준 DB 잔고 업데이트
+            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
+            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {
-            log.error("[ADD_FROM FAILED] 사용자={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
+            log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", web3jService.getCredentials().getAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
         }
     }
+
 
     // 2-1. remove 요청 처리
     @Override
@@ -228,13 +205,13 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             // 사용자 지갑에서 BET 출금 approve
@@ -307,14 +284,14 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             // approve
@@ -345,7 +322,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     fanTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             // 사용자 지갑으로 전송
@@ -411,7 +388,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             String tokenName = transaction.getTokenFrom().getTokenName();
@@ -424,7 +401,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     fanTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             TransactionReceipt approveReceipt = fanToken.approve(exchangeAddress, amountWei).send();

@@ -120,8 +120,8 @@ public class ExchangeServiceImpl implements ExchangeService {
     private void handleAddTransaction(Transaction transaction) {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
-            BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100), 18, RoundingMode.HALF_UP); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact(); // 18자리 변환
+            BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
+            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigInteger();
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();
@@ -144,25 +144,18 @@ public class ExchangeServiceImpl implements ExchangeService {
             );
 
             String userWalletAddress = transaction.getWallet().getWalletAddress();
-            String operatorAddress = credentials.getAddress();
 
-            // 운영 지갑에서 사용자에게 BET 전송
-            TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER SUCCESS] 운영자 → 사용자 {}: {} BET (tx={})",
-                    userWalletAddress, amountBet.toPlainString(), transferReceipt.getTransactionHash());
-
-            // 컨트랙트에 BET 잔고 충분한지 확인
-            BigInteger balance = betToken.balanceOf(exchangeAddress).send();
-            BigInteger expectedTotal = exchangeContract.totalBETAdded().send().add(amountWei);
-            if (balance.compareTo(expectedTotal) < 0) {
-                log.warn("[ADD_DIRECT FAIL] 컨트랙트 잔고 부족: 필요={}, 실제={}", expectedTotal, balance);
-                throw new RuntimeException("컨트랙트에 BET 잔고가 부족합니다.");
-            }
+            // 운영 지갑에서 컨트랙트로 BET 전송
+            TransactionReceipt transferToContract = betToken.transfer(exchangeAddress, amountWei).send();
+            log.info("[TRANSFER TO CONTRACT] 운영자 → 컨트랙트: {} BET, tx={}", amountBet, transferToContract.getTransactionHash());
 
             // addDirect 호출
             TransactionReceipt addReceipt = exchangeContract.addDirect(amountWei).send();
-            log.info("[ADD_DIRECT SUCCESS] 사용자={}, amount={}, txHash={}",
-                    userWalletAddress, amountBet.toPlainString(), addReceipt.getTransactionHash());
+            log.info("[ADD_DIRECT SUCCESS] amount={}, tx={}", amountBet, addReceipt.getTransactionHash());
+
+            // 컨트랙트 -> 사용자 BET 전송
+            TransactionReceipt transferToUser = betToken.transfer(userWalletAddress, amountWei).send();
+            log.info("[TRANSFER TO USER SUCCESS] → 사용자 {}, amount={}, tx={}", userWalletAddress, amountBet, transferToUser.getTransactionHash());
 
             // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
@@ -173,7 +166,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {
-            log.error("[ADD_FROM FAILED] 사용자={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
+            log.error("[ADD_DIRECT FAILED] 사용자={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
         }

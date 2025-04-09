@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.common.resolver.FanTokenAddressResolver;
 import org.example.betty.common.util.PendingTransactionUtil;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.contract.Exchange;
@@ -25,6 +26,7 @@ import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.domain.wallet.service.BalanceService;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
@@ -57,8 +59,11 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;
 
-    @Value("${exchange.address}")
+    @Value("${EXCHANGE_ADDRESS}")
     private String exchangeAddress;
+
+    @Autowired
+    private FanTokenAddressResolver fanTokenAddressResolver;
 
     // 1-1. add 요청 처리
     @Override
@@ -236,7 +241,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 3-1. buy 요청 처리
     @Override
     @Transactional
-    public TransactionResponse processTransaction(TransactionRequest request, String accessToken) {
+    public TransactionResponse processBuy(TransactionRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         pendingTransactionUtil.throwIfPending(walletAddress);
 
@@ -260,36 +265,80 @@ public class ExchangeServiceImpl implements ExchangeService {
         transactionRepository.save(transaction);
         new Thread(() -> handleBuyTransaction(transaction)).start();
 
-        return new TransactionResponse(true, "트랜잭션 처리 중입니다.", transaction.getId());
+        return new TransactionResponse(true, "구매 요청 처리 중입니다.", transaction.getId());
     }
 
     // 3-2. buy 블록체인 트랜잭션 처리
     private void handleBuyTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(
+            BigDecimal amountBet = transaction.getAmountIn(); // BET
+            BigInteger amountWei = amountBet.toBigInteger();
+
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials(); // 운영 지갑
+            long chainId = web3jService.getChainId();
+
+            org.example.betty.contract.Token betToken = org.example.betty.contract.Token.load(
+                    betTokenAddress,
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
-                    web3jService.getWeb3j(),
-                    new RawTransactionManager(
-                            web3jService.getWeb3j(),
-                            web3jService.getCredentials(),
-                            web3jService.getChainId()
-                    ),
-                    new DefaultGasProvider());
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            // approve
+            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] BET -> Exchange, txHash={}", approveReceipt.getTransactionHash());
+
+            // buy
             String tokenName = transaction.getTokenTo().getTokenName();
-            BigInteger amount = transaction.getAmountIn().toBigInteger();
-            TransactionReceipt receipt = contract.buy(tokenName, amount).send();
+            TransactionReceipt buyReceipt = exchangeContract.buy(tokenName, amountWei).send();
+            log.info("[BUY SUCCESS] fanToken={}, txHash={}", tokenName, buyReceipt.getTransactionHash());
+
             // 이벤트에서 amountOut 파싱
-            List<Exchange.BuyExecutedEventResponse> events = Exchange.getBuyExecutedEvents(receipt);
-            if(!events.isEmpty()) {
-                BigInteger amountOut = events.get(0).amountOut;
-                transaction.updateAmountOut(new BigDecimal(amountOut));
+            List<Exchange.BuyExecutedEventResponse> events = Exchange.getBuyExecutedEvents(buyReceipt);
+            if (events.isEmpty()) {
+                throw new RuntimeException("BuyExecuted 이벤트가 없습니다.");
             }
+
+            BigInteger amountOut = events.get(0).amountOut;
+            transaction.updateAmountOut(new BigDecimal(amountOut));
+
+            // 팬토큰 컨트랙트
+            String fanTokenAddress = fanTokenAddressResolver.getAddress(tokenName);
+            if (fanTokenAddress == null) {
+                throw new RuntimeException("팬토큰 주소를 찾을 수 없습니다: " + tokenName);
+            }
+
+            org.example.betty.contract.Token fanToken = org.example.betty.contract.Token.load(
+                    fanTokenAddress,
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            // 사용자 지갑으로 전송
+            String userWalletAddress = transaction.getWallet().getWalletAddress();
+            TransactionReceipt transferReceipt = fanToken.transfer(userWalletAddress, amountOut).send();
+            log.info("[TRANSFER SUCCESS] toUser={}, fanToken={}, txHash={}", userWalletAddress, tokenName, transferReceipt.getTransactionHash());
+
+            // 트랜잭션 업데이트
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
+
+            // 잔고 동기화
+            balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
+            balanceService.syncWalletBalance(transaction.getWallet(), tokenName, fanTokenAddress);
         } catch (Exception e) {
+            log.error("[BUY TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
-            e.printStackTrace();
         }
     }
 

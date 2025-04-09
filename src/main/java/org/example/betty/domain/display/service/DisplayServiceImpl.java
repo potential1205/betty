@@ -172,32 +172,89 @@ public class DisplayServiceImpl implements DisplayService{
         log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
     }
 
+//    public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
+//        BufferedImage image = createImageFromBoard(display);
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//
+//        try {
+//            ImageIO.write(image, "png", baos);
+//            baos.flush();
+//            byte[] imageBytes = baos.toByteArray();
+//            baos.close();
+//
+//            String contentType = "image/png";
+//            String displayUrl = s3Util.upload(imageBytes, contentType, gameId, teamId, inning);
+//
+//            Display newDisplay = Display.builder()
+//                    .gameId(gameId)
+//                    .teamId(teamId)
+//                    .inning(inning)
+//                    .displayUrl(displayUrl)
+//                    .createdAt(LocalDateTime.now())
+//                    .build();
+//
+//            log.info("게임ID : " + gameId + "팀 ID : "  + teamId + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
+//            displayRepository.save(newDisplay);
+//        } catch (IOException e) {
+//            throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);
+//        }
+//    }
+
     public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
-        BufferedImage image = createImageFromBoard(display);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // 1. board 배열로부터 원본 이미지를 생성 (예: 64x64)
+        BufferedImage originalImage = createImageFromBoard(display);
 
-        try {
-            ImageIO.write(image, "png", baos);
+        // 2. 업스케일링 배율 (예: 4배)
+        final int UPSCALE_FACTOR = 4;
+        BufferedImage upscaledImage = upscaleImage(originalImage, UPSCALE_FACTOR);
+
+        // 3. 업스케일된 이미지를 ByteArray로 변환 (try-with-resources 사용)
+        byte[] imageBytes;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            // ImageIO.write는 이미지 작성에 실패하면 false를 반환할 수 있음
+            if (!ImageIO.write(upscaledImage, "png", baos)) {
+                throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);
+            }
             baos.flush();
-            byte[] imageBytes = baos.toByteArray();
-            baos.close();
-
-            String contentType = "image/png";
-            String displayUrl = s3Util.upload(imageBytes, contentType, gameId, teamId, inning);
-
-            Display newDisplay = Display.builder()
-                    .gameId(gameId)
-                    .teamId(teamId)
-                    .inning(inning)
-                    .displayUrl(displayUrl)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            log.info("게임ID : " + gameId + "팀 ID : "  + teamId + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
-            displayRepository.save(newDisplay);
+            imageBytes = baos.toByteArray();
         } catch (IOException e) {
+            log.error("이미지 변환 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);
         }
+
+        // 4. S3에 업스케일된 이미지 업로드
+        String contentType = "image/png";
+        String displayUrl = s3Util.upload(imageBytes, contentType, gameId, teamId, inning);
+
+        // 5. Display 엔티티 생성 및 저장
+        Display newDisplay = Display.builder()
+                .gameId(gameId)
+                .teamId(teamId)
+                .inning(inning)
+                .displayUrl(displayUrl)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        displayRepository.save(newDisplay);
+
+        log.info("게임ID: {} 팀ID: {} {}번째 이닝 이미지가 정상적으로 저장되었습니다.", gameId, teamId, inning);
+    }
+
+    private BufferedImage upscaleImage(BufferedImage image, int scaleFactor) {
+        int scaledWidth = image.getWidth() * scaleFactor;
+        int scaledHeight = image.getHeight() * scaleFactor;
+
+        // 이미지 타입이 0이면 기본 TYPE_INT_ARGB로 지정
+        int imageType = image.getType() == 0 ? BufferedImage.TYPE_INT_ARGB : image.getType();
+        BufferedImage upscaledImage = new BufferedImage(scaledWidth, scaledHeight, imageType);
+
+        Graphics2D g2d = upscaledImage.createGraphics();
+        // Nearest Neighbor 보간법 적용: 픽셀 아트의 날카로운 경계를 유지
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g2d.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
+        g2d.dispose();
+
+        return upscaledImage;
     }
 
     public BufferedImage createImageFromBoard(Pixel[][] display) {

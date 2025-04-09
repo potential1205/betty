@@ -15,10 +15,21 @@ contract DisplayAccess is Ownable {
     // 액세스 권한 매핑 (teamId_gameId_userAddress => hasAccess)
     mapping(bytes32 => bool) public accessRights;
     
+    // 보상 풀 주소
+    address public rewardPool;
+    
     // 이벤트 정의
     event AccessGranted(address indexed user, uint256 teamId, uint256 gameId);
+    event RewardPoolUpdated(address oldRewardPool, address newRewardPool);
     
     constructor() Ownable(msg.sender) {}
+    
+    // 보상 풀 설정 (관리자 전용)
+    function setRewardPool(address _rewardPool) external onlyOwner {
+        address oldRewardPool = rewardPool;
+        rewardPool = _rewardPool;
+        emit RewardPoolUpdated(oldRewardPool, _rewardPool);
+    }
     
     // 액세스 키 생성 함수
     function createAccessKey(uint256 teamId, uint256 gameId, address userAddress) internal pure returns (bytes32) {
@@ -27,14 +38,15 @@ contract DisplayAccess is Ownable {
     
     // 액세스 권한 구매
     function purchaseAccess(address tokenAddress, uint256 teamId, uint256 gameId) external {
+        require(rewardPool != address(0), "Reward pool not set");
         bytes32 accessKey = createAccessKey(teamId, gameId, msg.sender);
-        require(!accessRights[accessKey], "Already Approved");
+        require(!accessRights[accessKey], "has access");
         
         IERC20 token = IERC20(tokenAddress);
         
         // 1 팬토큰 전송 (18 decimals 고려)
         uint256 amount = 1 * 10**18;
-        require(token.transferFrom(msg.sender, address(this), amount), "Failed to transfer token");
+        require(token.transferFrom(msg.sender, rewardPool, amount), "transfer to reward pool failed");
         
         // 액세스 권한 부여
         accessRights[accessKey] = true;

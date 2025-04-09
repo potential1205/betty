@@ -1,7 +1,5 @@
 package org.example.betty.domain.exchange.service;
 
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
-
 import java.math.BigInteger;
 import java.util.List;
 

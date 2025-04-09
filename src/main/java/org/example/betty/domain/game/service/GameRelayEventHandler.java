@@ -50,11 +50,11 @@ public class GameRelayEventHandler {
             sseService.send(gameId, currentInning);
 
             // 이닝변경 전광판 저장
-            long id = gameService.resolveGameDbId(gameId);
-            Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-            int inning = Integer.parseInt(currentInning.replaceAll("[^0-9]", ""));
-            displayService.inningEnd(id, teamIds.get("awayTeamId"), inning);
-            displayService.inningEnd(id,teamIds.get("homeTeamId"), inning);
+//            long id = gameService.resolveGameDbId(gameId);
+//            Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+//            int inning = Integer.parseInt(currentInning.replaceAll("[^0-9]", ""));
+//            displayService.inningEnd(id, teamIds.get("awayTeamId"), inning);
+//            displayService.inningEnd(id,teamIds.get("homeTeamId"), inning);
 
             // 현재 이닝 맵에 기록
             previousInningMap.put(gameId, currentInning);

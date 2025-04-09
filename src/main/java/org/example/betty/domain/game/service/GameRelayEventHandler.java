@@ -30,6 +30,7 @@ public class GameRelayEventHandler {
     private final RedisTemplate<String, Object> redisTemplate2;
     private final SseService sseService;
     private final DisplayService displayService;
+    private final GameService gameService;
 
     private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
     private final Map<String, String> previousInningMap = new ConcurrentHashMap<>();
@@ -46,12 +47,16 @@ public class GameRelayEventHandler {
         // 이닝 변경 감지 또는 최초 전송
         if (prevInning == null || !prevInning.equals(currentInning)) {
             log.info("[이닝 상태 업데이트] gameId={} | {} → {}", gameId, prevInning, currentInning);
-            sseService.send(gameId, currentInning); // DTO 없이 문자열만 전송
+            sseService.send(gameId, currentInning);
 
             // 이닝변경 전광판 저장
-//            displayService.inningEnd(gameId, gameId.substring(8, 10), currentInning.replaceAll("[^0-9]", ""));
-//            displayService.gameEnd(gameId, gameId.substring(10, 12), currentInning.replaceAll("[^0-9]", ""));
+            long id = gameService.resolveGameDbId(gameId);
+            Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+            int inning = Integer.parseInt(currentInning.replaceAll("[^0-9]", ""));
+            displayService.inningEnd(id, teamIds.get("awayTeamId"), inning);
+            displayService.inningEnd(id,teamIds.get("homeTeamId"), inning);
 
+            // 현재 이닝 맵에 기록
             previousInningMap.put(gameId, currentInning);
         }
 
@@ -62,8 +67,6 @@ public class GameRelayEventHandler {
             previousScoreMap.put(gameId, currentScore);
         }
     }
-
-
 
 
     public void handleRelayUpdate(String gameId, RedisGameRelay currentRelay) {
@@ -136,7 +139,6 @@ public class GameRelayEventHandler {
 
             // 2. 새 문제 출제
             List<RedisGameProblem> problems = problemGenerator.generateAllProblems(gameId, currentRelay);
-//            String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
             String redisKey = "problems:" + gameId;
             ListOperations<String, Object> listOps = redisTemplate2.opsForList();
 

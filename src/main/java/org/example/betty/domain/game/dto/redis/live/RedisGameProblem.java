@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -15,7 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class RedisGameProblem implements Serializable {
-
     private String problemId;
     private String gameId;
     private String inning;
@@ -26,13 +26,6 @@ public class RedisGameProblem implements Serializable {
     private List<String> options;
     private String answer;
     private boolean push;
-    private long timestamp;
+    private LocalDateTime timestamp;
 
-    // redis 저장x
-    @JsonIgnore
-    public String getFormattedTimestamp() {
-        return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.of("Asia/Seoul"))
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    }
 }

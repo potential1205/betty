@@ -7,6 +7,7 @@ import org.example.betty.domain.game.entity.Game;
 
 
 import java.util.List;
+import java.util.Map;
 
 public interface GameService {
 
@@ -21,6 +22,12 @@ public interface GameService {
     Game findGameByGameId(String gameId);
 
     String getGameStatus(String accessToken, Long gameId);
+
+    // gameId로부터 팀 코드(away, home)를 파싱하고, DB에서 각 팀의 PK(id)를 조회해 반환
+    Map<String, Long> resolveTeamIdsFromGameId(String gameId);
+
+    // DB에서 해당 조건을 만족하는 Game 객체의 PK(id)를 조회해 반환
+    Long resolveGameDbId(String gameId);
 
 
 }

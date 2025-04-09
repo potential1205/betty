@@ -88,6 +88,17 @@ export const registerWallet = async () => {
   return response.data;
 };
 
+// 지갑 잔고 
+export const getWalletBalances = async () => {
+  try {
+    const response = await axiosInstance.get('/wallet/balances');
+    return response.data;
+  } catch (error) {
+    console.error('지갑 잔고 조회 실패:', error);
+    throw error;
+  }
+};
+
 export interface GameSchedule {
   season: number;
   gameDate: string;

@@ -81,14 +81,7 @@ const MyPage: React.FC = () => {
     const fetchWalletInfo = async () => {
       try {
         setIsLoading(true);
-        const data = await getWalletInfo();
-        updateWalletInfo({
-          address: data.address,
-          nickname: data.nickname,
-          totalBET: data.totalBET,
-          transactions: [],
-          tokens: []
-        });
+        await useStore.getState().fetchWalletInfo();
       } catch (error) {
         console.error('지갑 정보 조회 실패:', error);
         if (axios.isAxiosError(error) && error.response?.status === 404) {

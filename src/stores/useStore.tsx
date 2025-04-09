@@ -162,6 +162,7 @@ interface AppState {
   setIsChargeModalOpen: (isOpen: boolean) => void;
   chargeBetty: (amount: number) => void;
   updateWalletInfo: (newInfo: Partial<WalletInfo>) => void;
+  fetchWalletInfo: () => Promise<void>;
   
   // API 함수들
   fetchProposals: (teamId: number) => Promise<void>;
@@ -493,6 +494,29 @@ export const useStore = create<AppState>((set, get) => ({
       transactions: newInfo.transactions ?? state.walletInfo.transactions ?? [],
     }
   })),
+
+  fetchWalletInfo: async () => {
+    try {
+      const data = await import('../apis/axios').then(mod => mod.getWalletBalances());
+
+      const tokenList = data.tokens.map((t: any) => ({
+        team: t.tokenName,
+        amount: Number(t.balance),
+        betValue: Number(t.balance) * get().bettyPrice
+      }));
+
+      const total = Number(data.totalBet);
+
+      get().updateWalletInfo({
+        address: data.walletAddress,
+        nickname: data.nickname,
+        totalBET: total,
+        tokens: tokenList
+      });
+    } catch (error) {
+      console.error('fetchWalletInfo 실패:', error);
+    }
+  },
   
   // API 연동 함수들
   clearError: () => set({ error: null }),

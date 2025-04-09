@@ -77,7 +77,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         public BigInteger getGasLimit() {
             return BigInteger.valueOf(5_000_000L);
         }
-    }
+    };
 
     @Value("${BET_ADDRESS}")
     private String betTokenAddress;

@@ -234,7 +234,6 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.error("[REMOVE TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
-            e.printStackTrace();
         }
     }
 
@@ -375,27 +374,59 @@ public class ExchangeServiceImpl implements ExchangeService {
     // 4-2. sell 블록체인 트랜잭션 처리
     private void handleSellTransaction(Transaction transaction) {
         try {
-            Exchange contract = Exchange.load(
+            BigDecimal amountFan = transaction.getAmountIn(); // 팬토큰 수량
+            BigInteger amountWei = amountFan.toBigInteger();
+
+            Web3j web3j = web3jService.getWeb3j();
+            Credentials credentials = web3jService.getCredentials();
+            long chainId = web3jService.getChainId();
+
+            Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
-                    web3jService.getWeb3j(),
-                    new RawTransactionManager(
-                            web3jService.getWeb3j(),
-                            web3jService.getCredentials(),
-                            web3jService.getChainId()
-                    ),
-                    new DefaultGasProvider());
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
             String tokenName = transaction.getTokenFrom().getTokenName();
-            BigInteger amount = transaction.getAmountIn().toBigInteger();
-            TransactionReceipt receipt = contract.sell(tokenName, amount).send();
-            // 이벤트에서 amountOut 파싱
-            List<Exchange.SellExecutedEventResponse> events = Exchange.getSellExecutedEvents(receipt);
-            if(!events.isEmpty()) {
-                BigInteger amountOut = events.get(0).amountOut;
-                transaction.updateAmountOut(new BigDecimal(amountOut));
+            String fanTokenAddress = fanTokenAddressResolver.getAddress(tokenName);
+            if (fanTokenAddress == null) {
+                throw new RuntimeException("팬토큰 주소를 찾을 수 없습니다: " + tokenName);
             }
+
+            org.example.betty.contract.Token fanToken = org.example.betty.contract.Token.load(
+                    fanTokenAddress,
+                    web3j,
+                    new RawTransactionManager(web3j, credentials, chainId),
+                    new DefaultGasProvider()
+            );
+
+            TransactionReceipt approveReceipt = fanToken.approve(exchangeAddress, amountWei).send();
+            log.info("[APPROVE SUCCESS] FanToken -> Exchange, token={}, amount={}, txHash={}",
+                    tokenName, amountFan, approveReceipt.getTransactionHash());
+
+            TransactionReceipt sellReceipt = exchangeContract.sell(tokenName, amountWei).send();
+            log.info("[SELL SUCCESS] token={}, amount={}, txHash={}",
+                    tokenName, amountFan, sellReceipt.getTransactionHash());
+
+            // 이벤트에서 amountOut 파싱
+            List<Exchange.SellExecutedEventResponse> events = Exchange.getSellExecutedEvents(sellReceipt);
+            if (events.isEmpty()) {
+                throw new RuntimeException("SellExecuted 이벤트가 없습니다.");
+            }
+
+            BigInteger amountOut = events.get(0).amountOut;
+            transaction.updateAmountOut(new BigDecimal(amountOut));
+
+            // 트랜잭션 업데이트
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
+
+            // 잔고 동기화
+            balanceService.syncWalletBalance(transaction.getWallet(), tokenName, fanTokenAddress);
+            balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
         } catch (Exception e) {
+            log.error("[SELL TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
             e.printStackTrace();

@@ -199,12 +199,12 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Long resolveGameDbId(String gameId) {
-        int season = 2000 + Integer.parseInt(gameId.substring(0, 2));
-        int month = Integer.parseInt(gameId.substring(2, 4));
-        int day = Integer.parseInt(gameId.substring(4, 6));
+        int season = 2000 + Integer.parseInt(gameId.substring(2, 4));
+        int month = Integer.parseInt(gameId.substring(4, 6));
+        int day = Integer.parseInt(gameId.substring(6, 8));
 
-        String awayCode = gameId.substring(6, 8);
-        String homeCode = gameId.substring(8, 10);
+        String awayCode = gameId.substring(8, 10);
+        String homeCode = gameId.substring(10, 12);
 
         LocalDate gameDate = LocalDate.of(season, month, day);
 

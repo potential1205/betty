@@ -140,6 +140,7 @@ public class RewardPool extends Contract {
         return deployRemoteCall(RewardPool.class, web3j, transactionManager, gasPrice, gasLimit, getDeploymentBinary(), "");
     }
 
+
     private static String getDeploymentBinary() {
         if (librariesLinkedBinary != null) {
             return librariesLinkedBinary;

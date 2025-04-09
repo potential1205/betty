@@ -401,7 +401,6 @@ public class Token extends Contract {
         return deployRemoteCall(Token.class, web3j, transactionManager, gasPrice, gasLimit, getDeploymentBinary(), encodedConstructor);
     }
 
-
     private static String getDeploymentBinary() {
         if (librariesLinkedBinary != null) {
             return librariesLinkedBinary;

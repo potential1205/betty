@@ -414,6 +414,7 @@ public class Exchange extends Contract {
         return deployRemoteCall(Exchange.class, web3j, transactionManager, gasPrice, gasLimit, getDeploymentBinary(), encodedConstructor);
     }
 
+
     private static String getDeploymentBinary() {
         if (librariesLinkedBinary != null) {
             return librariesLinkedBinary;

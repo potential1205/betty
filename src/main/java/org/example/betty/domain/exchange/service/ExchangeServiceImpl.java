@@ -121,7 +121,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
             BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.toBigInteger();
+            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigInteger();
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();
@@ -146,31 +146,24 @@ public class ExchangeServiceImpl implements ExchangeService {
             BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
             BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
 
-            log.info("[DEBUG] ▶ 운영 지갑: {}", credentials.getAddress());
-            log.info("[DEBUG] ▶ BET 잔고: {}", balance);
-            log.info("[DEBUG] ▶ Exchange({}) 에 대한 allowance: {}", exchangeAddress, allowance);
-            log.info("[DEBUG] ▶ 전송 예정 금액 (amountWei): {}", amountWei);
+            log.info("[ADD] 운영지갑={}, 잔고={}, 요청량={}", credentials.getAddress(), balance, amountWei);
 
             // allowance 부족 시 approve
             if (allowance.compareTo(amountWei) < 0) {
-                log.info("[DEBUG] ▶ 기존 allowance 부족 → approve 초기화 및 무제한 설정");
+                log.info("[ADD] Allowance 부족 → approve 초기화 및 재설정");
                 betToken.approve(exchangeAddress, BigInteger.ZERO).send();
                 TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
-                log.info("[APPROVE RESET] txHash={}, new allowance={}",
-                        approveReceipt.getTransactionHash(),
-                        betToken.allowance(credentials.getAddress(), exchangeAddress).send());
-            } else {
-                log.info("[DEBUG] ▶ 충분한 allowance 존재 → approve 생략");
+                log.info("[ADD] Approve 완료 → txHash={}", approveReceipt.getTransactionHash());
             }
 
             // add
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
-            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
+            log.info("[ADD] Exchange에 추가 완료 → txHash={}", addReceipt.getTransactionHash());
 
             // 사용자 지갑으로 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();
             TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountBet, transferReceipt.getTransactionHash());
+            log.info("[TRANSFER] 사용자 지갑으로 전송 완료 → to={}, amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
 
             // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
@@ -178,12 +171,10 @@ public class ExchangeServiceImpl implements ExchangeService {
             transactionRepository.save(transaction);
 
             // 온체인 기준 DB 잔고 업데이트
-            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
-            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {
-            log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", web3jService.getCredentials().getAddress(), e.getMessage(), e);
+            log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
         }

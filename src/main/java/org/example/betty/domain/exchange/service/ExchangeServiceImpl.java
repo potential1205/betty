@@ -343,6 +343,8 @@ public class ExchangeServiceImpl implements ExchangeService {
     }
 
     // 4-1. sell 요청 처리
+    @Override
+    @Transactional
     public TransactionResponse processSell(TransactionRequest request, String accessToken) {
         String walletAddress = sessionUtil.getWalletAddress(accessToken);
         pendingTransactionUtil.throwIfPending(walletAddress);

@@ -13,3 +13,4 @@ public class WalletBalanceResponse {
     private String tokenName;
     private BigDecimal balance;
 }
+

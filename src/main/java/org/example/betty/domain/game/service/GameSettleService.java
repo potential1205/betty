@@ -6,7 +6,7 @@ public interface GameSettleService {
 
     void liveVoteSettle(Long gameId);
 
-    void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId, String teamATokenAddress, String teamBTokenAddress);
+    void createPreVoteTeamSettle(Long gameId, Long teamAId, Long teamBId);
     void preVoteTeamSettle(Long gameId, Long winnderTeamId);
 
     void createPreVoteMVPSettle(Long gameId, List<Long> playerIds, List<String> tokenAddresses);

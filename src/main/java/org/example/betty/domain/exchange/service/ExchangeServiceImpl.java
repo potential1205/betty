@@ -142,20 +142,26 @@ public class ExchangeServiceImpl implements ExchangeService {
                     zeroGasProvider
             );
 
-            BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
+            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
             BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
+            BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
+
             log.info("[DEBUG] ▶ 운영 지갑: {}", credentials.getAddress());
             log.info("[DEBUG] ▶ BET 잔고: {}", balance);
             log.info("[DEBUG] ▶ Exchange({}) 에 대한 allowance: {}", exchangeAddress, allowance);
             log.info("[DEBUG] ▶ 전송 예정 금액 (amountWei): {}", amountWei);
 
-            betToken.approve(exchangeAddress, BigInteger.ZERO).send();
-            // approve
-            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
-
-            BigInteger allowanceAfter = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
-            log.info("[DEBUG] ▶ approve 이후 allowance: {}", allowanceAfter);
+            // allowance 부족 시 approve
+            if (allowance.compareTo(amountWei) < 0) {
+                log.info("[DEBUG] ▶ 기존 allowance 부족 → approve 초기화 및 무제한 설정");
+                betToken.approve(exchangeAddress, BigInteger.ZERO).send();
+                TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
+                log.info("[APPROVE RESET] txHash={}, new allowance={}",
+                        approveReceipt.getTransactionHash(),
+                        betToken.allowance(credentials.getAddress(), exchangeAddress).send());
+            } else {
+                log.info("[DEBUG] ▶ 충분한 allowance 존재 → approve 생략");
+            }
 
             // add
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();

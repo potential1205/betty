@@ -26,7 +26,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GameSettlementServiceImpl implements GameSettlementService {
+public class GameSettleServiceImpl implements GameSettleService {
 
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
@@ -36,6 +36,9 @@ public class GameSettlementServiceImpl implements GameSettlementService {
     private final RewardService rewardService;
     private final SettlementService settlementService;
 
+
+    // LIVE 투표 정산
+    @Override
     public void liveVoteSettle(Long gameId, Long homeTeamId, Long awayTeamId) {
 
         // 1BET 가치에 해당하는 팬 토큰 시세 조회
@@ -98,12 +101,27 @@ public class GameSettlementServiceImpl implements GameSettlementService {
         }
     }
 
-    public void preVoteSettle(Long gameId, Long winnderTeamId) {
-        settlementService.finalizeGame(BigInteger.valueOf(gameId), BigInteger.valueOf(winnderTeamId));
+
+    // 사전 투표 정산
+    @Override
+    public void preVoteSettle(Long gameId, Long winnerTeamId) {
+        settlementService.finalizeGame(BigInteger.valueOf(gameId), BigInteger.valueOf(winnerTeamId));
         List<String> winnerWalletAddressList = settlementService.getWinningTeamBettors(BigInteger.valueOf(gameId));
 
         for (String winnerWalletAddress : winnerWalletAddressList) {
             settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
         }
+    }
+
+    @Override
+    public void createGame(Long gameId, Long teamAId, Long teamBId, Long startTime, String teamATokenAddress, String teamBTokenAddress) {
+        settlementService.createGame(
+                BigInteger.valueOf(gameId),
+                BigInteger.valueOf(teamAId),
+                BigInteger.valueOf(teamBId),
+                BigInteger.valueOf(startTime),
+                teamATokenAddress,
+                teamBTokenAddress
+        );
     }
 }

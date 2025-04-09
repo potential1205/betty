@@ -9,8 +9,8 @@ import lombok.*;
 @ToString
 public class PreVoteAnswer {
 
-    private String teamA;
-    private String teamB;
+    private String teamA; // 홈팀
+    private String teamB; // 원정팀
 
     private String winnerTeam;
     private String loserTeam;

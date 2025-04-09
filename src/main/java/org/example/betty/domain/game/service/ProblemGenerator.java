@@ -6,6 +6,7 @@ import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
@@ -15,6 +16,7 @@ public class ProblemGenerator {
         List<RedisGameProblem> result = new ArrayList<>();
         PlayerRelayInfo batter = relay.getBatter();
         PlayerRelayInfo pitcher = relay.getPitcher();
+        LocalDateTime now = LocalDateTime.now();
 
         if (batter == null || pitcher == null) return result;
 
@@ -23,7 +25,6 @@ public class ProblemGenerator {
         String pitcherName = pitcher.getName();
         String inning = relay.getInning();
         String attackTeam = relay.getTeamAtBat();
-        long now = System.currentTimeMillis();
 
         // 1. 공통 문제
         result.add(RedisGameProblem.builder()

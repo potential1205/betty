@@ -8,6 +8,7 @@ import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
+import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final SessionUtil sessionUtil;
     private final WalletRepository walletRepository;
+    private final TeamRepository teamRepository;
 
 
     @Qualifier("redisTemplate2")
@@ -155,6 +158,39 @@ public class GameServiceImpl implements GameService {
 
         Game game = optionalGame.get();
         return game.getStatus();
+    }
+
+    @Override
+    public Map<String, Long> resolveTeamIdsFromGameId(String gameId) {
+        String awayCode = gameId.substring(8, 10);
+        String homeCode = gameId.substring(10, 12);
+
+        Long awayTeamId = teamRepository.findByTeamCode(awayCode).get().getId();  // 예외 처리 없음
+        Long homeTeamId = teamRepository.findByTeamCode(homeCode).get().getId();
+
+        return Map.of(
+                "awayTeamId", awayTeamId,
+                "homeTeamId", homeTeamId
+        );
+    }
+
+    @Override
+    public Long resolveGameDbId(String gameId) {
+        int season = 2000 + Integer.parseInt(gameId.substring(0, 2));
+        int month = Integer.parseInt(gameId.substring(2, 4));
+        int day = Integer.parseInt(gameId.substring(4, 6));
+
+        String awayCode = gameId.substring(6, 8);
+        String homeCode = gameId.substring(8, 10);
+
+        LocalDate gameDate = LocalDate.of(season, month, day);
+
+        return gameRepository
+                .findByGameDateAndSeasonAndHomeTeam_TeamCodeAndAwayTeam_TeamCode(
+                        gameDate, season, homeCode, awayCode
+                )
+                .get()
+                .getId();
     }
 
     private String generateGameCode(Game game) {

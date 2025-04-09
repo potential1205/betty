@@ -204,8 +204,8 @@ public class DisplayServiceImpl implements DisplayService{
         // 1. board 배열로부터 원본 이미지를 생성 (예: 64x64)
         BufferedImage originalImage = createImageFromBoard(display);
 
-        // 2. 업스케일링 배율 (예: 4배)
-        final int UPSCALE_FACTOR = 4;
+        // 2. 업스케일링 배율
+        final int UPSCALE_FACTOR = 16;
         BufferedImage upscaledImage = upscaleImage(originalImage, UPSCALE_FACTOR);
 
         // 3. 업스케일된 이미지를 ByteArray로 변환 (try-with-resources 사용)

@@ -2,12 +2,19 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.betty.domain.exchange.entity.Token;
+import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.async.LineupAsyncExecutor;
 import org.example.betty.domain.game.async.RelayAsyncExecutor;
+import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.entity.Game;
+import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.game.repository.GameRepository;
+import org.example.betty.domain.game.repository.TeamRepository;
+import org.example.betty.exception.BusinessException;
+import org.example.betty.exception.ErrorCode;
 import org.example.betty.external.game.scraper.LineupScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
@@ -24,23 +31,27 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameCacheServiceImpl implements GameCacheService {
-
-    private final GameRepository gameRepository;
-    private final LineupScraper lineupScraper;
     @Qualifier("taskScheduler")
     private final TaskScheduler taskScheduler;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
+
+    private final LineupScraper lineupScraper;
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
     private final GameService gameService;
     private final SseService sseService;
+    private final GameRepository gameRepository;
+    private final GameSettleService gameSettleService;
+    private final TeamRepository teamRepository;
+    private final TokenRepository tokenRepository;
 
     public static final String REDIS_GAME_PREFIX = "games:";
 
@@ -54,13 +65,10 @@ public class GameCacheServiceImpl implements GameCacheService {
         LocalDate today = LocalDate.now();
 //        LocalDate today = LocalDate.now().minusDays(1);
 
-
         List<Game> todayGames = gameRepository.findByGameDate(today);
-
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
         int index = 0;
-
         for (Game game : todayGames) {
             String gameId = generateGameId(game);
             String redisKey = REDIS_GAME_PREFIX + today + ":" + gameId;
@@ -71,6 +79,8 @@ public class GameCacheServiceImpl implements GameCacheService {
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
 
             if (isNewEntry) {
+                
+                // 1. 당일 경기 일정 캐싱
                 RedisGameSchedule gameSchedule = RedisGameSchedule.builder()
                         .season(game.getSeason())
                         .gameDate(game.getGameDate().toString())
@@ -82,7 +92,39 @@ public class GameCacheServiceImpl implements GameCacheService {
                         .build();
 
                 hashOps.put(redisKey, "gameInfo", gameSchedule);
-                log.info("[캐싱 완료] gameInfo 저장 - gameId: {}", gameId);
+                log.info("[캐싱 완료] 경기일정저장 - gameId: {}", gameId);
+                
+                // 2. 호출을 위한 정보 세팅
+                Long id = gameService.resolveGameDbId(gameId);
+                Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+                Long homeTeamId = teamIds.get("homeTeamId");
+                Long awayTeamId = teamIds.get("awayTeamId");
+                log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, homeTeamId, awayTeamId);
+
+                // Team 객체 가져오기 (예외처리 없이 바로 호출)
+                Team homeTeam = teamRepository.findById(homeTeamId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+                Team awayTeam = teamRepository.findById(awayTeamId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+                // Token 객체 가져오기 (예외처리 없이 바로 호출)
+                Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+                Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+                // 3. 승리팀 베팅 시작
+                gameSettleService.createGame(
+                        id,
+                        teamIds.get("homeTeamId"),
+                        teamIds.get("awayTeamId"),
+                        0L,
+                        homeToken.getTokenAddress(),
+                        awayToken.getTokenAddress()
+                );
+
             } else {
                 log.info("[캐싱 스킵] Redis에 이미 존재하는 경기 - gameId: {}", gameId);
             }
@@ -173,7 +215,6 @@ public class GameCacheServiceImpl implements GameCacheService {
     private void scheduleRelayJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
-//        LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
         LocalDateTime gameStartTime = LocalDateTime.of(game.getGameDate(), game.getStartTime()).plusMinutes(1);
 
         final Integer seleniumIndex;
@@ -205,6 +246,24 @@ public class GameCacheServiceImpl implements GameCacheService {
                             sseService.send(gameId, "LIVE");
                             relayAsyncExecutor.startRelay(gameId, seleniumIndex);
                             log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
+
+                            // 1. 승리팀 베팅 정산 호출
+                            Long id = gameService.resolveGameDbId(gameId);
+                            String key = "results:" + gameId;
+                            PreVoteAnswer result = (PreVoteAnswer) redisTemplate2.opsForValue().get(key);
+
+                            if (result == null) {
+                                throw new BusinessException(ErrorCode.NOT_FOUND_GAME_RESULT);
+                            }
+                            String winnerPrefix = result.getWinnerTeam();
+                            Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+                            Long winnerTeamId = winnerTeam.getId();
+                            gameSettleService.preVoteSettle(id, winnerTeamId);
+                            log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
+                            
+                            // 2. MVP 베팅 정산 호출
+                            
                         } catch (Exception e) {
                             log.error("[중계 크롤링 실패] gameId: {}, error: {}", gameId, e.getMessage(), e);
                         }

@@ -9,6 +9,7 @@ import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.game.repository.TeamRepository;
+import org.example.betty.domain.wallet.entity.Wallet;
 import org.example.betty.domain.wallet.repository.WalletRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
@@ -158,6 +159,16 @@ public class GameServiceImpl implements GameService {
 
         Game game = optionalGame.get();
         return game.getStatus();
+    }
+
+    @Override
+    public void betWinningTeam(String accessToken, Long gameId, Long teamId) {
+
+    }
+
+    @Override
+    public void betMvpPlayer(String accessToken, Long gameId, Long playerId) {
+
     }
 
     @Override

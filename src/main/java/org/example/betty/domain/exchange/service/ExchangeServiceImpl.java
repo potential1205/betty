@@ -142,28 +142,29 @@ public class ExchangeServiceImpl implements ExchangeService {
                     zeroGasProvider
             );
 
-            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+            String userWalletAddress = transaction.getWallet().getWalletAddress();
+
             BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
             BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
+            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
-            log.info("[ADD] 운영지갑={}, 잔고={}, 요청량={}", credentials.getAddress(), balance, amountWei);
+            log.info("[ADD_FROM] 운영지갑={}, 사용자={}, 잔고={}, 요청량={}", credentials.getAddress(), userWalletAddress, balance, amountWei);
 
             // allowance 부족 시 approve
             if (allowance.compareTo(amountWei) < 0) {
                 log.info("[ADD] Allowance 부족 → approve 초기화 및 재설정");
                 betToken.approve(exchangeAddress, BigInteger.ZERO).send();
                 TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
-                log.info("[ADD] Approve 완료 → txHash={}", approveReceipt.getTransactionHash());
+                log.info("[ADD_FROM] Approve 완료 → txHash={}", approveReceipt.getTransactionHash());
             }
 
             // add
-            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
-            log.info("[ADD] Exchange에 추가 완료 → txHash={}", addReceipt.getTransactionHash());
+            TransactionReceipt addReceipt = exchangeContract.addFrom(userWalletAddress, amountWei).send();
+            log.info("[ADD_FROM SUCCESS] 사용자={}, amount={}, txHash={}", userWalletAddress, amountWei, addReceipt.getTransactionHash());
 
             // 사용자 지갑으로 전송
-            String userWalletAddress = transaction.getWallet().getWalletAddress();
             TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER] 사용자 지갑으로 전송 완료 → to={}, amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
+            log.info("[TRANSFER SUCCESS] 사용자={} amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
 
             // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
@@ -174,7 +175,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {
-            log.error("[ADD TRANSACTION FAILED] wallet={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
+            log.error("[ADD_FROM FAILED] 사용자={}, reason={}", transaction.getWallet().getWalletAddress(), e.getMessage(), e);
             transaction.updateStatus(TransactionStatus.FAIL);
             transactionRepository.save(transaction);
         }

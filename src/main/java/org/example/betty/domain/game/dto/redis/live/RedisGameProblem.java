@@ -27,6 +27,4 @@ public class RedisGameProblem implements Serializable {
     private String answer;
     private boolean push;
     private String timestamp;
-
-
 }

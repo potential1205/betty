@@ -2,11 +2,11 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.display.service.DisplayService;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.QuestionCode;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
+import org.example.betty.domain.game.repository.GameRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,12 +29,13 @@ public class GameRelayEventHandler {
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
     private final SseService sseService;
-    private final DisplayService displayService;
     private final GameService gameService;
+    private final GameSocketService gameSocketService;
 
     private final Map<String, String> previousBatterMap = new ConcurrentHashMap<>();
     private final Map<String, String> previousInningMap = new ConcurrentHashMap<>();
     private final Map<String, String> previousScoreMap = new ConcurrentHashMap<>();
+    private final GameRepository gameRepository;
 
 
     public void handleGameInfoChange(String gameId, RedisGameRelay relayData) {
@@ -47,7 +48,7 @@ public class GameRelayEventHandler {
         // 이닝 변경 감지 또는 최초 전송
         if (prevInning == null || !prevInning.equals(currentInning)) {
             log.info("[이닝 상태 업데이트] gameId={} | {} → {}", gameId, prevInning, currentInning);
-            sseService.send(gameId, currentInning);
+            gameSocketService.sendGameEvent(gameService.resolveGameDbId(gameId), currentInning, currentScore);
 
             // 이닝변경 전광판 저장
 //            long id = gameService.resolveGameDbId(gameId);
@@ -63,7 +64,8 @@ public class GameRelayEventHandler {
         // 점수 변경 감지 또는 최초 전송
         if (prevScore == null || !prevScore.equals(currentScore)) {
             log.info("[점수 상태 업데이트] gameId={} | {} → {}", gameId, prevScore, currentScore);
-            sseService.send(gameId, currentScore); // 점수도 문자열만 전송
+            gameSocketService.sendGameEvent(gameService.resolveGameDbId(gameId), currentInning, currentScore);
+
             previousScoreMap.put(gameId, currentScore);
         }
     }
@@ -162,8 +164,8 @@ public class GameRelayEventHandler {
                 selected.setPush(true);
                 listOps.set(redisKey, redisTemplate2.opsForList().size(redisKey) - problems.size() + randomIndex, selected);
 
-                // 선택된 문제 SSE 전송
-                sseService.send(gameId, selected);
+                // 선택된 문제 socket 전송
+                gameSocketService.sendGameProblem(gameService.resolveGameDbId(gameId),selected);
             }
             previousBatterMap.put(gameId, currentBatterName);
         }

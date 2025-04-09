@@ -12,4 +12,6 @@ public interface TokenPriceRepository extends JpaRepository<TokenPrice, Long> {
     List<TokenPrice> findAllByTokenOrderByUpdatedAtDesc(Token token);
 
     Optional<TokenPrice> findByTokenName(String tokenName);
+
+    Optional<Object> findFirstByTokenNameOrderByUpdatedAtDesc(String tokenName);
 }

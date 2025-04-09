@@ -3,8 +3,6 @@ package org.example.betty.domain.game.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.entity.Token;
-import org.example.betty.domain.exchange.entity.TokenPrice;
-import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.exchange.service.SettlementService;
 import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
@@ -23,6 +21,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +30,6 @@ public class GameSettleServiceImpl implements GameSettleService {
 
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
-    private final TokenPriceRepository tokenPriceRepository;
     private final TokenRepository tokenRepository;
     private final TeamRepository teamRepository;
     private final RewardService rewardService;
@@ -39,69 +37,51 @@ public class GameSettleServiceImpl implements GameSettleService {
 
     // LIVE 투표 정산
     @Override
-    public void liveVoteSettle(Long gameId, Long homeTeamId, Long awayTeamId) {
+    public void liveVoteSettle(Long gameId) {
+        Map<String, Integer> correctCounts = new HashMap<>();
 
-        // 1BET 가치에 해당하는 팬 토큰 시세 조회
-        Team homeTeam = teamRepository.findById(homeTeamId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-        Team awayTeam = teamRepository.findById(awayTeamId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+        // 투표 결과를 Redis에서 조회
+        String resultKey = "livevote:result:" + gameId;
+        List<RedisGameLiveResult> results = (List<RedisGameLiveResult>) redisTemplate2.opsForValue().get(resultKey);
 
-        Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-        Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+        if (results == null || results.isEmpty()) {
+            log.info("[LIVE VOTE SETTLE] No vote results found for gameId={}", gameId);
+            return;
+        }
 
-        BigInteger homeTokenPrice = tokenPriceRepository.findByTokenName(homeToken.getTokenName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_PRICE_NOT_FOUND)).getPrice().toBigInteger();
-
-        BigInteger awayTokenPrice = tokenPriceRepository.findByTokenName(awayToken.getTokenName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_PRICE_NOT_FOUND)).getPrice().toBigInteger();
-
-        // 리워드를 보내 줄
-        Map<String, Integer> homeMap = new HashMap<>();
-        Map<String, Integer> awayMap = new HashMap<>();
-
-        // 투표 결과 조회
-        String problemKey = "livevote:result:" + gameId;
-        List<RedisGameLiveResult> list = (List<RedisGameLiveResult>) redisTemplate2.opsForValue().get(problemKey);
-
-        // 투표 결과에 따라 리워드 지급
-        for (RedisGameLiveResult result : list) { // 투표 목록
-
-            // 사용자 정보
+        for (RedisGameLiveResult result : results) {
             String walletAddress = result.getWalletAddress();
-
-            // 문제, 정답지
             String voteResultKey = "livevote:" + gameId + ":" + result.getProblemId();
             RedisGameProblem problem = (RedisGameProblem) redisTemplate2.opsForValue().get(voteResultKey);
 
-            if (problem.getAnswer().equals(result.getSelect())) {
-                if (result.getMyTeamId().equals(homeTeamId)) {
-                    if (homeMap.containsKey(walletAddress)) {
-                        homeMap.put(walletAddress, homeMap.get(walletAddress) + 1);
-                    } else {
-                        homeMap.put(walletAddress, 1);
-                    }
-                } else {
-                    if (awayMap.containsKey(walletAddress)) {
-                        awayMap.put(walletAddress, awayMap.get(walletAddress) + 1);
-                    } else {
-                        awayMap.put(walletAddress, 1);
-                    }
-                }
+            if (problem != null && problem.getAnswer().equals(result.getSelect())) {
+                correctCounts.merge(walletAddress, 1, Integer::sum);
             }
         }
 
-        for (String walletAddress : homeMap.keySet()) {
-            RewardRequest requet = new RewardRequest(homeToken.getTokenAddress(), walletAddress, homeTokenPrice.multiply(new BigInteger(String.valueOf(homeMap.get(walletAddress)))));
-            rewardService.sendReward(requet);
+        for (Map.Entry<String, Integer> entry : correctCounts.entrySet()) {
+            String walletAddress = entry.getKey();
+            int correctCount = entry.getValue();
+
+            long randomTokenType = ThreadLocalRandom.current().nextLong(1, 11);
+
+            Team team = teamRepository.findById(randomTokenType)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+            Token token = tokenRepository.findByTokenName(team.getTokenName())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+
+            RewardRequest rewardRequest = new RewardRequest(
+                    token.getTokenAddress(),
+                    walletAddress,
+                    BigInteger.valueOf(correctCount)
+            );
+            rewardService.sendReward(rewardRequest);
+            log.info("[REWARD SENT] walletAddress={}, tokenType={}, tokenAddress={}, correctCount={}",
+                    walletAddress, randomTokenType, token.getTokenAddress(), correctCount);
         }
 
-        for (String walletAddress : awayMap.keySet()) {
-            RewardRequest requet = new RewardRequest(awayToken.getTokenAddress(), walletAddress, awayTokenPrice.multiply(new BigInteger(String.valueOf(awayMap.get(walletAddress)))));
-            rewardService.sendReward(requet);
-        }
+        log.info("[LIVE VOTE SETTLE COMPLETED] gameId={}", gameId);
     }
 
     // 팀 사전 투표 생성
@@ -125,6 +105,28 @@ public class GameSettleServiceImpl implements GameSettleService {
 
         for (String winnerWalletAddress : winnerWalletAddressList) {
             settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
+        }
+    }
+
+    // MVP 사전 투표 생성
+    @Override
+    public void createPreVoteMVPSettle(Long gameId, List<Long> playerIds, List<String> tokenAddresses, Long startTime) {
+        settlementService.createMVPGame(
+                BigInteger.valueOf(gameId),
+                playerIds.stream().map(BigInteger::valueOf).toList(),
+                tokenAddresses,
+                BigInteger.valueOf(startTime)
+        );
+    }
+
+    // MVP 사전 투표 정산
+    @Override
+    public void preVoteMVPSettle(Long gameId, Long winningPlayerId) {
+        settlementService.finalizePreVoteMVP(BigInteger.valueOf(gameId), BigInteger.valueOf(winningPlayerId));
+        List<String> winnerWalletAddressList = settlementService.getWinningVoters(BigInteger.valueOf(gameId));
+
+        for (String winnerWalletAddress : winnerWalletAddressList) {
+            settlementService.claimMVPRewardForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
         }
     }
 }

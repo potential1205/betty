@@ -149,6 +149,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.info("[DEBUG] ▶ Exchange({}) 에 대한 allowance: {}", exchangeAddress, allowance);
             log.info("[DEBUG] ▶ 전송 예정 금액 (amountWei): {}", amountWei);
 
+            betToken.approve(exchangeAddress, BigInteger.ZERO).send();
             // approve
             TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
             log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());

@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
+import org.example.betty.domain.game.dto.response.GameDetailResponse;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
+import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.service.GameService;
 import org.example.betty.domain.game.service.SseService;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +38,16 @@ public class GameController {
 
         List<GameInfoResponse> schedules = gameReadService.getTodayGameSchedules(accessToken);
         return ResponseEntity.ok(schedules);
+    }
+
+    @Operation(summary = "경기 상세 조회", description = "경기 상세 정보를 조회합니다.")
+    @GetMapping("/games/{gameId}")
+    public ResponseEntity<GameDetailResponse> getGameById(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+            @PathVariable Long gameId) {
+
+        GameDetailResponse response = gameReadService.getGameInfoById(accessToken, gameId);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "라인업 조회", description = "MVP 베팅을 위한 경기 라인업을 조회합니다.")

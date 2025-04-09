@@ -2,6 +2,7 @@ package org.example.betty.domain.game.service;
 
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
+import org.example.betty.domain.game.dto.response.GameDetailResponse;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
 
@@ -32,4 +33,5 @@ public interface GameService {
     Long resolveGameDbId(String gameId);
 
 
+    GameDetailResponse getGameInfoById(String accessToken, Long gameId);
 }

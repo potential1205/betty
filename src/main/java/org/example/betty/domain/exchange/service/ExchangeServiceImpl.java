@@ -120,8 +120,8 @@ public class ExchangeServiceImpl implements ExchangeService {
     private void handleAddTransaction(Transaction transaction) {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
-            BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigInteger();
+            BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100), 18, RoundingMode.HALF_UP); // 1BET = 100KRW
+            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact(); // 18자리 변환
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();
@@ -133,38 +133,36 @@ public class ExchangeServiceImpl implements ExchangeService {
                     betTokenAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
+
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
-                    zeroGasProvider
+                    new DefaultGasProvider()
             );
 
             String userWalletAddress = transaction.getWallet().getWalletAddress();
+            String operatorAddress = credentials.getAddress();
 
-            BigInteger allowance = betToken.allowance(credentials.getAddress(), exchangeAddress).send();
-            BigInteger balance = betToken.balanceOf(credentials.getAddress()).send();
-            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+            // 운영 지갑에서 사용자에게 BET 전송
+            TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
+            log.info("[TRANSFER SUCCESS] 운영자 → 사용자 {}: {} BET (tx={})",
+                    userWalletAddress, amountBet.toPlainString(), transferReceipt.getTransactionHash());
 
-            log.info("[ADD_FROM] 운영지갑={}, 사용자={}, 잔고={}, 요청량={}", credentials.getAddress(), userWalletAddress, balance, amountWei);
-
-            // allowance 부족 시 approve
-            if (allowance.compareTo(amountWei) < 0) {
-                log.info("[ADD] Allowance 부족 → approve 초기화 및 재설정");
-                betToken.approve(exchangeAddress, BigInteger.ZERO).send();
-                TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
-                log.info("[ADD_FROM] Approve 완료 → txHash={}", approveReceipt.getTransactionHash());
+            // 컨트랙트에 BET 잔고 충분한지 확인
+            BigInteger balance = betToken.balanceOf(exchangeAddress).send();
+            BigInteger expectedTotal = exchangeContract.totalBETAdded().send().add(amountWei);
+            if (balance.compareTo(expectedTotal) < 0) {
+                log.warn("[ADD_DIRECT FAIL] 컨트랙트 잔고 부족: 필요={}, 실제={}", expectedTotal, balance);
+                throw new RuntimeException("컨트랙트에 BET 잔고가 부족합니다.");
             }
 
-            // add
-            TransactionReceipt addReceipt = exchangeContract.addFrom(userWalletAddress, amountWei).send();
-            log.info("[ADD_FROM SUCCESS] 사용자={}, amount={}, txHash={}", userWalletAddress, amountWei, addReceipt.getTransactionHash());
-
-            // 사용자 지갑으로 전송
-            TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
-            log.info("[TRANSFER SUCCESS] 사용자={} amount={}, txHash={}", userWalletAddress, amountWei, transferReceipt.getTransactionHash());
+            // addDirect 호출
+            TransactionReceipt addReceipt = exchangeContract.addDirect(amountWei).send();
+            log.info("[ADD_DIRECT SUCCESS] 사용자={}, amount={}, txHash={}",
+                    userWalletAddress, amountBet.toPlainString(), addReceipt.getTransactionHash());
 
             // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);

@@ -89,8 +89,7 @@ public class GameRelayEventHandler {
             
             // 1. 정답 채점
             if (prevBatter != null && prevBatter.getName() != null) {
-//                String redisKey = "game:" + LocalDate.now() + ":" + gameId + ":problem";
-                String redisKey = "problems:" + gameId;
+                String redisKey = "livevote:problem:" + gameService.resolveGameDbId(gameId);
 
                 // 일단 전체 생성된 문제 조회
                 ListOperations<String, Object> listOps = redisTemplate2.opsForList();
@@ -139,7 +138,7 @@ public class GameRelayEventHandler {
 
             // 2. 새 문제 출제
             List<RedisGameProblem> problems = problemGenerator.generateAllProblems(gameId, currentRelay);
-            String redisKey = "problems:" + gameId;
+            String redisKey = "livevote:problem:" + gameService.resolveGameDbId(gameId);
             ListOperations<String, Object> listOps = redisTemplate2.opsForList();
 
             // 문제 저장

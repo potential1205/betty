@@ -163,21 +163,18 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void submitLiveVote(String accessToken, SubmitLiveVoteRequest request) {
-//        String walletAddress = sessionUtil.getWalletAddress(accessToken);
-//        walletRepository.findByWalletAddress(walletAddress)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
-//
-//        RedisGameLiveResult result = RedisGameLiveResult.builder()
-//                .walletAddress(walletAddress)
-//                .select(request.getSelectedAnswer())
-//                .problemId(request.getProblemId())
-//                .homeTeamId(request.getHomeTeamId())
-//                .awayTeamId(request.getAwayTeamId())
-//                .myTeamId(request.getMyTeamId())
-//                .build();
-//
-//        String redisKey = "votes:live:" + request.getGameId() + ":" + walletAddress;
-//        redisTemplate2.opsForValue().set(redisKey, result);
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+        walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        RedisGameLiveResult result = RedisGameLiveResult.builder()
+                .walletAddress(walletAddress)
+                .select(request.getSelectedAnswer())
+                .problemId(request.getProblemId())
+                .build();
+
+        String redisKey = "livevote:" + request.getGameId();
+        redisTemplate2.opsForValue().set(redisKey, result);
     }
 
     @Override

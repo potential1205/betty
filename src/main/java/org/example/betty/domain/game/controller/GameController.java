@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
+import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.dto.response.GameScheduleListResponse;
 import org.example.betty.domain.game.service.GameService;
@@ -64,4 +65,14 @@ public class GameController {
 
         return sseService.stream(accessToken, gameId);
     }
+
+    @Operation(summary = "라이브 투표 제출", description = "유저가 실시간 중계 중 라이브 투표를 제출합니다.")
+    @PostMapping("/games/{gameId}/votes/live")
+    public ResponseEntity<Void> submitLiveVote(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+            @RequestBody SubmitLiveVoteRequest request) {
+        gameReadService.submitLiveVote(accessToken, request);
+        return ResponseEntity.ok().build();
+    }
+
 }

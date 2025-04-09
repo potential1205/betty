@@ -444,8 +444,14 @@ const Home: React.FC = () => {
       <div className="absolute bottom-12 left-0 right-0 flex justify-center px-12 z-10">
         <button
           onClick={() => {
-            // currentGame을 useStore에 저장하고 페이지 이동
+            // currentGame을 useStore에 저장
             useStore.setState({ currentGame });
+            
+            // localStorage에 게임 ID와 정보 저장
+            localStorage.setItem('currentGameId', currentGame.gameId.toString());
+            localStorage.setItem('currentGame', JSON.stringify(currentGame));
+            
+            // 페이지 이동
             navigate('/main');
           }}
           className="w-full h-12 bg-black rounded-[20px] text-white text-lg font-medium"

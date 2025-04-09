@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import backImg from '../assets/back.png';
 import hamburgerImg from '../assets/hamburger.png';
@@ -10,6 +10,7 @@ import { Winner } from '../components/Winner';
 import { Game } from '../stores/useStore';
 import QuizModal from '../components/QuizModal';
 import axiosInstance from '../apis/axios';
+import { getGameDetail } from '../apis/gameApi';
 
 type Tab = 'LIVE-PICK' | 'WINNER' | 'DISPLAY';
 
@@ -45,6 +46,7 @@ interface ProblemHistory {
 
 const MainPage: React.FC = () => {
   const navigate = useNavigate();
+  const { gameId } = useParams<{ gameId: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('LIVE-PICK');
   const [displayTeam, setDisplayTeam] = useState<'home' | 'away'>('home');
   const { currentGame, toggleSidebar, setCurrentGame } = useStore();
@@ -56,24 +58,160 @@ const MainPage: React.FC = () => {
   const [problemHistory, setProblemHistory] = useState<ProblemHistory[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAnswer, setPendingAnswer] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 게임 정보가 없으면 홈으로 리다이렉트
-  if (!currentGame) {
-    navigate('/');
-    return null;
-  }
+  // 게임 정보 로드
+  useEffect(() => {
+    const loadGameData = async () => {
+      try {
+        // URL 파라미터에서 gameId가 있으면 사용, 아니면 로컬스토리지에서 확인
+        const targetGameId = gameId || localStorage.getItem('currentGameId');
+        
+        if (!targetGameId) {
+          // 게임 ID가 없는 경우 홈으로 리다이렉트
+          navigate('/home');
+          return;
+        }
+        
+        // 이미 currentGame이 있고 ID가 일치하면 로드하지 않음
+        if (currentGame && currentGame.gameId.toString() === targetGameId) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // localStorage에서 게임 정보를 확인
+        const savedGame = localStorage.getItem('currentGame');
+        if (savedGame) {
+          try {
+            const parsedGame = JSON.parse(savedGame);
+            if (parsedGame && parsedGame.gameId.toString() === targetGameId) {
+              setCurrentGame(parsedGame);
+              
+              // API를 통해 최신 정보도 가져오기 시도
+              try {
+                const numericGameId = Number(targetGameId);
+                const gameData = await getGameDetail(numericGameId);
+                console.log('API에서 가져온 게임 데이터:', gameData);
+                
+                // 형식 변환 - API 응답 형식을 useStore의 Game 형식에 맞게 변환
+                const formattedGame: Game = {
+                  id: gameData.id,
+                  gameId: gameData.id,
+                  homeTeamId: gameData.homeTeam.id,
+                  awayTeamId: gameData.awayTeam.id,
+                  homeTeam: gameData.homeTeam.teamName,
+                  awayTeam: gameData.awayTeam.teamName,
+                  homeScore: gameData.homeScore || 0,
+                  awayScore: gameData.awayScore || 0,
+                  status: gameData.status,
+                  inning: gameData.inning || 0,
+                  schedule: {
+                    gameId: gameData.id,
+                    homeTeamId: gameData.homeTeam.id,
+                    awayTeamId: gameData.awayTeam.id,
+                    season: gameData.season,
+                    gameDate: gameData.gameDate,
+                    startTime: `${gameData.startTime.hour}:${gameData.startTime.minute.toString().padStart(2, '0')}`,
+                    stadium: gameData.stadium,
+                    homeTeamName: gameData.homeTeam.teamName,
+                    awayTeamName: gameData.awayTeam.teamName,
+                    status: gameData.status
+                  },
+                  homeTeamCode: gameData.homeTeam.teamCode,
+                  awayTeamCode: gameData.awayTeam.teamCode,
+                  homeTeamName: gameData.homeTeam.teamName,
+                  awayTeamName: gameData.awayTeam.teamName
+                };
+                
+                setCurrentGame(formattedGame);
+                localStorage.setItem('currentGame', JSON.stringify(formattedGame));
+              } catch (apiError) {
+                console.error('API에서 최신 게임 정보 가져오기 실패:', apiError);
+                // API 호출 실패해도 localStorage의 데이터는 이미 설정됨
+              }
+              
+              setIsLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.error('저장된 게임 정보 파싱 오류:', e);
+            // 파싱 오류 시 API 호출 시도
+          }
+        }
+        
+        // localStorage에 정보가 없거나 파싱 오류 발생 시 API 호출
+        try {
+          const numericGameId = Number(targetGameId);
+          const gameData = await getGameDetail(numericGameId);
+          console.log('API에서 가져온 게임 데이터:', gameData);
+          
+          // 형식 변환 - API 응답 형식을 useStore의 Game 형식에 맞게 변환
+          const formattedGame: Game = {
+            id: gameData.id,
+            gameId: gameData.id,
+            homeTeamId: gameData.homeTeam.id,
+            awayTeamId: gameData.awayTeam.id,
+            homeTeam: gameData.homeTeam.teamName,
+            awayTeam: gameData.awayTeam.teamName,
+            homeScore: gameData.homeScore || 0,
+            awayScore: gameData.awayScore || 0,
+            status: gameData.status,
+            inning: gameData.inning || 0,
+            schedule: {
+              gameId: gameData.id,
+              homeTeamId: gameData.homeTeam.id,
+              awayTeamId: gameData.awayTeam.id,
+              season: gameData.season,
+              gameDate: gameData.gameDate,
+              startTime: `${gameData.startTime.hour}:${gameData.startTime.minute.toString().padStart(2, '0')}`,
+              stadium: gameData.stadium,
+              homeTeamName: gameData.homeTeam.teamName,
+              awayTeamName: gameData.awayTeam.teamName,
+              status: gameData.status
+            },
+            homeTeamCode: gameData.homeTeam.teamCode,
+            awayTeamCode: gameData.awayTeam.teamCode,
+            homeTeamName: gameData.homeTeam.teamName,
+            awayTeamName: gameData.awayTeam.teamName
+          };
+          
+          setCurrentGame(formattedGame);
+          localStorage.setItem('currentGameId', targetGameId);
+          localStorage.setItem('currentGame', JSON.stringify(formattedGame));
+          setIsLoading(false);
+          return;
+        } catch (apiError) {
+          console.error('API에서 게임 정보 가져오기 실패:', apiError);
+          // API 호출 실패 시 홈으로 리다이렉트
+          navigate('/home');
+        }
+      } catch (error) {
+        console.error('게임 정보 로드 실패:', error);
+        navigate('/home');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadGameData();
+  }, [gameId, navigate, setCurrentGame, currentGame]);
 
   // SSE 연결 및 문제 수신
   useEffect(() => {
-    if (!currentGame || currentGame.status !== 'LIVE') return;
+    if (!currentGame || currentGame.status !== 'LIVE' || isLoading) return;
 
-    const eventSource = new EventSource(
-      `${process.env.REACT_APP_API_URL}/api/v1/home/games/${currentGame.gameId}/stream`
-    );
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    // 웹소켓으로 변경 예정 - SSE 코드 제거됨
+    console.log("[리얼타임 연결] 웹소켓으로 변경 예정. 현재 연결 비활성화됨.");
+    
+    // 임시 디버깅 데이터
+    console.log(`게임 정보: ${currentGame.homeTeam} vs ${currentGame.awayTeam}, ID: ${currentGame.gameId}`);
+    
+    // 실시간 데이터 처리 함수 - 향후 웹소켓에서 사용할 예정
+    const handleRealTimeData = (data: any) => {
+      console.log("[리얼타임] 데이터 수신 처리기 호출됨 (현재 비활성화)", data);
       
+      // 타입별 처리 로직 (주석 처리)
+      /*
       switch (data.type) {
         case 'PROBLEM':
           setProblemData(data.problem);
@@ -96,32 +234,45 @@ const MainPage: React.FC = () => {
           break;
         case 'END':
           if (data.isGameEnd) {
-            // 경기 종료 처리
             setCurrentGame({
               ...currentGame!,
               status: 'ENDED'
             });
             setIsLive(false);
           } else {
-            // 문제 종료 처리
             setIsActive(false);
             if (problemData) {
-              setProblemHistory(prev => [...prev, {
+              const newHistory = {
                 ...problemData,
                 userAnswer: selectedAnswer
-              }]);
+              };
+              setProblemHistory(prev => [...prev, newHistory]);
             }
             setProblemData(null);
             setSelectedAnswer(null);
           }
           break;
       }
+      */
     };
-
+    
     return () => {
-      eventSource.close();
+      console.log("[리얼타임 연결] 정리 함수 호출됨 (현재 연결 없음)");
     };
-  }, [currentGame, problemData, selectedAnswer]);
+  }, [currentGame, problemData, selectedAnswer, isLoading]);
+
+  // 디버깅용 - 상태 변경 시 로깅
+  useEffect(() => {
+    console.log("[상태 디버깅] problemData 변경:", problemData);
+  }, [problemData]);
+
+  useEffect(() => {
+    console.log("[상태 디버깅] isActive 변경:", isActive);
+  }, [isActive]);
+
+  useEffect(() => {
+    console.log("[상태 디버깅] problemHistory 변경:", problemHistory);
+  }, [problemHistory]);
 
   // 타이머 카운트다운
   useEffect(() => {
@@ -181,6 +332,49 @@ const MainPage: React.FC = () => {
       alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
     }
   };
+
+  // 로딩 중인 경우 로딩 화면 표시
+  if (isLoading) {
+    return (
+      <div className="relative h-full bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-['Giants-Bold'] mb-2">
+            게임 정보 로딩 중...
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // 게임 정보가 없는 경우도 처리
+  if (!currentGame) {
+    return (
+      <div className="relative h-full bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-['Giants-Bold'] mb-2">
+            게임 정보를 찾을 수 없습니다
+          </div>
+          <div className="text-sm text-gray-400 mt-2 mb-4">
+            게임을 선택하거나 다시 시도해주세요
+          </div>
+          <div className="flex gap-3 justify-center">
+            <button 
+              onClick={() => navigate('/home')}
+              className="px-4 py-2 bg-white text-black rounded-full text-sm"
+            >
+              홈으로
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gray-800 text-white rounded-full text-sm"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full bg-black text-white overflow-hidden">

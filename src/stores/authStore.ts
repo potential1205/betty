@@ -46,6 +46,25 @@ export const useUserStore = create<UserState>()(
             console.log('Web3Auth 초기화 시작...');
             await web3auth.init();
             console.log('Web3Auth 초기화 완료');
+            
+            // 로컬 스토리지에서 인증 상태 확인
+            const storedState = localStorage.getItem('user-storage');
+            if (storedState) {
+              try {
+                const { isAuthenticated, walletAddress } = JSON.parse(storedState);
+                
+                // 이미 인증된 상태라면 상태 유지만 하고 실제 연결은 필요시 수행
+                if (isAuthenticated && walletAddress) {
+                  console.log('저장된 인증 상태 복원:', walletAddress);
+                  set({ 
+                    walletAddress,
+                    isAuthenticated: true
+                  });
+                }
+              } catch (parseError) {
+                console.error('저장된 상태 파싱 실패:', parseError);
+              }
+            }
           } else {
             console.log('Web3Auth 이미 연결됨');
           }
@@ -64,12 +83,22 @@ export const useUserStore = create<UserState>()(
 
       checkNickname: async () => {
         try {
+          // 지갑 주소 가져오기
+          const walletStore = useWalletStore.getState();
+          const walletAddress = await walletStore.getAccounts();
+          
+          if (!walletAddress) {
+            throw new Error('지갑 주소를 가져올 수 없습니다');
+          }
+          
           // useStore에서 닉네임 확인
           const { nickname: storeNickname } = useStore.getState();
           if (storeNickname) {
             set({
+              walletAddress,
               nickname: storeNickname,
-              needsNickname: false
+              needsNickname: false,
+              isAuthenticated: true
             });
             return true;
           }
@@ -80,8 +109,10 @@ export const useUserStore = create<UserState>()(
             const parsed = JSON.parse(storedNickname);
             if (parsed.nickname) {
               set({
+                walletAddress,
                 nickname: parsed.nickname,
-                needsNickname: false
+                needsNickname: false,
+                isAuthenticated: true
               });
               return true;
             }
@@ -90,14 +121,28 @@ export const useUserStore = create<UserState>()(
           // 로컬에 없으면 서버에서 조회
           const response = await getNickname();
           set({
+            walletAddress,
             nickname: response.nickname,
-            needsNickname: false
+            needsNickname: false,
+            isAuthenticated: true
           });
           return true;
-        } catch (error) {
+        } catch (error: any) {
           console.log('닉네임 등록이 필요합니다');
+          
+          // 에러 코드 확인하여 닉네임 등록 필요 여부 판단
+          if (error.response?.data?.code === 1006) {
+            set({
+              needsNickname: true,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return false;
+          }
+          
           set({
-            needsNickname: true
+            needsNickname: true,
+            isAuthenticated: false
           });
           return false;
         }

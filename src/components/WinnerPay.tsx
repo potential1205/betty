@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
+import { useWalletStore } from '../stores/walletStore';
+import { useUserStore } from '../stores/authStore';
 import axiosInstance from '../apis/axios';
+import { getTeamTokenName } from '../apis/tokenApi';
+import { placeBet, getWinningTeamVotingContract, getWinningTeamVotingContractReadOnly, getTeamBets } from '../utils/winningTeamVotingContract';
+import { web3auth } from '../utils/web3auth';
 
 interface WinnerPayProps {
   isOpen: boolean;
@@ -9,15 +14,85 @@ interface WinnerPayProps {
   type: 'winner' | 'mvp';
   team?: string;
   player?: string;
+  onBetSuccess?: () => void;
 }
 
-const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, player }) => {
+const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, player, onBetSuccess }) => {
   const [amount, setAmount] = useState<number>(0);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
   const { currentGame, walletInfo } = useStore();
+  const { getTokenBalance, tokenBalance, tokenBalanceLoading } = useWalletStore();
+  const { login, isAuthenticated } = useUserStore();
+  const [tokenName, setTokenName] = useState<string>('');
+  const [teamId, setTeamId] = useState<number | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   
-  const amounts = [10000, 50000, 100000, 500000];
+  const amounts = [1, 5, 10, 50];
+
+  // web3auth 로그인 상태 확인
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      // 1. web3auth.connected 체크
+      const isWeb3Connected = web3auth.connected;
+      
+      // 2. authStore의 isAuthenticated 체크
+      const isAuth = isAuthenticated;
+      
+      // 3. 최종 로그인 상태 설정 (App.tsx에서 web3auth 연결 유지 로직을 처리하므로 자동 재연결 로직 제거)
+      setIsLoggedIn(isWeb3Connected || isAuth);
+    };
+    
+    checkLoginStatus();
+  }, [isAuthenticated]);
+
+  // 토큰 이름 가져오기 및 teamId 설정
+  useEffect(() => {
+    const fetchTokenName = async () => {
+      if (!currentGame || !team) return;
+      
+      try {
+        // 선택한 팀의 팀 ID 확인
+        const currentTeamId = team === currentGame.homeTeam 
+          ? currentGame.homeTeamId 
+          : currentGame.awayTeamId;
+          
+        if (!currentTeamId) return;
+        
+        setTeamId(currentTeamId);
+        
+        // 토큰 이름 가져오기
+        const fetchedTokenName = await getTeamTokenName(currentTeamId);
+        setTokenName(fetchedTokenName || 'BET');
+      } catch (error) {
+        console.error('토큰 이름 가져오기 실패:', error);
+        setTokenName('BET'); // 기본값
+      }
+    };
+    
+    fetchTokenName();
+  }, [currentGame, team]);
+  
+  // 토큰 잔액 가져오기
+  useEffect(() => {
+    const fetchTokenBalance = async () => {
+      if (!teamId) return;
+      
+      setIsLoadingBalance(true);
+      try {
+        await getTokenBalance(teamId);
+      } catch (error) {
+        console.error('토큰 잔액 가져오기 실패:', error);
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+    
+    fetchTokenBalance();
+  }, [teamId, getTokenBalance]);
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -39,181 +114,272 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
     setAmount(Number(newAmount));
   };
 
+  // 로그인 처리
+  const handleLogin = async () => {
+    try {
+      setIsPlacingBet(true);
+      setError(null);
+      
+      // useUserStore의 login 함수 사용 (web3auth 초기화 + 연결 포함)
+      const loginSuccess = await login('google');
+      
+      if (loginSuccess) {
+        setIsLoggedIn(true);
+        
+        // 로그인 후 토큰 잔액 새로고침
+        if (teamId) {
+          await getTokenBalance(teamId);
+        }
+      } else {
+        throw new Error('로그인에 실패했습니다');
+      }
+    } catch (err: any) {
+      console.error('로그인 실패:', err);
+      setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsPlacingBet(false);
+    }
+  };
+
   const handlePay = async () => {
-    if (amount <= 0 || !currentGame) return;
+    // 로그인/연결 상태 재확인
+    const isConnected = web3auth.connected;
+    const providerExists = !!web3auth.provider;
+    
+    // 연결되어 있지 않거나 프로바이더가 없는 경우 로그인 필요
+    if (!isConnected || !providerExists) {
+      setError('베팅을 위해 먼저 지갑에 연결해주세요.');
+      return;
+    }
+
+    if (amount <= 0 || !currentGame || !teamId) {
+      setError('유효한 금액과 팀을 선택해주세요.');
+      return;
+    }
+
+    setIsPlacingBet(true);
+    setError(null);
 
     try {
-      // 배팅 API 호출
-      const response = await axiosInstance.post('/bets', {
-        gameId: currentGame.gameId,
-        amount: amount,
-        type: type,
-        target: type === 'winner' ? team : player
-      });
-
-      if (response.status === 200) {
-        setShowSuccess(true);
-        setTimeout(() => {
-          setShowSuccess(false);
-          setAmount(0);
-          setCustomAmount('');
-          onClose();
-        }, 1500);
+      // privateKey를 사용하여 베팅하기
+      console.log(`베팅 시작: 게임 ID=${currentGame.gameId}, 팀 ID=${teamId}, 금액=${amount}`);
+      
+      // 1. 개인키 가져오기
+      const privateKey = await useWalletStore.getState().exportPrivateKey();
+      if (!privateKey) {
+        throw new Error("개인키를 가져올 수 없습니다. 다시 로그인해주세요.");
       }
-    } catch (err) {
-      console.error('배팅 실패:', err);
-      alert('배팅에 실패했습니다. 다시 시도해주세요.');
+      
+      // 2. 컨트랙트 인스턴스 생성
+      const contract = getWinningTeamVotingContract(privateKey);
+      
+      // 3. 베팅 실행
+      const receipt = await placeBet(
+        contract,
+        currentGame.gameId,
+        teamId,
+        amount.toString()
+      );
+      
+      console.log('베팅 성공:', receipt);
+      
+      // 4. 베팅 성공 후 상태 업데이트
+      // 베팅 금액 업데이트를 위해 컨트랙트에서 다시 조회
+      const readOnlyContract = getWinningTeamVotingContractReadOnly();
+      const updatedBets = await getTeamBets(readOnlyContract, currentGame.gameId, teamId);
+      console.log('업데이트된 베팅량:', updatedBets);
+      
+      // 콜백 함수 호출로 부모 컴포넌트에 베팅 성공 알림
+      if (onBetSuccess) {
+        onBetSuccess();
+      }
+      
+      // 성공 메시지 표시
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setAmount(0);
+        setCustomAmount('');
+        onClose();
+      }, 1500);
+      
+    } catch (err: any) {
+      console.error('베팅 실패:', err);
+      
+      // 연결 관련 오류인 경우 다시 로그인 필요
+      if (err.message && (
+          err.message.includes('개인키를 가져올 수 없습니다') || 
+          err.message.includes('invalid sender')
+        )) {
+        setError('지갑 연결에 문제가 있습니다. 다시 로그인해주세요.');
+      } else {
+        setError(err.message || '베팅에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsPlacingBet(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-white z-50"
-      style={{
-        width: '360px',
-        height: '743px',
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        overflow: 'hidden'
-      }}
-    >
-      {/* 헤더 */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
-        <div className="w-[12px] h-[12px]" />
-        <h1 className="text-lg font-['Giants-Bold'] text-gray-800">
-          {type === 'winner' ? `${team} 우승 예측` : `${player} MVP 예측`}
-        </h1>
-        <button 
-          onClick={onClose}
-          className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
-        >
-          <svg
-            className="w-full h-full"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div 
+        className="bg-white rounded-xl overflow-hidden shadow-xl"
+        style={{ width: '100%', maxWidth: '360px' }}
+      >
+        {/* 헤더 */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-100">
+          <div className="w-5"></div>
+          <h1 className="text-lg font-['Giants-Bold'] text-gray-800">
+            {type === 'winner' ? `${team} 우승 예측` : `${player} MVP 예측`}
+          </h1>
+          <button 
+            onClick={onClose}
+            className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-      </div>
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
 
-      {/* 메인 컨텐츠 */}
-      <div className="h-[calc(100%-56px)] flex flex-col justify-center">
-        <div className="p-4 flex flex-col">
+        {/* 메인 컨텐츠 */}
+        <div className="p-4">
           {/* 현재 보유 금액 */}
-          <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-4">
+          <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-3 shadow-lg mb-3">
             <p className="text-xs text-gray-400 mb-1">현재 보유 금액</p>
             <div className="flex items-baseline">
-              <p className="text-xl font-['Giants-Bold'] text-white">{walletInfo.totalBET.toLocaleString()}</p>
-              <p className="text-sm text-gray-400 ml-1">원</p>
+              {tokenBalanceLoading || isLoadingBalance ? (
+                <p className="text-sm text-gray-400">로딩 중...</p>
+              ) : (
+                <>
+                  <p className="text-xl font-['Giants-Bold'] text-white">
+                    {tokenBalance ? Number(tokenBalance).toLocaleString(undefined, {maximumFractionDigits: 4}) : '0'}
+                  </p>
+                  <p className="text-sm text-gray-400 ml-1">{tokenName || 'BET'}</p>
+                </>
+              )}
+            </div>
+            <div className="flex items-baseline mt-1">
+              <p className="text-xs text-gray-400">BET 잔액: {walletInfo.totalBET.toLocaleString()}</p>
             </div>
           </div>
 
-          {/* 금액 선택 버튼들 */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {amounts.map((value) => (
+          {!isLoggedIn ? (
+            // 로그인 필요 화면
+            <div className="py-4 flex flex-col items-center">
+              <p className="text-sm text-gray-600 text-center mb-4">
+                베팅을 위해 지갑에 연결해주세요.
+              </p>
               <button
-                key={value}
-                onClick={() => {
-                  setAmount(value);
-                  setCustomAmount('');
-                }}
-                className={`p-4 rounded-xl text-center transition-colors
-                  ${amount === value && !customAmount
-                    ? 'bg-black text-white' 
-                    : 'bg-gray-100 text-black hover:bg-gray-200'}`}
+                onClick={handleLogin}
+                disabled={isPlacingBet}
+                className="px-6 py-3 rounded-xl bg-black text-white font-['Giants-Bold'] hover:bg-gray-800 transition-colors"
               >
-                <p className="text-sm mb-1">베팅금액</p>
-                <p className="text-lg font-['Giants-Bold']">
-                  {value.toLocaleString()}원
-                </p>
+                {isPlacingBet ? '연결 중...' : '지갑 연결하기'}
               </button>
-            ))}
-          </div>
-
-          {/* 직접 입력 필드 */}
-          <div className="bg-gray-100 rounded-lg p-3 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500">직접 입력하기</span>
             </div>
-            <div className="flex items-center justify-between">
-              <input
-                type="text"
-                value={customAmount}
-                onChange={handleCustomAmountChange}
-                placeholder="0"
-                className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
-              />
-              <span className="text-gray-500 ml-2">원</span>
-            </div>
-          </div>
+          ) : (
+            // 로그인 완료 후 베팅 화면
+            <>
+              {/* 금액 선택 버튼들 */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {amounts.map((value) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      setAmount(value);
+                      setCustomAmount(value.toString());
+                    }}
+                    className={`p-3 rounded-xl text-center transition-colors
+                      ${amount === value
+                        ? 'bg-black text-white' 
+                        : 'bg-gray-100 text-black hover:bg-gray-200'}`}
+                  >
+                    <p className="text-sm mb-1">베팅금액</p>
+                    <p className="text-lg font-['Giants-Bold']">
+                      {value.toLocaleString()} {tokenName || 'BET'}
+                    </p>
+                  </button>
+                ))}
+              </div>
 
-          {/* 버튼 */}
-          <button
-            onClick={handlePay}
-            disabled={amount === 0}
-            className={`w-full py-4 rounded-xl text-white text-base font-['Giants-Bold'] transition-colors ${
-              amount > 0
-                ? 'bg-black hover:bg-gray-800'
-                : 'bg-gray-300 cursor-not-allowed'
-            }`}
-          >
-            베팅하기
-          </button>
+              {/* 직접 입력 필드 */}
+              <div className="bg-gray-100 rounded-lg p-3 mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-500">직접 입력하기</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <input
+                    type="text"
+                    value={customAmount}
+                    onChange={handleCustomAmountChange}
+                    placeholder="0"
+                    className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
+                  />
+                  <span className="text-gray-500 ml-2">{tokenName || 'BET'}</span>
+                </div>
+              </div>
+
+              {/* 에러 메시지 */}
+              {error && (
+                <div className="bg-red-50 text-red-500 p-2 rounded-lg mb-3 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* 버튼 */}
+              <button
+                onClick={handlePay}
+                disabled={amount === 0 || isPlacingBet}
+                className={`w-full py-3 rounded-xl text-white text-base font-['Giants-Bold'] transition-colors ${
+                  amount > 0 && !isPlacingBet
+                    ? 'bg-black hover:bg-gray-800'
+                    : 'bg-gray-300 cursor-not-allowed'
+                }`}
+              >
+                {isPlacingBet ? '베팅 처리 중...' : '베팅하기'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      <AnimatePresence>
-        {showSuccess && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-white flex items-center justify-center pointer-events-none z-[60]"
-          >
-            <div className="flex flex-col items-center">
-              <svg
-                className="w-16 h-16 sm:w-24 sm:h-24 text-green-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <motion.path
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5 }}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 13l4 4L21 7"
-                />
-              </svg>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-sm sm:text-base font-['Giants-Bold'] text-gray-800 mt-2 sm:mt-3"
-              >
-                베팅이 완료되었습니다
-              </motion.p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      {/* 성공 메시지 모달 */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-[60]">
+          <div className="flex flex-col items-center">
+            <svg
+              className="w-16 h-16 text-green-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 13l4 4L21 7"
+              />
+            </svg>
+            <p className="text-base font-['Giants-Bold'] text-gray-800 mt-2">
+              베팅이 완료되었습니다
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -43,7 +43,7 @@ public class Web3jServiceImpl implements Web3jService {
 
     @Override
     public Credentials getCredentials() {
-        return Credentials.create(adminPrivateKey);
+        return credentials;
     }
 
 

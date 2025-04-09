@@ -133,6 +133,10 @@ public class ExchangeServiceImpl implements ExchangeService {
             TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, MAX_UINT256).send();
             log.info("[APPROVE MAX] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
+            log.info("[CREDENTIALS] Using credentials address: {}", credentials.getAddress());
+            log.info("[TOKEN BALANCE] admin BET balance: {}", betToken.balanceOf(credentials.getAddress()).send());
+            log.info("[ALLOWANCE] admin -> exchange allowance: {}", betToken.allowance(credentials.getAddress(), exchangeAddress).send());
+
             // add
             TransactionReceipt addReceipt = exchangeContract.addFrom(credentials.getAddress(), amountWei).send();
             log.info("[ADD_FROM SUCCESS] operator={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());

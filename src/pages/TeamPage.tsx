@@ -9,6 +9,9 @@ import Sidebar from '../components/Sidebar';
 import SuggestModal from '../components/suggest';
 import ConfirmModal from '../components/confirm';
 import axiosInstance from '../apis/axios';
+import { voteOnProposal, checkVoted } from '../utils/proposalContract';
+import { web3auth } from '../utils/web3auth';
+import { ethers } from 'ethers';
 
 // 팀 이름/코드 포맷팅 함수
 const formatTeamName = (teamId: string) => {
@@ -33,15 +36,30 @@ interface Proposal {
   closedAt: string;
 }
 
+interface Token {
+  tokenName: string;
+  balance: number;
+}
+
+interface WalletBalance {
+  walletAddress: string;
+  nickname: string;
+  totalBet: number;
+  tokens: Token[];
+}
+
 // 제안 카드 컴포넌트
 const ProposalCard: React.FC<{
   proposal: Proposal;
   tokenCount: number;
-  onVote: (proposalId: number) => void;
+  onVote: (proposalId: number) => Promise<void>;
   isApproved: boolean;
 }> = ({ proposal, tokenCount, onVote, isApproved }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
+  const [votingError, setVotingError] = useState<string | null>(null);
   const progress = (proposal.currentCount / proposal.targetCount) * 100;
   const teamCode = formatTeamCode(String(proposal.teamId));
   const isCompleted = progress >= 100;
@@ -53,6 +71,60 @@ const ProposalCard: React.FC<{
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // 투표 여부 확인
+  useEffect(() => {
+    const checkVoteStatus = async () => {
+      try {
+        if (!web3auth.provider) return;
+        
+        const provider = new ethers.BrowserProvider(web3auth.provider);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        
+        const voted = await checkVoted(proposal.id, address);
+        setHasVoted(voted);
+      } catch (error) {
+        console.error('투표 여부 확인 실패:', error);
+      }
+    };
+    
+    checkVoteStatus();
+  }, [proposal.id]);
+
+  const handleVoteClick = async () => {
+    try {
+      setIsVoting(true);
+      setVotingError(null);
+      setIsConfirmOpen(false);
+
+      // 웹쓰리 인증 확인
+      if (!web3auth.provider) {
+        setVotingError('블록체인 지갑 연결이 필요합니다. 로그인 상태를 확인해주세요.');
+        return;
+      }
+      
+      // 웹쓰리 연결 상태 확인
+      if (!web3auth.connected) {
+        setVotingError('블록체인 연결이 끊어졌습니다. 재로그인이 필요합니다.');
+        return;
+      }
+      
+      // 이미 투표했는지 확인
+      if (hasVoted) {
+        setVotingError('이미 투표하셨습니다.');
+        return;
+      }
+
+      await onVote(proposal.id);
+      setHasVoted(true);
+    } catch (error: any) {
+      console.error('투표 처리 실패:', error);
+      setVotingError(error.message || '투표 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   return (
@@ -96,9 +168,22 @@ const ProposalCard: React.FC<{
         <span>진행률: {Math.round(progress)}%</span>
       </div>
 
+      {/* 투표 버튼 또는 상태 표시 */}
       {isApproved || isCompleted ? (
         <div className="w-full py-3 rounded-full bg-green-400/20 text-green-400 text-center text-sm">
           구단 검토 예정인 제안입니다
+        </div>
+      ) : hasVoted ? (
+        <div className="w-full py-3 rounded-full bg-blue-400/20 text-blue-400 text-center text-sm">
+          이미 투표한 제안입니다
+        </div>
+      ) : isVoting ? (
+        <div className="w-full py-3 rounded-full bg-gray-700 text-gray-400 text-center text-sm">
+          투표 처리 중...
+        </div>
+      ) : votingError ? (
+        <div className="w-full py-3 rounded-full bg-red-400/20 text-red-400 text-center text-sm">
+          {votingError}
         </div>
       ) : (
         <button
@@ -118,10 +203,7 @@ const ProposalCard: React.FC<{
       <ConfirmModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
-        onConfirm={() => {
-          onVote(proposal.id);
-          setIsConfirmOpen(false);
-        }}
+        onConfirm={handleVoteClick}
         team={String(proposal.teamId)}
         requiredTokens={1}
       />
@@ -133,51 +215,59 @@ const TeamPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [teamTokenCount, setTeamTokenCount] = useState(0);
+  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState(1); // 기본 팀 ID (두산)
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   const { toggleSidebar } = useStore();
   const [teamsData, setTeamsData] = useState(Object.values(TEAMS).map(team => Number(team.id)));
   const [visibleTeams, setVisibleTeams] = useState<number[]>([]);
 
-  // 팀 ID 변경 시 데이터 로드
+  // 현재 선택된 팀의 토큰 수량 계산
+  const getSelectedTeamTokenCount = () => {
+    if (!walletBalance) return 0;
+    const selectedTeamCode = formatTeamCode(String(selectedTeamId));
+    const teamToken = walletBalance.tokens.find(token => token.tokenName === selectedTeamCode);
+    return teamToken?.balance || 0;
+  };
+
+  // 컴포넌트 마운트 시 지갑 잔액 조회
   useEffect(() => {
-    const loadTeamData = async () => {
+    const loadWalletBalance = async () => {
+      try {
+        const walletData = await axiosInstance.get('/wallet/balances');
+        setWalletBalance(walletData.data);
+      } catch (error) {
+        console.error('지갑 잔액 조회 실패:', error);
+        setWalletBalance(null);
+      }
+    };
+    
+    loadWalletBalance();
+  }, []);
+
+  // 팀 ID 변경 시 제안 목록만 로드
+  useEffect(() => {
+    const loadProposals = async () => {
       setLoading(true);
       try {
-        // 병렬로 데이터 불러오기
-        const [proposalsData, tokenCountData] = await Promise.all([
-          axiosInstance.get(`/proposals/team/${selectedTeamId}`),
-          axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
-        ]);
-        
+        const proposalsData = await axiosInstance.get(`/proposals/team/${selectedTeamId}`);
         setProposals(proposalsData.data.proposalList || []);
-        setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
       } catch (error: any) {
-        console.error('팀 데이터 로딩 실패:', error);
-        // 더 자세한 에러 정보 출력
+        console.error('제안 목록 로딩 실패:', error);
         if (error.response) {
-          // 서버가 응답을 반환한 경우
           console.error('Error response:', {
             data: error.response.data,
             status: error.response.status,
             headers: error.response.headers
           });
-        } else if (error.request) {
-          // 요청은 보냈지만 응답을 받지 못한 경우
-          console.error('Error request:', error.request);
-        } else {
-          // 요청 설정 중에 문제가 발생한 경우
-          console.error('Error message:', error.message);
         }
         setProposals([]);
-        setTeamTokenCount(0);
       } finally {
         setLoading(false);
       }
     };
     
-    loadTeamData();
+    loadProposals();
   }, [selectedTeamId]);
 
   // 보이는 팀 목록 업데이트
@@ -188,21 +278,38 @@ const TeamPage: React.FC = () => {
   // 투표 핸들러
   const handleVote = async (proposalId: number) => {
     try {
+      // 1. 블록체인에 투표 트랜잭션 전송
+      console.log('안건 ID로 투표 요청:', proposalId);
+      const txHash = await voteOnProposal(proposalId);
+      console.log('투표 트랜잭션 해시:', txHash);
+      
+      // 2. 백엔드 API로 투표 등록
       await axiosInstance.post('/proposals/vote', {
         teamId: selectedTeamId,
         proposalId
       });
       
-      // 투표 후 데이터 다시 불러오기
-      const [proposalsData, tokenCountData] = await Promise.all([
+      // 3. 데이터 다시 불러오기
+      const [proposalsData, walletData] = await Promise.all([
         axiosInstance.get(`/proposals/team/${selectedTeamId}`),
-        axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
+        axiosInstance.get('/wallet/balances')
       ]);
       
       setProposals(proposalsData.data.proposalList || []);
-      setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
-    } catch (error) {
+      setWalletBalance(walletData.data);
+    } catch (error: any) {
       console.error('투표 실패:', error);
+      
+      // 오류 메시지 사용자 친화적으로 변환
+      let errorMsg = error.message || '알 수 없는 오류';
+      
+      if (errorMsg.includes('invalid sender')) {
+        errorMsg = '지갑 인증에 문제가 있습니다. 다시 로그인한 후 시도해주세요.';
+      } else if (errorMsg.includes('insufficient funds')) {
+        errorMsg = '트랜잭션 수수료를 지불할 토큰이 부족합니다.';
+      }
+      
+      throw new Error(errorMsg);
     }
   };
 
@@ -217,13 +324,13 @@ const TeamPage: React.FC = () => {
       });
       
       // 제안 생성 후 데이터 다시 불러오기
-      const [proposalsData, tokenCountData] = await Promise.all([
+      const [proposalsData, walletData] = await Promise.all([
         axiosInstance.get(`/proposals/team/${selectedTeamId}`),
-        axiosInstance.get(`/proposals/team/${selectedTeamId}/token/count`)
+        axiosInstance.get('/wallet/balances')
       ]);
       
       setProposals(proposalsData.data.proposalList || []);
-      setTeamTokenCount(tokenCountData.data.teamTokenCount || 0);
+      setWalletBalance(walletData.data);
     } catch (error) {
       console.error('제안 생성 실패:', error);
     }
@@ -327,14 +434,14 @@ const TeamPage: React.FC = () => {
               <h2 className="text-lg font-['Giants-Bold'] mb-2">보유 토큰</h2>
               <div className="flex items-center">
                 <span className="text-2xl font-['Giants-Bold']">
-                  {teamTokenCount}
+                  {getSelectedTeamTokenCount()}
                 </span>
                 <span className="ml-2 text-gray-400 font-['Giants-Bold']">{formatTeamCode(String(selectedTeamId))}</span>
               </div>
             </div>
 
             {/* 제안하기 버튼 - 텍스트만 있는 버전 */}
-            {teamTokenCount >= 3 && (
+            {getSelectedTeamTokenCount() >= 10 && (
               <div className="pl-6">
                 <button
                   onClick={() => setIsSuggestModalOpen(true)}
@@ -354,14 +461,14 @@ const TeamPage: React.FC = () => {
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
             </div>
-          ) : teamTokenCount > 0 ? (
+          ) : getSelectedTeamTokenCount() > 0 ? (
             // 제안 목록
             proposals.length > 0 ? (
               proposals.map(proposal => (
                 <ProposalCard
                   key={proposal.id}
                   proposal={proposal}
-                  tokenCount={teamTokenCount}
+                  tokenCount={getSelectedTeamTokenCount()}
                   onVote={handleVote}
                   isApproved={proposal.currentCount >= proposal.targetCount}
                 />

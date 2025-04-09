@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreVoteSettleRequest {
+public class MvpPreVoteSettleRequest {
     private Long gameId;
-    private Long winningTeamId;
+    private Long winningPlayerId;
 }

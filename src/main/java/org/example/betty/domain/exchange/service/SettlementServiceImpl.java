@@ -169,6 +169,7 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public void createMVPGame(BigInteger gameId, List<BigInteger> playerIds, List<String> tokenAddresses, BigInteger startTime) {
+        log.info("createMVPGame 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -181,6 +182,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("createMVPGame 호출");
             TransactionReceipt receipt = contract.createMVPGame(gameId, playerIds, tokenAddresses, startTime)
                     .send();
 
@@ -193,6 +195,7 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public void finalizePreVoteMVP(BigInteger gameId, BigInteger winningPlayerId) {
+        log.info("finalizePreVoteMVP 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -205,6 +208,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("finalizePreVoteMVP 호출");
             TransactionReceipt receipt = contract.finalizeMVP(gameId, winningPlayerId).send();
 
             log.info("[FINALIZE MVP GAME SUCCESS] gameId={}, txHash={}", gameId, receipt.getTransactionHash());
@@ -215,6 +219,7 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public List<String> getWinningVoters(BigInteger gameId) {
+        log.info("getWinningVoters 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -227,6 +232,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("getWinningVoters 호출");
             List<String> bettors = contract.getWinningVoters(gameId).send();
 
             log.info("[GET WINNING MVP BETTORS SUCCESS] gameId={}, bettors={}", gameId, bettors);
@@ -239,6 +245,7 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public void claimMVPRewardForUser(BigInteger gameId, String user) {
+        log.info("claimMVPRewardForUser 시작");
         try {
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -251,6 +258,7 @@ public class SettlementServiceImpl implements SettlementService {
                     new DefaultGasProvider()
             );
 
+            log.info("claimMVPRewardForUser 호출");
             TransactionReceipt receipt = contract.claimMVPRewardForUser(gameId, user).send();
 
             log.info("[CLAIM FOR USER SUCCESS] user={}, gameId={}, txHash={}", user, gameId, receipt.getTransactionHash());

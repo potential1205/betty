@@ -22,6 +22,8 @@ public enum ErrorCode {
     NOT_FOUND_LINEUP(HttpStatus.NOT_FOUND, 2001, "라인업 정보가 존재하지 않습니다."),
     INVALID_REDIS_DATA(HttpStatus.INTERNAL_SERVER_ERROR, 2002, "Redis 데이터 형식이 잘못되었습니다."),
     INVALID_TEAM_NAME(HttpStatus.BAD_REQUEST, 2003, "유효하지 않은 팀 이름입니다."),
+    NOT_FOUND_GAME_RESULT(HttpStatus.NOT_FOUND, 2004, "경기 결과가 존재하지 않습니다."),
+    NOT_FOUND_GAME(HttpStatus.NOT_FOUND, 2005, "경기가 존재하지 않습니다."),
     DISPLAY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 3002, "전광판 저장에 실패했습니다."),
     NOT_FOUND_DISPLAY_ACCESS(HttpStatus.INTERNAL_SERVER_ERROR, 3003, "전광판 접근 권한이 없습니다."),
     ALREADY_HAS_DISPLAY_ACCESS(HttpStatus.INTERNAL_SERVER_ERROR, 3003, "이미 전광판 접근 권한이 있습니다."),

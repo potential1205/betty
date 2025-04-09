@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface TeamRepository extends JpaRepository<Team, Long> {
     Team findByTeamNameContaining(String teamName);
-
     Optional<Team> findByTeamCode(String teamCode);
+    Optional<Team> findByTeamNameStartingWith(String teamName);
+
 }

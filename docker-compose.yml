@@ -98,6 +98,12 @@ services:
       # Chain ID
       CHAIN_ID: ${CHAIN_ID}
 
+      # WinningTeamVoting
+      WINNING_TEAM_VOTING_ADDRESS: ${WINNING_TEAM_VOTING_ADDRESS}
+
+      # MVPVoting
+      MVP_VOTING_ADDRESS: ${WINNING_TEAM_VOTING_ADDRESS}
+
   selenium-chrome-1:
     image: selenium/standalone-chrome:134.0-20250323
     container_name: selenium-chrome-1

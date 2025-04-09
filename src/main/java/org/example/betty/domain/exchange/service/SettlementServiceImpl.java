@@ -2,6 +2,7 @@ package org.example.betty.domain.exchange.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -18,6 +19,12 @@ import org.web3j.tx.gas.DefaultGasProvider;
 @RequiredArgsConstructor
 @Slf4j
 public class SettlementServiceImpl implements SettlementService {
+
+    @Value("${WINNING_TEAM_VOTING_ADDRESS}")
+    private String winningTeamVotingAddress;
+
+    @Value("${MVP_VOTING_ADDRESS}")
+    private String mvpVotingAddress;
 
     private final Web3jService web3jService;
 
@@ -45,7 +52,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.WinningTeamVoting contract = org.example.betty.contract.WinningTeamVoting.load(
-                    "",
+                    winningTeamVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -78,7 +85,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.WinningTeamVoting contract = org.example.betty.contract.WinningTeamVoting.load(
-                    "",
+                    winningTeamVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -108,7 +115,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.WinningTeamVoting contract = org.example.betty.contract.WinningTeamVoting.load(
-                    "",
+                    winningTeamVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -141,7 +148,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.WinningTeamVoting contract = org.example.betty.contract.WinningTeamVoting.load(
-                    "",
+                    winningTeamVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -168,7 +175,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
-                    "",
+                    mvpVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -192,7 +199,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
-                    "",
+                    mvpVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -214,7 +221,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
-                    "",
+                    mvpVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
@@ -238,7 +245,7 @@ public class SettlementServiceImpl implements SettlementService {
             long chainId = web3jService.getChainId();
 
             org.example.betty.contract.MVPVoting contract = org.example.betty.contract.MVPVoting.load(
-                    "",
+                    mvpVotingAddress,
                     web3j,
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()

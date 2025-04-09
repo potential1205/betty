@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenPriceRepository;
 import org.example.betty.domain.exchange.repository.TokenRepository;
+import org.example.betty.domain.exchange.service.SettlementService;
 import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
 import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.example.betty.domain.game.entity.Team;
@@ -33,6 +34,7 @@ public class GameSettlementServiceImpl implements GameSettlementService {
     private final TokenRepository tokenRepository;
     private final TeamRepository teamRepository;
     private final RewardService rewardService;
+    private final SettlementService settlementService;
 
     public void liveVoteSettle(Long gameId, Long homeTeamId, Long awayTeamId) {
 
@@ -96,8 +98,13 @@ public class GameSettlementServiceImpl implements GameSettlementService {
         }
     }
 
-    public void preVoteSettle(Long gameId) {
+    public void preVoteSettle(Long gameId, Long winnderTeamId) {
+        settlementService.finalizeGame(BigInteger.valueOf(gameId), BigInteger.valueOf(winnderTeamId));
+        List<String> winnerWalletAddressList = settlementService.getWinningTeamBettors(BigInteger.valueOf(gameId));
 
+        for (String winnerWalletAddress : winnerWalletAddressList) {
+            settlementService.claimForUser(BigInteger.valueOf(gameId), winnerWalletAddress);
+        }
     }
 
 }

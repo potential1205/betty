@@ -9,6 +9,7 @@ import CollaborativeCanvas from '../components/CollaborativeCanvas';
 import { Winner } from '../components/Winner';
 import { Game } from '../stores/useStore';
 import QuizModal from '../components/QuizModal';
+import axiosInstance from '../apis/axios';
 
 type Tab = 'LIVE-PICK' | 'WINNER' | 'DISPLAY';
 
@@ -66,7 +67,9 @@ const MainPage: React.FC = () => {
   useEffect(() => {
     if (!currentGame || currentGame.status !== 'LIVE') return;
 
-    const eventSource = new EventSource(`${process.env.REACT_APP_API_URL}/api/games/${currentGame.gameId}/events`);
+    const eventSource = new EventSource(
+      `${process.env.REACT_APP_API_URL}/api/v1/home/games/${currentGame.gameId}/stream`
+    );
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -162,21 +165,20 @@ const MainPage: React.FC = () => {
     if (!currentGame || !problemData || !pendingAnswer) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/games/${currentGame.gameId}/problems/${problemData.problemId}/answer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ answer: pendingAnswer }),
+      const response = await axiosInstance.post(`/home/games/${currentGame.gameId}/votes/live`, {
+        gameId: currentGame.gameId,
+        selectedAnswer: pendingAnswer,
+        problemId: problemData.problemId
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         setSelectedAnswer(pendingAnswer);
         setShowConfirmModal(false);
         setPendingAnswer(null);
       }
     } catch (error) {
       console.error('답변 제출 실패:', error);
+      alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

@@ -28,7 +28,6 @@ public class GameRelayEventHandler {
     private final ProblemGenerator problemGenerator;
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
-    private final SseService sseService;
     private final GameService gameService;
     private final GameSocketService gameSocketService;
 
@@ -111,7 +110,7 @@ public class GameRelayEventHandler {
 
                         log.info("[채점 대상 발견] 문제ID={} | 유형={} | 타자={}", problem.getProblemId(), problem.getQuestionCode(), problem.getBatterName());
 
-                        String answer = determineAnswer(problem, prevBatter);
+                        String answer = determineAnswer(problem, prevBatter, currentRelay);
 
                         if (answer == null) {
                             log.warn("[정답 미정] 문제ID={} | 타자={} | summary 또는 pitchResults 부족", problem.getProblemId(), problem.getBatterName());
@@ -171,7 +170,7 @@ public class GameRelayEventHandler {
         }
     }
 
-    private String determineAnswer(RedisGameProblem problem, PlayerRelayInfo prevBatter) {
+    private String determineAnswer(RedisGameProblem problem, PlayerRelayInfo prevBatter, RedisGameRelay relay) {
         String summary = prevBatter.getSummaryText();
         List<String> pitchResults = prevBatter.getPitchResults();
         String questionCode = problem.getQuestionCode();
@@ -182,9 +181,9 @@ public class GameRelayEventHandler {
             case PITCH_COUNT:
                 if (pitchResults == null) return null;
                 int pitchCount = pitchResults.size();
-                if (pitchCount <= 3) return "① 1~3구";
-                else if (pitchCount <= 6) return "② 4~6구";
-                else return "③ 7구 이상";
+                if (pitchCount <= 4) return "① 1~4구";
+                else if (pitchCount <= 8) return "② 5~8구";
+                else return "③ 9구 이상";
 
             case ON_BASE:
                 if (summary == null) return null;
@@ -250,9 +249,8 @@ public class GameRelayEventHandler {
                 }
                 return "O";
 
-            case LAST_BATTER:
-                if (summary == null) return "X";
-                if (summary.contains("마지막") || summary.contains("3아웃") || summary.contains("경기 종료") || summary.contains("경기 끝")) {
+            case GO_TO_BOTTOM_9  :
+                if (relay.getInning() != null && relay.getInning().startsWith("9회말")) {
                     return "O";
                 }
                 return "X";

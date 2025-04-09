@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
+import org.example.betty.domain.game.service.GameService;
 import org.example.betty.external.game.scraper.GameResultScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +21,7 @@ public class GameResultAsyncExecutor {
     @Qualifier("redisTemplate2")
     private final RedisTemplate<String, Object> redisTemplate2;
     private final ObjectMapper objectMapper;
+    private final GameService gameService;
 
     @Async
     public void executeResultScraping(String gameId, int seleniumIndex) {
@@ -40,7 +41,8 @@ public class GameResultAsyncExecutor {
 
     private void saveToRedis(String gameId, PreVoteAnswer result) {
         try {
-            String key = "results:" + gameId;
+            Long id = gameService.resolveGameDbId(gameId);
+            String key = "results:" + id;
             String value = objectMapper.writeValueAsString(result);
             redisTemplate2.opsForValue().set(key, value);
         } catch (Exception e) {

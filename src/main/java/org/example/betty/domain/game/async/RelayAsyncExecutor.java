@@ -33,7 +33,6 @@ public class RelayAsyncExecutor {
     private final Map<String, ScheduledFuture<?>> relayTasks = new ConcurrentHashMap<>();
     private final GameRelayEventHandler gameRelayEventHandler;
     private final GameService gameService;
-    private final SseService sseService;
     private final GameResultAsyncExecutor gameResultAsyncExecutor;
     private final DisplayService displayService;
     private final GameSettleService gameSettleService;
@@ -52,10 +51,10 @@ public class RelayAsyncExecutor {
                     stopRelay(gameId);
                     log.info("[중계 중단] gameId: {} - 경기 종료 감지로 반복 크롤링 중단", gameId);
                     
-//                    // 경기 종료 시 호출해야하는 작업을 위한 정보 세팅
-//                    long id = gameService.resolveGameDbId(gameId);
-//                    Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-//                    log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
+                    // 경기 종료 시 호출해야하는 작업을 위한 정보 세팅
+                    long id = gameService.resolveGameDbId(gameId);
+                    Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+                    log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, teamIds.get("homeTeamId"), teamIds.get("awayTeamId"));
 //
 //                    // 1. 전광판 종료처리 (홈팀/원정팀)
 //                    displayService.gameEnd(id, teamIds.get("homeTeamId"));
@@ -64,7 +63,6 @@ public class RelayAsyncExecutor {
 //
 //                    // 2. 경기 상태 종료 처리 + SSE 알림
 //                    Game game = gameService.findGameByGameId(gameId);
-//                    sseService.send(gameId, "ENDED");
 //                    gameService.updateGameStatusToEnded(game);
 //                    log.info("[경기 상태 종료 완료] gameId: {}", gameId);
 //
@@ -80,6 +78,8 @@ public class RelayAsyncExecutor {
 
                 saveRelayDataToRedis(gameId, relayData);
                 log.info("[중계 크롤링] gameId: {} - 크롤링 완료", gameId);
+
+                // 경기 정보 업데이트 및 소켓 전송
                 gameRelayEventHandler.handleRelayUpdate(gameId, relayData);
                 gameRelayEventHandler.handleGameInfoChange(gameId, relayData);
 

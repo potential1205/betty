@@ -2,10 +2,10 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.async.LineupAsyncExecutor;
 import org.example.betty.domain.game.async.RelayAsyncExecutor;
+import org.example.betty.domain.game.dto.redis.PlayerInfo;
 import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
@@ -29,9 +29,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Stream;
 
 
 @Slf4j
@@ -47,7 +48,6 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final LineupAsyncExecutor lineupAsyncExecutor;
     private final RelayAsyncExecutor relayAsyncExecutor;
     private final GameService gameService;
-    private final SseService sseService;
     private final GameRepository gameRepository;
     private final GameSettleService gameSettleService;
     private final TeamRepository teamRepository;
@@ -142,9 +142,9 @@ public class GameCacheServiceImpl implements GameCacheService {
                 scheduleRelayJob(game); // 중계 크롤링 예약
             }
             // Redis 키 만료 설정
-            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
-            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
-            redisTemplate2.expireAt(redisKey, expireDate);
+//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
+//            redisTemplate2.expireAt(redisKey, expireDate);
         }
     }
 
@@ -168,6 +168,8 @@ public class GameCacheServiceImpl implements GameCacheService {
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
         LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+//        LocalDateTime executeTime = LocalDateTime.now().plusMinutes(1);
+
 
         final Integer seleniumIndex;
         try {
@@ -187,6 +189,56 @@ public class GameCacheServiceImpl implements GameCacheService {
                 if (lineup != null) {
                     redisTemplate2.opsForHash().put(redisKey, "lineup", lineup);
                     log.info("[라인업 저장 완료] - gameId: {}, time: {}", gameId, LocalDateTime.now());
+
+                    // MVP 베팅 시작
+                    Long id = gameService.resolveGameDbId(gameId);
+
+                    // 1. playerIds 구성
+                    List<Long> playerIds = Stream.concat(
+                                    Stream.concat(
+                                            Stream.of(lineup.getAway().getStarterPitcher()),
+                                            lineup.getAway().getStarterBatters().stream()
+                                    ),
+                                    Stream.concat(
+                                            Stream.of(lineup.getHome().getStarterPitcher()),
+                                            lineup.getHome().getStarterBatters().stream()
+                                    )
+                            )
+                            .filter(player -> player != null && player.getId() != null)
+                            .map(PlayerInfo::getId)
+                            .toList();
+
+                    // 2. tokenAddresses 구성
+                    List<String> tokenAddresses = new ArrayList<>();
+
+                    String awayTokenName = game.getAwayTeam().getTokenName();
+                    String homeTokenName = game.getHomeTeam().getTokenName();
+
+                    String awayTokenAddress = tokenRepository.findByTokenName(awayTokenName)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND))
+                            .getTokenAddress();
+
+                    String homeTokenAddress = tokenRepository.findByTokenName(homeTokenName)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND))
+                            .getTokenAddress();
+
+                    // away 선수 수만큼 away 주소 추가
+                    int awayPlayerCount = 1 + lineup.getAway().getStarterBatters().size(); // pitcher + batters
+                    for (int i = 0; i < awayPlayerCount; i++) {
+                        tokenAddresses.add(awayTokenAddress);
+                    }
+
+                    // home 선수 수만큼 home 주소 추가
+                    int homePlayerCount = 1 + lineup.getHome().getStarterBatters().size(); // pitcher + batters
+                    for (int i = 0; i < homePlayerCount; i++) {
+                        tokenAddresses.add(homeTokenAddress);
+                    }
+
+                    // 3. 최종 호출
+                    gameSettleService.createPreVoteMVPSettle(id, playerIds, tokenAddresses);
+
+
+
                 } else {
                     log.warn("[라인업 저장 실패] 라인업이 null임 - gameId: {}, time: {}", gameId, LocalDateTime.now());
                 }
@@ -230,7 +282,6 @@ public class GameCacheServiceImpl implements GameCacheService {
         if (gameStartTime.isBefore(LocalDateTime.now())) {
             try {
                 gameService.updateGameStatusToLive(game);
-                sseService.send(gameId, "LIVE");
                 relayAsyncExecutor.startRelay(gameId, seleniumIndex);
                 log.info("[중계 크롤링 시작] 경기 시작 시간 지남 - gameId: {}", gameId);
             } catch (Exception e) {
@@ -241,27 +292,64 @@ public class GameCacheServiceImpl implements GameCacheService {
                     () -> {
                         try {
                             gameService.updateGameStatusToLive(game);
-                            sseService.send(gameId, "LIVE");
                             relayAsyncExecutor.startRelay(gameId, seleniumIndex);
                             log.info("[중계 크롤링 시작] 예약 실행 - gameId: {}", gameId);
 
                             // 1. 승리팀 베팅 정산 호출
-//                            Long id = gameService.resolveGameDbId(gameId);
-//                            String key = "results:" + gameId;
-//                            PreVoteAnswer result = (PreVoteAnswer) redisTemplate2.opsForValue().get(key);
-//
-//                            if (result == null) {
-//                                throw new BusinessException(ErrorCode.NOT_FOUND_GAME_RESULT);
-//                            }
-//                            String winnerPrefix = result.getWinnerTeam();
-//                            Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
-//                                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-//                            Long winnerTeamId = winnerTeam.getId();
-//                            gameSettleService.preVoteTeamSettle(id, winnerTeamId);
-//                            log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
-                            
+                            Long id = gameService.resolveGameDbId(gameId);
+                            String key = "results:" + gameId;
+                            PreVoteAnswer result = (PreVoteAnswer) redisTemplate2.opsForValue().get(key);
+
+                            if (result == null) {
+                                throw new BusinessException(ErrorCode.NOT_FOUND_GAME_RESULT);
+                            }
+                            String winnerPrefix = result.getWinnerTeam();
+                            Team winnerTeam = teamRepository.findByTeamNameStartingWith(winnerPrefix)
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+                            Long winnerTeamId = winnerTeam.getId();
+                            gameSettleService.preVoteTeamSettle(id, winnerTeamId);
+                            log.info("[승리팀 베팅 정산 호출 완료] gameId: {}", gameId);
+
                             // 2. MVP 베팅 정산 호출
-                            
+                            String mvp = result.getMvpName();
+                            RedisGameLineup lineup = (RedisGameLineup) redisTemplate2.opsForHash()
+                                    .get(redisKey, "lineup");
+
+                            if (lineup == null) {
+                                throw new IllegalStateException("라인업 정보를 찾을 수 없습니다.");
+                            }
+
+                            // 홈팀과 원정팀의 모든 선수 리스트 만들기
+                            List<PlayerInfo> allPlayers = new ArrayList<>();
+                            if (lineup.getHome() != null) {
+                                if (lineup.getHome().getStarterPitcher() != null) {
+                                    allPlayers.add(lineup.getHome().getStarterPitcher());
+                                }
+                                if (lineup.getHome().getStarterBatters() != null) {
+                                    allPlayers.addAll(lineup.getHome().getStarterBatters());
+                                }
+                            }
+                            if (lineup.getAway() != null) {
+                                if (lineup.getAway().getStarterPitcher() != null) {
+                                    allPlayers.add(lineup.getAway().getStarterPitcher());
+                                }
+                                if (lineup.getAway().getStarterBatters() != null) {
+                                    allPlayers.addAll(lineup.getAway().getStarterBatters());
+                                }
+                            }
+
+                            // 선수 이름으로 MVP 검색
+                            PlayerInfo matchedPlayer = allPlayers.stream()
+                                    .filter(p -> p != null && p.getName().equals(mvp))
+                                    .findFirst()
+                                    .orElse(null);
+
+                            if (matchedPlayer == null) {
+                                throw new IllegalStateException("MVP 선수 정보를 찾을 수 없습니다: " + mvp);
+                            }
+
+                            gameSettleService.preVoteMVPSettle(id, matchedPlayer.getId());
+
                         } catch (Exception e) {
                             log.error("[중계 크롤링 실패] gameId: {}, error: {}", gameId, e.getMessage(), e);
                         }

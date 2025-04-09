@@ -7,6 +7,8 @@ import org.example.betty.domain.game.dto.redis.RedisGameRelay;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -16,7 +18,9 @@ public class ProblemGenerator {
         List<RedisGameProblem> result = new ArrayList<>();
         PlayerRelayInfo batter = relay.getBatter();
         PlayerRelayInfo pitcher = relay.getPitcher();
-        String now = LocalDateTime.now().toString();
+        String now = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
 
         if (batter == null || pitcher == null) return result;
 
@@ -34,8 +38,8 @@ public class ProblemGenerator {
                 .attackTeam(attackTeam)
                 .batterName(batterName)
                 .questionCode(QuestionCode.PITCH_COUNT.name())
-                .description(String.format("%s %s의 타석은 몇 구 안에 끝날까요?", batterPosition, batterName))
-                .options(List.of("① 1~3구", "② 4~6구", "③ 7구 이상"))
+                .description(String.format("%s %s의 타석은 몇 구 안에 승부가 날까요?", batterPosition, batterName))
+                .options(List.of("① 1~4구", "② 5~8구", "③ 9구 이상"))
                 .timestamp(now)
                 .build());
 
@@ -70,10 +74,11 @@ public class ProblemGenerator {
                 .attackTeam(attackTeam)
                 .batterName(batterName)
                 .questionCode(QuestionCode.STRIKE_SEQUENCE.name())
-                .description(String.format("투수 %s가 %s %s을 연속 스트라이크로 압도할 수 있을까요?", pitcherName, batterPosition, batterName))
+                .description(String.format("투수 %s, 이번 타석 초반 2연속 스트라이크로 기세를 가져올 수 있을까요?", pitcherName))
                 .options(List.of("O", "X"))
                 .timestamp(now)
                 .build());
+
 
         result.add(RedisGameProblem.builder()
                 .problemId(UUID.randomUUID().toString())
@@ -88,18 +93,20 @@ public class ProblemGenerator {
                 .build());
 
         // 2. 특수 문제 조건 체크 및 생성
-        // 선발 투수 이닝 책임은 무조건 생성
-        result.add(RedisGameProblem.builder()
-                .problemId(UUID.randomUUID().toString())
-                .gameId(gameId)
-                .inning(inning)
-                .attackTeam(attackTeam)
-                .batterName(pitcherName)
-                .questionCode(QuestionCode.PITCHER_DUTY.name())
-                .description("선발 투수는 몇 이닝까지 책임질까요?")
-                .options(List.of("① 5이닝 이하", "② 6~7이닝", "③ 8이닝 이상"))
-                .timestamp(now)
-                .build());
+        // 선발 투수 이닝 책임은 1이닝에서만
+        if (inning.startsWith("1")) {
+            result.add(RedisGameProblem.builder()
+                    .problemId(UUID.randomUUID().toString())
+                    .gameId(gameId)
+                    .inning(inning)
+                    .attackTeam(attackTeam)
+                    .batterName(pitcherName)
+                    .questionCode(QuestionCode.PITCHER_DUTY.name())
+                    .description("선발 투수는 몇 이닝까지 책임질까요?")
+                    .options(List.of("① 5이닝 이하", "② 6~7이닝", "③ 8이닝 이상"))
+                    .timestamp(now)
+                    .build());
+        }
 
         // 2루 주자가 있는 경우에만 타점 문제 생성
         if (relay.getRunnerOnBase() != null && relay.getRunnerOnBase().stream().anyMatch(r -> r.contains("2루"))) {
@@ -140,30 +147,27 @@ public class ProblemGenerator {
                     .attackTeam(attackTeam)
                     .batterName(pitcherName)
                     .questionCode(QuestionCode.NO_RUN_ALLOWED.name())
-                    .description(String.format("투수 %s는 이번 이닝을 실점 없이 막을 수 있을까요?", pitcherName))
+                    .description(String.format("투수 %s는 이번 이닝을 실점 없이 끝낼 수 있을까요?", pitcherName))
                     .options(List.of("O", "X"))
                     .timestamp(now)
                     .build());
         }
 
-        // 마지막 타자 예측: 9회말 && 동점일 때만
-        if ("9회말".equals(inning) && isTiedScore(relay.getScore())) {
-            List<String> nextBatters = relay.getNextBatters();
-            if (nextBatters != null && !nextBatters.isEmpty()) {
-                String selected = nextBatters.get(new Random().nextInt(nextBatters.size()));
-                result.add(RedisGameProblem.builder()
-                        .problemId(UUID.randomUUID().toString())
-                        .gameId(gameId)
-                        .inning("9회말")
-                        .attackTeam(attackTeam)
-                        .batterName(selected)
-                        .questionCode(QuestionCode.LAST_BATTER.name())
-                        .description(String.format("이번 경기 마지막 타자가 될 가능성이 가장 높은 선수는 %s입니다. 이 선수가 정말 마지막 타자가 될까요?", selected))
-                        .options(List.of("O", "X"))
-                        .timestamp(now)
-                        .build());
-            }
+        // (9이닝 시작 시점 동점인 상황) 9회말까지 경기가 이어질까요?
+        if ("9회초".equals(inning) && isTiedScore(relay.getScore())) {
+            result.add(RedisGameProblem.builder()
+                    .problemId(UUID.randomUUID().toString())
+                    .gameId(gameId)
+                    .inning("9회초")
+                    .attackTeam(attackTeam)
+                    .batterName(null)
+                    .questionCode(QuestionCode.GO_TO_BOTTOM_9 .name()) // 새로운 질문 코드 사용하는 걸 추천
+                    .description("경기가 9회말까지 이어질까요?")
+                    .options(List.of("O", "X"))
+                    .timestamp(now)
+                    .build());
         }
+
 
         return result;
     }

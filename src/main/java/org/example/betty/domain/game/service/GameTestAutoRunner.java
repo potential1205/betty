@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.game.dto.redis.PlayerRelayInfo;
 import org.example.betty.domain.game.dto.redis.RedisGameRelay;
-import org.example.betty.domain.game.service.GameRelayEventHandler;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,31 +24,31 @@ public class GameTestAutoRunner implements CommandLineRunner {
 
     private static final String GAME_ID = "20250410HHOB02025";
     private static final String REDIS_KEY = "games:2025-04-10:20250410HHOB02025";
-    private final AtomicInteger inningCounter = new AtomicInteger(1); // 시작 이닝 번호
+    private final AtomicInteger inningCounter = new AtomicInteger(1);
 
     private final List<String> batterNames = Arrays.asList("박민우", "손아섭", "이명기", "노진혁", "김성욱");
-    private final List<String> previousNames = Arrays.asList("김주원", "이호성", "이승엽", "김기태", "이정후");
 
     @Override
     public void run(String... args) {
-        log.info("[자동 테스트] GameTestAutoRunner 시작됨! 10초마다 relay 자동 전송 테스트 중...");
+        log.info("[자동 테스트] GameTestAutoRunner 시작됨! 5초마다 relay 자동 전송 테스트 중...");
     }
 
-    @Scheduled(fixedRate = 5000) // 5초마다 실행
+    @Scheduled(fixedRate = 5000)
     public void pushTestRelay() {
         int inningNum = inningCounter.getAndIncrement();
 
         String inningText = (inningNum % 2 == 1) ? (inningNum / 2 + 1) + "회초" : (inningNum / 2) + "회말";
         String scoreText = "NC " + (inningNum % 5 + 1) + " : 키움 " + (inningNum % 3);
+
+        String prevName = batterNames.get((inningNum - 1 + batterNames.size()) % batterNames.size());
         String batterName = batterNames.get(inningNum % batterNames.size());
-        String prevName = previousNames.get(inningNum % previousNames.size());
 
         RedisGameRelay relay = RedisGameRelay.builder()
                 .inning(inningText)
                 .teamAtBat("NC공격")
                 .score(scoreText)
                 .outCount(2)
-                .pitchResult(Arrays.asList("스트라이크", "볼")) // 더미로라도 줘야 문제 출제 유리
+                .pitchResult(Arrays.asList("스트라이크", "볼"))
                 .runnerOnBase(Arrays.asList("1루 1루 \n권희동"))
                 .pitcher(PlayerRelayInfo.builder()
                         .name("정현우")
@@ -72,10 +71,8 @@ public class GameTestAutoRunner implements CommandLineRunner {
                 .nextBatters(Arrays.asList("4번 데이비슨", "5번 박건우", "6번 한재환"))
                 .build();
 
-        // Redis에 저장
         redisTemplate2.opsForHash().put(REDIS_KEY, "relay", relay);
 
-        // 소켓 이벤트 + 문제 출제 트리거
         gameRelayEventHandler.handleGameInfoChange(GAME_ID, relay);
         gameRelayEventHandler.handleRelayUpdate(GAME_ID, relay);
 

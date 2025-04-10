@@ -113,20 +113,20 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
             );
-            Exchange exchangeContract = Exchange.load(
-                    exchangeAddress,
-                    web3j,
-                    new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
-            );
+//            Exchange exchangeContract = Exchange.load(
+//                    exchangeAddress,
+//                    web3j,
+//                    new RawTransactionManager(web3j, credentials, chainId),
+//                    new DefaultGasProvider()
+//            );
 
             // approve
-            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
-
-            // add
-            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
-            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
+//            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
+//            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
+//
+//            // add
+//            TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
+//            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
 
             // 사용자 지갑으로 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();
@@ -139,8 +139,8 @@ public class ExchangeServiceImpl implements ExchangeService {
             transactionRepository.save(transaction);
 
             // 온체인 기준 DB 잔고 업데이트
-            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
-            BigDecimal updatedBet = new BigDecimal(updatedWei);
+//            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
+//            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package org.example.betty.domain.exchange.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.betty.common.util.SessionUtil;
+import org.example.betty.domain.exchange.dto.resp.TokenInfoResponse;
 import org.example.betty.domain.exchange.entity.Token;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.entity.Team;
@@ -15,7 +16,6 @@ import org.example.betty.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -89,5 +89,21 @@ public class TokenServiceImpl implements TokenService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
 
         return walletBalance.getBalance();
+    }
+
+    @Override
+    public TokenInfoResponse getTokenInfoById(String accessToken, Long tokenId) {
+        String walletAddress = sessionUtil.getWalletAddress(accessToken);
+
+        Wallet wallet = walletRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
+
+        Token token = tokenRepository.findById(tokenId)
+                .orElseThrow(()-> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), tokenId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
+
+        return TokenInfoResponse.of(walletBalance.getBalance(), token.getTokenAddress());
     }
 }

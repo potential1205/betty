@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../stores/useStore';
 import { removeBettyCoin } from '../apis/exchangeApi';
+import { useWalletStore } from '../stores/walletStore';
+import { ethers } from 'ethers';
+import TokenABI from '../../abi/Token.json'
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -23,6 +26,30 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
     
     try {
       setIsLoading(true);
+
+      // 1. 개인키
+      const walletStore = useWalletStore.getState();
+      const privateKey = await walletStore.exportPrivateKey();
+      if (!privateKey) throw new Error("개인키를 가져올 수 없습니다");
+      const provider = new ethers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
+      const wallet = new ethers.Wallet(privateKey, provider);
+
+      const betAddress = import.meta.env.VITE_BET_ADDRESS!;
+      const exchangeAddress = import.meta.env.VITE_EXCHANGE_ADDRESS!;
+      const betContract = new ethers.Contract(betAddress, TokenABI.abi, wallet);
+      const amountWei = ethers.parseEther(amount);
+
+      // 2. approve
+      const allowance = await betContract.allowance(wallet.address, exchangeAddress);
+      if (allowance < amountWei) {
+        const approveTx = await betContract.approve(exchangeAddress, amountWei);
+        await approveTx.wait();
+        console.log('approve 완료');
+      } else {
+        console.log('이미 승인됨');
+      }
+
+      // 3. 백엔드 출금 요청
       const res = await removeBettyCoin(Number(amount));
 
       if (res.success) {

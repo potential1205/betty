@@ -94,6 +94,9 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price,
           const tx = {
             to: EXCHANGE_ADDRESS,
             data,
+            gasLimit: 1_000_000,
+            gasPrice: 0,
+            value: 0
           };
 
           const signedTx = await signer.signTransaction(tx);

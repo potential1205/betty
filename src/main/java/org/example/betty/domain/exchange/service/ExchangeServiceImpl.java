@@ -66,6 +66,10 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Autowired
     private FanTokenAddressResolver fanTokenAddressResolver;
 
+    private BigInteger toWei(BigDecimal amount) {
+        return amount.multiply(BigDecimal.TEN.pow(18)).toBigInteger();
+    }
+
     // 1-1. add 요청 처리
     @Override
     public TransactionResponse processAdd(TransactionRequest request, String accessToken) {
@@ -99,7 +103,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             BigDecimal amountKrw = transaction.getAmountIn(); // KRW
             BigDecimal amountBet = amountKrw.divide(BigDecimal.valueOf(100)); // 1BET = 100KRW
-            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact();
+            BigInteger amountWei = toWei(amountBet);
 
             // 운영 지갑 Credentials, GasProvider
             Web3j web3j = web3jService.getWeb3j();
@@ -176,13 +180,14 @@ public class ExchangeServiceImpl implements ExchangeService {
                 .wallet(wallet)
                 .tokenFrom(bet)
                 .tokenTo(null) // KRW
-                .amountIn(request.getAmountIn())
+                .amountIn(requestedAmount)
                 .amountOut(null)
                 .transactionStatus(TransactionStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         transactionRepository.save(transaction);
+
         new Thread(() -> handleRemoveTransaction(transaction)).start();
 
         return new TransactionResponse(true, "출금 요청이 처리 중입니다.", transaction.getId());
@@ -190,21 +195,12 @@ public class ExchangeServiceImpl implements ExchangeService {
 
     // 2-2. remove 블록체인 트랜잭션 처리
     private void handleRemoveTransaction(Transaction transaction) {
+        log.info("[REMOVE] 트랜잭션 시작 - id={}, wallet={}, amount={} BETTY",
+                transaction.getId(), transaction.getWallet(), transaction.getAmountIn());
         try {
-            BigDecimal amountBet = transaction.getAmountIn(); // BET
-            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1 BET = 100 KRW
-            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact();
-
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
             long chainId = web3jService.getChainId();
-
-            org.example.betty.contract.Token betToken = org.example.betty.contract.Token.load(
-                    betTokenAddress,
-                    web3j,
-                    new RawTransactionManager(web3j, credentials, chainId),
-                    new DefaultGasProvider()
-            );
 
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
@@ -215,14 +211,19 @@ public class ExchangeServiceImpl implements ExchangeService {
 
             // 사용자 지갑에서 BET 출금 approve
             String userWalletAddress = transaction.getWallet().getWalletAddress();
-            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-            log.info("[APPROVE SUCCESS] user={}, amount={}, txHash={}", userWalletAddress, amountBet, approveReceipt.getTransactionHash());
+            BigDecimal amountBet = transaction.getAmountIn();
+            BigInteger amountWei = toWei(amountBet);
+
+            log.info("[REMOVE] removeFrom 호출 - from={}, amountWei={}", userWalletAddress, amountWei);
 
             // remove
             TransactionReceipt removeReceipt = exchangeContract.removeFrom(userWalletAddress, amountWei).send();
+
             log.info("[REMOVE SUCCESS] wallet={}, amount={}, txHash={}", userWalletAddress, amountBet, removeReceipt.getTransactionHash());
 
             // 트랜잭션 업데이트
+            BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100));
+
             transaction.updateAmountOut(amountKrw);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);

@@ -3,6 +3,7 @@ package org.example.betty.domain.exchange.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.example.betty.domain.exchange.dto.resp.TokenAddressResponse;
+import org.example.betty.domain.exchange.dto.resp.TokenInfoResponse;
 import org.example.betty.domain.exchange.dto.resp.TokenNameResponse;
 import org.example.betty.domain.exchange.dto.resp.TokenPriceResponse;
 import org.example.betty.domain.exchange.service.TokenService;
@@ -61,5 +62,16 @@ public class TokenController {
         BigDecimal balance = tokenService.getBettyPrice(accessToken);
 
         return ResponseEntity.ok(TokenPriceResponse.of(balance));
+    }
+
+    @Operation(summary = "토큰 ID로 토큰 정보 조회", description = "토큰 ID로 토큰 정보를 조회합니다.")
+    @GetMapping("/{tokenId}")
+    public ResponseEntity<TokenInfoResponse> getTokenInfoById(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String accessToken,
+            @PathVariable Long tokenId) {
+
+        TokenInfoResponse response = tokenService.getTokenInfoById(accessToken, tokenId);
+
+        return ResponseEntity.ok(response);
     }
 }

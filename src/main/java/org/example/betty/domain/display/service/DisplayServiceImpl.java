@@ -169,36 +169,7 @@ public class DisplayServiceImpl implements DisplayService{
         Pixel[][] board = getDisplay(gameId, teamId);
         board[r][c] = pixel;
         redisTemplate3.opsForValue().set(key, board);
-        log.info("updatePixcel 성공" + pixel.getColor() + pixel.getWalletAddress() + " " + r + " " + c);
     }
-
-//    public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
-//        BufferedImage image = createImageFromBoard(display);
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//
-//        try {
-//            ImageIO.write(image, "png", baos);
-//            baos.flush();
-//            byte[] imageBytes = baos.toByteArray();
-//            baos.close();
-//
-//            String contentType = "image/png";
-//            String displayUrl = s3Util.upload(imageBytes, contentType, gameId, teamId, inning);
-//
-//            Display newDisplay = Display.builder()
-//                    .gameId(gameId)
-//                    .teamId(teamId)
-//                    .inning(inning)
-//                    .displayUrl(displayUrl)
-//                    .createdAt(LocalDateTime.now())
-//                    .build();
-//
-//            log.info("게임ID : " + gameId + "팀 ID : "  + teamId + " " + inning + " 번째 이닝 이미지가 정상적으로 저장되었습니다.");
-//            displayRepository.save(newDisplay);
-//        } catch (IOException e) {
-//            throw new BusinessException(ErrorCode.DISPLAY_SAVE_FAILED);
-//        }
-//    }
 
     public void saveDisplay(Pixel[][] display, Long gameId, Long teamId, int inning) {
         // 1. board 배열로부터 원본 이미지를 생성 (예: 64x64)

@@ -10,7 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -22,34 +21,26 @@ public class SessionUtil {
     @Qualifier("redisTemplate")
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public void setSession(String walletAddress, String accessToken, Duration ttl) {
-        redisTemplate.opsForValue().set(walletAddress, accessToken, ttl);
+    public void setSession(String walletAddress, Duration ttl) {
+        redisTemplate.opsForValue().set(walletAddress, Boolean.TRUE, ttl);
     }
 
     public String getSession(String accessToken) {
-        log.info("accessToken 검증 전");
         if (accessToken == null || accessToken.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ACCESS_TOKEN);
         }
-        log.info("accessToken 존재");
-        String accessTokenBody = accessToken.substring(7).trim();
 
+        String accessTokenBody = accessToken.substring(7).trim();
         String walletAddress = jwtService.getSubjectFromToken(accessTokenBody);
 
+        log.info("입력된 accessToken: " + accessTokenBody);
         log.info("accessToken에서 지갑 주소 추출:" + walletAddress);
 
-        Object stored = redisTemplate.opsForValue().get(walletAddress);
-
-        log.info("redis 세션 조회:" + walletAddress + " " + stored);
-        log.info("입력된 accessToken: " + accessTokenBody);
-        log.info("둘이 같나: " + accessTokenBody.equals(stored));
-
-        if (!Objects.equals(accessTokenBody, stored)) {
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(walletAddress))) {
             throw new BusinessException(ErrorCode.INVALID_SESSION);
         }
 
         log.info("redis 세션 조회 성공:" + walletAddress);
-
         return walletAddress;
     }
 

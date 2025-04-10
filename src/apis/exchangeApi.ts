@@ -5,6 +5,12 @@ export interface TransactionRequest {
     amountIn: number;
 }
 
+export interface SignedBuyRequest {
+    tokenId: number;
+    amountIn: number;
+    signedRawTransaction: string;
+}
+
 export interface SwapRequest {
     tokenFromId: number;
     tokenToId: number;
@@ -46,6 +52,20 @@ export const removeBettyCoin = async (amountIn: number) : Promise<TransactionRes
 export const buyFanToken = async (request: TransactionRequest): Promise<TransactionResponse> => {
     return (await axiosInstance.post("/exchange/buy", request)).data;
 }
+
+export const buyFanTokenSigned = async (
+    signedRawTransaction: string,
+    tokenId: number,
+    amountIn: number
+): Promise<TransactionResponse> => {
+    return (
+        await axiosInstance.post("/exchange/buy/signed", {
+            signedRawTransaction,
+            tokenId,
+            amountIn,
+        })
+    ).data;
+};
 
 // 팬토큰 판매
 export const sellFanToken = async (request: TransactionRequest): Promise<TransactionResponse> => {

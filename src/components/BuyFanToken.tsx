@@ -7,6 +7,12 @@ import { useStore } from '../stores/useStore';
 import CandleChart from './CandleChart';
 import { buyFanToken, sellFanToken, swapFanToken } from '../apis/exchangeApi';
 import { teamToTokenIdMap } from '../constants/tokenMap';
+import { web3auth } from '../utils/web3auth';
+import { ethers } from 'ethers';
+import ExchangeABI from "../../abi/Exchange.json";
+import { buyFanTokenSigned } from '../apis/exchangeApi';
+
+const EXCHANGE_ADDRESS = import.meta.env.VITE_EXCHANGE_ADDRESS;
 
 const dummyDailyData = [
   { time: '2024-04-01', open: 100, high: 108, low: 98, close: 106 },
@@ -78,10 +84,24 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price,
     try {
       switch (mode) {
         case 'buy': {
-          const res = await buyFanToken({
-            tokenId,
-            amountIn: numAmount,
-          });
+          const provider = new ethers.BrowserProvider(web3auth.provider!);
+          const signer = await provider.getSigner();
+
+          const amountInWei = ethers.parseUnits(amount, 18);
+          const contractInterface = new ethers.Interface(ExchangeABI);
+          const data = contractInterface.encodeFunctionData("buy", [team, amountInWei]);
+
+          const tx = {
+            to: EXCHANGE_ADDRESS,
+            data,
+          };
+
+          const signedTx = await signer.signTransaction(tx);
+          const res = await buyFanTokenSigned(signedTx, tokenId, Number(amount));
+          // const res = await buyFanToken({
+          //   tokenId,
+          //   amountIn: numAmount,
+          // });
           if (!res.success) throw new Error(res.message);
           break;
         }

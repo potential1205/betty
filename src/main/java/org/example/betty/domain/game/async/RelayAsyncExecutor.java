@@ -61,7 +61,7 @@ public class RelayAsyncExecutor {
 //                    displayService.gameEnd(id, teamIds.get("awayTeamId"));
 //                    log.info("[전광판 종료 완료] gameId: {}", gameId);
 //
-//                    // 2. 경기 상태 종료 처리 + SSE 알림
+//                    // 2. 경기 상태 종료 처리
 //                    Game game = gameService.findGameByGameId(gameId);
 //                    gameService.updateGameStatusToEnded(game);
 //                    log.info("[경기 상태 종료 완료] gameId: {}", gameId);

@@ -26,6 +26,7 @@ contract MintRewardTokenScript is Script {
 
         for (uint i = 0; i < 10; i++) {
             Token fanToken = Token(fanTokenAddresses[i]);
+            console.log("Try mint to:", rewardPool);
             uint256 rewardAmount = (1_000_000 * 1e18) / 10; // 10% 보상 = 100,000개
             fanToken.mint(rewardPool, rewardAmount);
             console.log(" Success:", tokenNames[i]);

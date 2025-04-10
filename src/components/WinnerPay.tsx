@@ -4,9 +4,10 @@ import { useStore } from '../stores/useStore';
 import { useWalletStore } from '../stores/walletStore';
 import { useUserStore } from '../stores/authStore';
 import axiosInstance from '../apis/axios';
-import { getTeamTokenName } from '../apis/tokenApi';
+import { getTeamTokenName, getBettyPrice } from '../apis/tokenApi';
 import { placeBet, getWinningTeamVotingContract, getWinningTeamVotingContractReadOnly, getTeamBets } from '../utils/winningTeamVotingContract';
 import { web3auth } from '../utils/web3auth';
+import { getMVPVotingContract, voteMVP } from '../utils/mvpVotingContract';
 
 interface WinnerPayProps {
   isOpen: boolean;
@@ -14,22 +15,27 @@ interface WinnerPayProps {
   type: 'winner' | 'mvp';
   team?: string;
   player?: string;
+  playerId?: number;
+  voteAmount?: string;
+  tokenName?: string;
   onBetSuccess?: () => void;
 }
 
-const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, player, onBetSuccess }) => {
+const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, player, playerId, voteAmount, tokenName, onBetSuccess }) => {
   const [amount, setAmount] = useState<number>(0);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
   const { currentGame, walletInfo } = useStore();
   const { getTokenBalance, tokenBalance, tokenBalanceLoading } = useWalletStore();
   const { login, isAuthenticated } = useUserStore();
-  const [tokenName, setTokenName] = useState<string>('');
+  const [localTokenName, setLocalTokenName] = useState<string>(tokenName || '');
   const [teamId, setTeamId] = useState<number | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [bettyBalance, setBettyBalance] = useState<number>(0);
+  const [bettyLoading, setBettyLoading] = useState(false);
   
   const amounts = [1, 5, 10, 50];
 
@@ -52,6 +58,13 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
   // 토큰 이름 가져오기 및 teamId 설정
   useEffect(() => {
     const fetchTokenName = async () => {
+      // MVP 모드에서 이미 tokenName이 전달된 경우
+      if (type === 'mvp' && tokenName) {
+        setLocalTokenName(tokenName);
+        return;
+      }
+      
+      // 팀 모드일 때 tokenName 가져오기
       if (!currentGame || !team) return;
       
       try {
@@ -66,24 +79,40 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
         
         // 토큰 이름 가져오기
         const fetchedTokenName = await getTeamTokenName(currentTeamId);
-        setTokenName(fetchedTokenName || 'BET');
+        setLocalTokenName(fetchedTokenName || 'BET');
       } catch (error) {
         console.error('토큰 이름 가져오기 실패:', error);
-        setTokenName('BET'); // 기본값
+        setLocalTokenName('BET'); // 기본값
       }
     };
     
     fetchTokenName();
-  }, [currentGame, team]);
+  }, [currentGame, team, type, tokenName]);
   
   // 토큰 잔액 가져오기
   useEffect(() => {
     const fetchTokenBalance = async () => {
-      if (!teamId) return;
+      if (!teamId && type === 'winner') return;
+      
+      // MVP 투표일 때는 선수 ID에 해당하는 팀의 토큰 잔액을 조회해야 함
+      // 이 예제에서는 간단히 처리하기 위해 tokenName으로 전달받은 토큰의 잔액만 표시
       
       setIsLoadingBalance(true);
       try {
-        await getTokenBalance(teamId);
+        if (type === 'winner' && teamId) {
+          await getTokenBalance(teamId);
+        } else if (type === 'mvp' && playerId) {
+          // MVP 모드에서는 선수가 속한 팀의 토큰 잔액을 가져와야 함
+          // 실제 구현에서는 선수 ID를 기반으로 팀 ID를 결정해야 함
+          // 이 예제에서는 간단하게 처리
+          const playerTeamId = Math.floor(playerId / 10000) === 1 
+            ? currentGame?.homeTeamId 
+            : currentGame?.awayTeamId;
+            
+          if (playerTeamId) {
+            await getTokenBalance(playerTeamId);
+          }
+        }
       } catch (error) {
         console.error('토큰 잔액 가져오기 실패:', error);
       } finally {
@@ -92,7 +121,26 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
     };
     
     fetchTokenBalance();
-  }, [teamId, getTokenBalance]);
+  }, [teamId, getTokenBalance, type, playerId, currentGame?.homeTeamId, currentGame?.awayTeamId]);
+
+  // 베티코인 잔액 조회
+  useEffect(() => {
+    const fetchBettyBalance = async () => {
+      if (!isLoggedIn) return;
+      
+      setBettyLoading(true);
+      try {
+        const balance = await getBettyPrice();
+        setBettyBalance(balance);
+      } catch (error) {
+        console.error('베티코인 잔액 조회 실패:', error);
+      } finally {
+        setBettyLoading(false);
+      }
+    };
+
+    fetchBettyBalance();
+  }, [isLoggedIn]);
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -152,8 +200,18 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
       return;
     }
 
-    if (amount <= 0 || !currentGame || !teamId) {
-      setError('유효한 금액과 팀을 선택해주세요.');
+    if (amount <= 0 || !currentGame) {
+      setError('유효한 금액을 입력해주세요.');
+      return;
+    }
+    
+    if (type === 'winner' && !teamId) {
+      setError('팀을 선택해주세요.');
+      return;
+    }
+    
+    if (type === 'mvp' && !playerId) {
+      setError('선수를 선택해주세요.');
       return;
     }
 
@@ -161,35 +219,48 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
     setError(null);
 
     try {
-      // privateKey를 사용하여 베팅하기
-      console.log(`베팅 시작: 게임 ID=${currentGame.gameId}, 팀 ID=${teamId}, 금액=${amount}`);
-      
-      // 1. 개인키 가져오기
+      // 개인키 가져오기
       const privateKey = await useWalletStore.getState().exportPrivateKey();
       if (!privateKey) {
         throw new Error("개인키를 가져올 수 없습니다. 다시 로그인해주세요.");
       }
       
-      // 2. 컨트랙트 인스턴스 생성
-      const contract = getWinningTeamVotingContract(privateKey);
+      // 팀 우승 베팅인 경우
+      if (type === 'winner' && teamId) {
+        console.log(`우승팀 베팅 시작: 게임 ID=${currentGame.gameId}, 팀 ID=${teamId}, 금액=${amount}`);
+        
+        // 컨트랙트 인스턴스 생성
+        const contract = getWinningTeamVotingContract(privateKey);
+        
+        // 베팅 실행
+        const receipt = await placeBet(
+          contract,
+          currentGame.gameId,
+          teamId,
+          amount.toString()
+        );
+        
+        console.log('우승팀 베팅 성공:', receipt);
+      } 
+      // MVP 베팅인 경우
+      else if (type === 'mvp' && playerId) {
+        console.log(`MVP 베팅 시작: 게임 ID=${currentGame.gameId}, 선수 ID=${playerId}, 금액=${amount}`);
+        
+        // MVP 투표 컨트랙트 인스턴스 생성
+        const contract = getMVPVotingContract(privateKey);
+        
+        // MVP 투표 실행
+        const receipt = await voteMVP(
+          contract,
+          currentGame.gameId,
+          playerId,
+          amount.toString()
+        );
+        
+        console.log('MVP 베팅 성공:', receipt);
+      }
       
-      // 3. 베팅 실행
-      const receipt = await placeBet(
-        contract,
-        currentGame.gameId,
-        teamId,
-        amount.toString()
-      );
-      
-      console.log('베팅 성공:', receipt);
-      
-      // 4. 베팅 성공 후 상태 업데이트
-      // 베팅 금액 업데이트를 위해 컨트랙트에서 다시 조회
-      const readOnlyContract = getWinningTeamVotingContractReadOnly();
-      const updatedBets = await getTeamBets(readOnlyContract, currentGame.gameId, teamId);
-      console.log('업데이트된 베팅량:', updatedBets);
-      
-      // 콜백 함수 호출로 부모 컴포넌트에 베팅 성공 알림
+      // 베팅 성공 후 콜백 호출
       if (onBetSuccess) {
         onBetSuccess();
       }
@@ -221,6 +292,7 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
   };
 
   if (!isOpen) return null;
+  
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -267,12 +339,20 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
                   <p className="text-xl font-['Giants-Bold'] text-white">
                     {tokenBalance ? Number(tokenBalance).toLocaleString(undefined, {maximumFractionDigits: 4}) : '0'}
                   </p>
-                  <p className="text-sm text-gray-400 ml-1">{tokenName || 'BET'}</p>
+                  <p className="text-sm text-gray-400 ml-1">{localTokenName || 'BET'}</p>
                 </>
               )}
             </div>
-            <div className="flex items-baseline mt-1">
-              <p className="text-xs text-gray-400">BET 잔액: {walletInfo.totalBET.toLocaleString()}</p>
+            <div className="flex items-baseline justify-between mt-1">
+              <p className="text-xs text-gray-400">
+                BET 잔액: {bettyLoading ? '로딩 중...' : bettyBalance.toLocaleString()}
+              </p>
+              <button
+                onClick={() => window.location.href = '/my'}
+                className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors font-['Giants-Bold']"
+              >
+                충전하기 →
+              </button>
             </div>
           </div>
 
@@ -309,7 +389,7 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
                   >
                     <p className="text-sm mb-1">베팅금액</p>
                     <p className="text-lg font-['Giants-Bold']">
-                      {value.toLocaleString()} {tokenName || 'BET'}
+                      {value.toLocaleString()} {localTokenName || 'BET'}
                     </p>
                   </button>
                 ))}
@@ -328,7 +408,7 @@ const WinnerPay: React.FC<WinnerPayProps> = ({ isOpen, onClose, type, team, play
                     placeholder="0"
                     className="text-xl font-['Giants-Bold'] text-gray-800 w-full outline-none bg-transparent"
                   />
-                  <span className="text-gray-500 ml-2">{tokenName || 'BET'}</span>
+                  <span className="text-gray-500 ml-2">{localTokenName || 'BET'}</span>
                 </div>
               </div>
 

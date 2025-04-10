@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import backImg from '../assets/back.png';
@@ -11,36 +11,12 @@ import { Game } from '../stores/useStore';
 import QuizModal from '../components/QuizModal';
 import axiosInstance from '../apis/axios';
 import { getGameDetail } from '../apis/gameApi';
+import { GameState, Problem as WebSocketProblem } from '../services/LiveVotingWebsocketService';
+import { useLiveSocketStore } from '../stores/liveSocketStore';
 
 type Tab = 'LIVE-PICK' | 'WINNER' | 'DISPLAY';
 
-interface Problem {
-  problemId: string;
-  gameId: string;
-  inning: string;
-  attackTeam: string;
-  batterName: string;
-  batterNumber: string;
-  questionCode: string;
-  description: string;
-  options: string[];
-  answer: string | null;
-  timestamp: number;
-  push: boolean;
-}
-
-interface ProblemHistory {
-  problemId: string;
-  gameId: string;
-  inning: string;
-  attackTeam: string;
-  batterName: string;
-  questionCode: string;
-  description: string;
-  options: string[];
-  answer: string | null;
-  timestamp: number;
-  push: boolean;
+interface ProblemHistory extends WebSocketProblem {
   userAnswer: string | null;
 }
 
@@ -51,15 +27,93 @@ const MainPage: React.FC = () => {
   const [displayTeam, setDisplayTeam] = useState<'home' | 'away'>('home');
   const { currentGame, toggleSidebar, setCurrentGame } = useStore();
   const [isLive, setIsLive] = useState(true);
-  const [problemData, setProblemData] = useState<Problem | null>(null);
-  const [isActive, setIsActive] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [problemHistory, setProblemHistory] = useState<ProblemHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAnswer, setPendingAnswer] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  
+  // liveSocketStore에서 상태와 액션을 가져옴
+  const {
+    connect,
+    disconnect,
+    submitAnswer,
+    setCallbacks,
+    currentProblem,
+    problemHistory,
+    isActive,
+    timeLeft,
+    selectedAnswer,
+    setSelectedAnswer: setSocketAnswer,
+    addToHistory
+  } = useLiveSocketStore();
+  
+  // 게임 상태 업데이트 콜백 함수
+  const handleGameUpdate = (gameState: GameState) => {
+    console.log("[MainPage] 게임 상태 업데이트:", JSON.stringify(gameState, null, 2));
+    
+    if (currentGame) {
+      // 이닝 형식에 맞게 수정 (방어적 처리 추가)
+      let inningValue = 1;
+      try {
+        if (gameState.inning) {
+          inningValue = parseInt(gameState.inning.replace(/[^\d]/g, ''), 10) || 1;
+          console.log(`[MainPage] 이닝 파싱 결과: "${gameState.inning}" => ${inningValue}`);
+        }
+      } catch (error) {
+        console.error('[MainPage] 이닝 파싱 오류:', error);
+      }
+      
+      const updatedGame = {
+        ...currentGame,
+        inning: inningValue,
+        homeScore: gameState.score.homeScore,
+        awayScore: gameState.score.awayScore,
+        status: gameState.status
+      };
+      
+      console.log("[MainPage] 게임 정보 업데이트:", {
+        이전점수: `${currentGame.homeScore}:${currentGame.awayScore}`,
+        새점수: `${updatedGame.homeScore}:${updatedGame.awayScore}`,
+        이전이닝: currentGame.inning,
+        새이닝: updatedGame.inning,
+        상태: updatedGame.status
+      });
+      
+      setCurrentGame(updatedGame);
+    }
+  };
+  
+  // 문제 수신 콜백 함수
+  const handleProblemReceived = (problem: WebSocketProblem) => {
+    console.log("[MainPage] 문제 수신:", JSON.stringify(problem, null, 2));
+    
+    // 디버깅: 문제 세부 정보
+    console.log(`[MainPage] 문제 세부 정보:
+      ID: ${problem.problemId}
+      게임ID: ${problem.gameId}
+      이닝: ${problem.inning}
+      공격팀: ${problem.attackTeam}
+      타자: ${problem.batterName}
+      선택지 수: ${problem.options.length}
+      답변: ${problem.answer || '미공개'}
+    `);
+    
+    console.log("[MainPage] 새 문제 활성화: 타이머 시작 (10초)");
+  };
+  
+  // 웹소켓 콜백 설정
+  useEffect(() => {
+    setCallbacks({
+      onConnect: () => {
+        console.log("[MainPage] 라이브 투표 웹소켓 연결 성공");
+      },
+      onDisconnect: () => {
+        console.log("[MainPage] 라이브 투표 웹소켓 연결 종료");
+      },
+      onGameUpdate: handleGameUpdate,
+      onProblemReceived: handleProblemReceived
+    });
+  }, [currentGame]);
+  
   // 게임 정보 로드
   useEffect(() => {
     const loadGameData = async () => {
@@ -196,100 +250,27 @@ const MainPage: React.FC = () => {
     loadGameData();
   }, [gameId, navigate, setCurrentGame, currentGame]);
 
-  // SSE 연결 및 문제 수신
+  // 웹소켓 연결 - 게임 ID와 게임 상태에 따라 연결 관리
   useEffect(() => {
-    if (!currentGame || currentGame.status !== 'LIVE' || isLoading) return;
-
-    // 웹소켓으로 변경 예정 - SSE 코드 제거됨
-    console.log("[리얼타임 연결] 웹소켓으로 변경 예정. 현재 연결 비활성화됨.");
+    if (!currentGame || isLoading) return;
     
-    // 임시 디버깅 데이터
-    console.log(`게임 정보: ${currentGame.homeTeam} vs ${currentGame.awayTeam}, ID: ${currentGame.gameId}`);
+    // 게임이 라이브 상태가 아니면 연결 해제
+    if (currentGame.status !== 'LIVE') {
+      console.log("[MainPage] 게임이 LIVE 상태가 아님 - 연결 필요 없음");
+      disconnect();
+      return;
+    }
     
-    // 실시간 데이터 처리 함수 - 향후 웹소켓에서 사용할 예정
-    const handleRealTimeData = (data: any) => {
-      console.log("[리얼타임] 데이터 수신 처리기 호출됨 (현재 비활성화)", data);
-      
-      // 타입별 처리 로직 (주석 처리)
-      /*
-      switch (data.type) {
-        case 'PROBLEM':
-          setProblemData(data.problem);
-          setIsActive(true);
-          setTimeLeft(10);
-          break;
-        case 'SCORE':
-          setCurrentGame({
-            ...currentGame!,
-            homeScore: data.homeScore,
-            awayScore: data.awayScore
-          });
-          break;
-        case 'STATUS':
-          setCurrentGame({
-            ...currentGame!,
-            status: data.status
-          });
-          setIsLive(data.status === 'LIVE');
-          break;
-        case 'END':
-          if (data.isGameEnd) {
-            setCurrentGame({
-              ...currentGame!,
-              status: 'ENDED'
-            });
-            setIsLive(false);
-          } else {
-            setIsActive(false);
-            if (problemData) {
-              const newHistory = {
-                ...problemData,
-                userAnswer: selectedAnswer
-              };
-              setProblemHistory(prev => [...prev, newHistory]);
-            }
-            setProblemData(null);
-            setSelectedAnswer(null);
-          }
-          break;
-      }
-      */
-    };
+    // 게임이 라이브 상태이면 연결 시도
+    console.log(`[MainPage] 게임 ID ${currentGame.gameId}에 웹소켓 연결 시도...`);
+    connect(currentGame.gameId);
     
+    // 컴포넌트 언마운트 시 연결 해제
     return () => {
-      console.log("[리얼타임 연결] 정리 함수 호출됨 (현재 연결 없음)");
+      console.log("[MainPage] 페이지 이동으로 웹소켓 연결 종료");
+      disconnect();
     };
-  }, [currentGame, problemData, selectedAnswer, isLoading]);
-
-  // 디버깅용 - 상태 변경 시 로깅
-  useEffect(() => {
-    console.log("[상태 디버깅] problemData 변경:", problemData);
-  }, [problemData]);
-
-  useEffect(() => {
-    console.log("[상태 디버깅] isActive 변경:", isActive);
-  }, [isActive]);
-
-  useEffect(() => {
-    console.log("[상태 디버깅] problemHistory 변경:", problemHistory);
-  }, [problemHistory]);
-
-  // 타이머 카운트다운
-  useEffect(() => {
-    if (!isActive || timeLeft <= 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isActive, timeLeft]);
+  }, [currentGame?.gameId, currentGame?.status, isLoading]);
 
   const getStatusText = () => {
     if (!currentGame?.status) return '';
@@ -313,23 +294,46 @@ const MainPage: React.FC = () => {
   };
 
   const confirmAnswer = async () => {
-    if (!currentGame || !problemData || !pendingAnswer) return;
+    if (!currentGame || !currentProblem || !pendingAnswer) return;
+    
+    console.log("[MainPage] 답변 제출 시도:", {
+      문제ID: currentProblem.problemId,
+      게임ID: currentGame.gameId,
+      선택답변: pendingAnswer
+    });
     
     try {
-      const response = await axiosInstance.post(`/home/games/${currentGame.gameId}/votes/live`, {
-        gameId: currentGame.gameId,
-        selectedAnswer: pendingAnswer,
-        problemId: problemData.problemId
-      });
-
-      if (response.status === 200) {
-        setSelectedAnswer(pendingAnswer);
+      // 이미 답변했거나 시간이 초과된 경우 처리
+      if (!isActive || selectedAnswer !== null) {
+        console.log('[MainPage] 이미 답변했거나 시간이 초과되었습니다.');
         setShowConfirmModal(false);
         setPendingAnswer(null);
+        return;
+      }
+      
+      // 웹소켓으로 답변 제출 (내부적으로 REST API 폴백 포함)
+      const success = await submitAnswer(
+        currentGame.gameId,
+        currentProblem.problemId,
+        pendingAnswer
+      );
+      
+      if (success) {
+        console.log("[MainPage] 답변 제출 성공");
+        // 히스토리에 추가
+        addToHistory(currentProblem, pendingAnswer);
+        setShowConfirmModal(false);
+        setPendingAnswer(null);
+      } else {
+        console.error("[MainPage] 답변 제출 실패");
+        alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
       }
     } catch (error) {
       console.error('답변 제출 실패:', error);
       alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setShowConfirmModal(false);
+      setPendingAnswer(null);
     }
   };
 
@@ -408,8 +412,18 @@ const MainPage: React.FC = () => {
           <div className="text-xl font-['Giants-Bold']">
             {`${currentGame.homeScore} : ${currentGame.awayScore}`}
           </div>
-          <div className="text-xs text-gray-400 mt-0.5">
-            {`${currentGame.schedule.stadium} | ${currentGame.schedule.startTime}`}
+          <div className="text-xs text-gray-400 mt-0.5 flex items-center justify-center gap-2">
+            <span>{currentGame.schedule.stadium}</span>
+            <span>|</span>
+            <span>{currentGame.schedule.startTime}</span>
+            {currentGame.status === 'LIVE' && (
+              <>
+                <span>|</span>
+                <span>
+                  {currentGame.inning || '시작 전'}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -473,9 +487,9 @@ const MainPage: React.FC = () => {
             ) : (
               <>
                 {/* 현재 문제 */}
-                {problemData && (
+                {currentProblem && (
                   <QuizModal
-                    problem={problemData}
+                    problem={currentProblem}
                     isActive={isActive}
                     onAnswer={handleAnswer}
                     currentTime={timeLeft}
@@ -485,7 +499,7 @@ const MainPage: React.FC = () => {
 
                 {/* 문제 히스토리 */}
                 <div className="space-y-3">
-                  {problemHistory.map((history, index) => (
+                  {problemHistory.map((history) => (
                     <div key={history.problemId} className="backdrop-blur-md bg-black/30 rounded-xl p-3 border border-white/10">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
@@ -555,7 +569,9 @@ const MainPage: React.FC = () => {
         {activeTab === 'WINNER' && (
           <Winner
             homeTeam={currentGame.homeTeam}
-            awayTeam={currentGame.awayTeam}/>
+            awayTeam={currentGame.awayTeam}
+            gameId={currentGame.gameId.toString()}
+          />
         )}
       </div>
 

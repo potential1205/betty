@@ -56,6 +56,37 @@ export const getGameDetail = async (gameId: number): Promise<Game> => {
   }
 };
 
+/**
+ * 라이브 투표를 제출합니다.
+ * @param gameId 게임 ID
+ * @param selectedAnswer 선택한 답변
+ * @param problemId 문제 ID
+ * @returns 응답 데이터
+ */
+export const submitLiveVote = async (
+  gameId: number,
+  selectedAnswer: string,
+  problemId: string
+): Promise<any> => {
+  try {
+    console.log(`라이브 투표 제출 요청: gameId=${gameId}, problemId=${problemId}, answer=${selectedAnswer}`);
+    const response = await axiosInstance.post(`/home/games/${gameId}/votes/live`, {
+      gameId,
+      selectedAnswer,
+      problemId
+    });
+    console.log('라이브 투표 제출 응답:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('라이브 투표 제출 실패:', error);
+    if (error.response) {
+      throw new Error(error.response.data?.message || '라이브 투표 제출 실패');
+    }
+    throw error;
+  }
+};
+
 export default {
-  getGameDetail
+  getGameDetail,
+  submitLiveVote
 }; 

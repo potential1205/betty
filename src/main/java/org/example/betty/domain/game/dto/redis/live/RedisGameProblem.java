@@ -1,6 +1,7 @@
 package org.example.betty.domain.game.dto.redis.live;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.io.Serializable;
@@ -25,6 +26,8 @@ public class RedisGameProblem implements Serializable {
     private String description;
     private List<String> options;
     private String answer;
+
+    @JsonProperty("push")
     private boolean push;
     private String timestamp;
 }

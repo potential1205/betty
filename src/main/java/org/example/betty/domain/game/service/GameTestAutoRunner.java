@@ -33,7 +33,7 @@
 //        log.info("[자동 테스트] GameTestAutoRunner 시작됨! 5초마다 relay 자동 전송 테스트 중...");
 //    }
 //
-//    @Scheduled(fixedRate = 10000)
+//    @Scheduled(fixedRate = 15000)
 //    public void pushTestRelay() {
 //        int inningNum = inningCounter.getAndIncrement();
 //

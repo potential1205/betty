@@ -142,30 +142,62 @@ public class GameRelayEventHandler {
             String redisKey = "livevote:problem:" + gameService.resolveGameDbId(gameId);
             ListOperations<String, Object> listOps = redisTemplate2.opsForList();
 
+//            // 문제 저장
+//            for (RedisGameProblem problem : problems) {
+//                listOps.rightPush(redisKey, problem);
+//                log.info("[문제 생성] {} | 문제ID: {}", problem.getDescription(), problem.getProblemId());
+//            }
+//
+//            // 오늘 자정까지 TTL 설정
+////            LocalDateTime now = LocalDateTime.now();
+////            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
+////            Duration ttl = Duration.between(now, midnight);
+////            redisTemplate2.expire(redisKey, ttl);
+//
+//            // 전송용 문제 랜덤 1개 선택
+//            if (!problems.isEmpty()) {
+//                int randomIndex = new Random().nextInt(problems.size());
+//                RedisGameProblem selected = problems.get(randomIndex);
+//
+//                // 해당 문제만 push 여부 업데이트
+//                selected.setPush(true);
+//                listOps.set(redisKey, redisTemplate2.opsForList().size(redisKey) - problems.size() + randomIndex, selected);
+//
+//                // 선택된 문제 socket 전송
+//                gameSocketService.sendGameProblem(gameService.resolveGameDbId(gameId),selected);
+//            }
+
+            // 문제 저장 전에 현재 리스트 길이 확인
+            Long beforeSize = redisTemplate2.opsForList().size(redisKey);
+            if (beforeSize == null) beforeSize = 0L;
+
             // 문제 저장
             for (RedisGameProblem problem : problems) {
                 listOps.rightPush(redisKey, problem);
                 log.info("[문제 생성] {} | 문제ID: {}", problem.getDescription(), problem.getProblemId());
             }
 
-            // 오늘 자정까지 TTL 설정
-//            LocalDateTime now = LocalDateTime.now();
-//            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
-//            Duration ttl = Duration.between(now, midnight);
-//            redisTemplate2.expire(redisKey, ttl);
-
-            // SSE 전송용 문제 랜덤 1개 선택
+            // 전송용 문제 랜덤 1개 선택
             if (!problems.isEmpty()) {
                 int randomIndex = new Random().nextInt(problems.size());
                 RedisGameProblem selected = problems.get(randomIndex);
 
-                // 해당 문제만 push 여부 업데이트
+                // push true 처리 및 저장
                 selected.setPush(true);
-                listOps.set(redisKey, redisTemplate2.opsForList().size(redisKey) - problems.size() + randomIndex, selected);
+                listOps.set(redisKey, beforeSize + randomIndex, selected);
 
-                // 선택된 문제 socket 전송
-                gameSocketService.sendGameProblem(gameService.resolveGameDbId(gameId),selected);
+                // [추가] push 상태 검증 로그
+                Object updated = listOps.index(redisKey, beforeSize + randomIndex);
+                if (updated instanceof RedisGameProblem updatedProblem) {
+                    log.info("[확인] 문제ID={} | push 상태={}", updatedProblem.getProblemId(), updatedProblem.isPush());
+
+                    // socket 전송도 updated 객체로 보내기
+                    gameSocketService.sendGameProblem(gameService.resolveGameDbId(gameId), updatedProblem);
+                } else {
+                    log.warn("[확인 실패] 인덱스 접근 실패 or 타입 불일치");
+                }
             }
+
             previousBatterMap.put(gameId, currentBatterName);
         }
     }

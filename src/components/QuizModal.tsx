@@ -1,21 +1,9 @@
 import React, { useState } from 'react';
 import { Quiz, QuizHistory } from '../constants/dummy';
+import { Problem as WebSocketProblem } from '../services/LiveVotingWebsocketService';
 
 interface QuizModalProps {
-  problem: {
-    problemId: string;
-    gameId: string;
-    inning: string;
-    attackTeam: string;
-    batterName: string;
-    batterNumber: string;
-    questionCode: string;
-    description: string;
-    options: string[];
-    answer: string | null;
-    timestamp: number;
-    push: boolean;
-  };
+  problem: WebSocketProblem;
   isActive: boolean;
   onAnswer: (answer: string) => void;
   currentTime: number;
@@ -35,6 +23,21 @@ const QuizModal: React.FC<QuizModalProps> = ({
   return (
     <div className="backdrop-blur-md bg-black/30 rounded-xl p-3 border border-white/10 mb-4">
       {/* 문제 정보 */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-300 bg-white/10 px-2 py-0.5 rounded-full">
+            {problem.inning}
+          </span>
+          <span className="text-xs text-gray-300">
+            {problem.attackTeam}
+          </span>
+        </div>
+      </div>
+      
+      <div className="text-sm font-['Pretendard-Regular'] text-gray-300 mb-1">
+        {problem.batterName} 타석
+      </div>
+      
       <div className="text-center mb-3">
         <div className="text-base font-['Pretendard-Regular'] text-white">
           {problem.description}

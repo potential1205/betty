@@ -235,7 +235,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                     }
 
                     // 3. 최종 호출
-                    gameSettleService.createPreVoteMVPSettle(id, playerIds, tokenAddresses);
+//                    gameSettleService.createPreVoteMVPSettle(id, playerIds, tokenAddresses);
 
                 } else {
                     log.warn("[라인업 저장 실패] 라인업이 null임 - gameId: {}, time: {}", gameId, LocalDateTime.now());

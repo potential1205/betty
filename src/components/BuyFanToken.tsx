@@ -11,8 +11,10 @@ import { web3auth } from '../utils/web3auth';
 import { ethers } from 'ethers';
 import ExchangeABI from "../../abi/Exchange.json";
 import { buyFanTokenSigned } from '../apis/exchangeApi';
+import { useWalletStore } from '../stores/walletStore';
 
 const EXCHANGE_ADDRESS = import.meta.env.VITE_EXCHANGE_ADDRESS;
+const RPC_URL = import.meta.env.VITE_RPC_URL;
 
 const dummyDailyData = [
   { time: '2024-04-01', open: 100, high: 108, low: 98, close: 106 },
@@ -84,8 +86,16 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price,
     try {
       switch (mode) {
         case 'buy': {
-          const provider = new ethers.BrowserProvider(web3auth.provider!);
-          const signer = await provider.getSigner();
+          const provider = new ethers.JsonRpcProvider(RPC_URL);
+
+          const walletStore = useWalletStore.getState();
+          const privateKey = await walletStore.exportPrivateKey();
+
+          if (!privateKey) {
+            throw new Error("개인키를 가져올 수 없습니다");
+          }
+
+          const wallet = new ethers.Wallet(privateKey, provider);
 
           const amountInWei = ethers.parseUnits(amount, 18);
           const contractInterface = new ethers.Interface(ExchangeABI);
@@ -99,12 +109,14 @@ const BuyFanToken: React.FC<BuyFanTokenProps> = ({ isOpen, onClose, team, price,
             value: 0
           };
 
-          const signedTx = await signer.signTransaction(tx);
-          const res = await buyFanTokenSigned(signedTx, tokenId, Number(amount));
-          // const res = await buyFanToken({
-          //   tokenId,
-          //   amountIn: numAmount,
-          // });
+          const txResponse = await wallet.sendTransaction(tx);
+          const receipt = await txResponse.wait();
+
+          if (!receipt?.hash) {
+            throw new Error("트랜잭션 해시를 가져올 수 없습니다");
+          }
+
+          const res = await buyFanTokenSigned(receipt.hash, tokenId, Number(amount));
           if (!res.success) throw new Error(res.message);
           break;
         }

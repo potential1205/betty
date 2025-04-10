@@ -44,7 +44,7 @@ const QuizModal: React.FC<QuizModalProps> = ({
         </div>
       </div>
 
-      {/* 타이머 */}
+      {/* 타이머 - 15초 제한시간 */}
       <div className="text-center mb-3">
         <div className="text-lg font-['Pretendard-Regular'] text-red-400">
           {currentTime}초

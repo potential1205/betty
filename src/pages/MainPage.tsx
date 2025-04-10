@@ -43,7 +43,9 @@ const MainPage: React.FC = () => {
     timeLeft,
     selectedAnswer,
     setSelectedAnswer: setSocketAnswer,
-    addToHistory
+    addToHistory,
+    isDataLoading,
+    resetState
   } = useLiveSocketStore();
   
   // 게임 상태 업데이트 콜백 함수
@@ -51,20 +53,9 @@ const MainPage: React.FC = () => {
     console.log("[MainPage] 게임 상태 업데이트:", JSON.stringify(gameState, null, 2));
     
     if (currentGame) {
-      // 이닝 형식에 맞게 수정 (방어적 처리 추가)
-      let inningValue = 1;
-      try {
-        if (gameState.inning) {
-          inningValue = parseInt(gameState.inning.replace(/[^\d]/g, ''), 10) || 1;
-          console.log(`[MainPage] 이닝 파싱 결과: "${gameState.inning}" => ${inningValue}`);
-        }
-      } catch (error) {
-        console.error('[MainPage] 이닝 파싱 오류:', error);
-      }
-      
       const updatedGame = {
         ...currentGame,
-        inning: inningValue,
+        inning: gameState.inning,
         homeScore: gameState.score.homeScore,
         awayScore: gameState.score.awayScore,
         status: gameState.status
@@ -97,7 +88,7 @@ const MainPage: React.FC = () => {
       답변: ${problem.answer || '미공개'}
     `);
     
-    console.log("[MainPage] 새 문제 활성화: 타이머 시작 (10초)");
+    console.log("[MainPage] 새 문제 활성화: 타이머 시작 (15초)");
   };
   
   // 웹소켓 콜백 설정
@@ -265,10 +256,11 @@ const MainPage: React.FC = () => {
     console.log(`[MainPage] 게임 ID ${currentGame.gameId}에 웹소켓 연결 시도...`);
     connect(currentGame.gameId);
     
-    // 컴포넌트 언마운트 시 연결 해제
+    // 컴포넌트 언마운트 시 연결 해제 및 상태 초기화
     return () => {
-      console.log("[MainPage] 페이지 이동으로 웹소켓 연결 종료");
+      console.log("[MainPage] 페이지 이동으로 웹소켓 연결 종료 및 상태 초기화");
       disconnect();
+      resetState();
     };
   }, [currentGame?.gameId, currentGame?.status, isLoading]);
 
@@ -381,9 +373,9 @@ const MainPage: React.FC = () => {
   }
 
   return (
-    <div className="relative h-full bg-black text-white overflow-hidden">
+    <div className="relative h-full bg-black text-white overflow-hidden flex flex-col">
       {/* 헤더 */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-6 px-8">
+      <div className="z-10 flex justify-between items-center p-6 px-8">
         <button 
           onClick={() => navigate(-1)} 
           className="w-[12px] h-[12px]"
@@ -401,7 +393,7 @@ const MainPage: React.FC = () => {
       </div>
 
       {/* 상단 매치업 타이틀 */}
-      <div className="pt-16 pb-4 text-center">
+      <div className="pb-4 text-center">
         <div className="text-red-600 text-sm font-['Giants-Bold']">
           {getStatusText()}
         </div>
@@ -467,7 +459,7 @@ const MainPage: React.FC = () => {
       )}
 
       {/* 컨텐츠 영역 */}
-      <div className="mt-6 px-6 overflow-y-auto h-[calc(100vh-320px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <div className="flex-1 px-6 mt-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {activeTab === 'LIVE-PICK' && (
           <div className="flex flex-col h-full">
             {currentGame?.status !== 'LIVE' ? (
@@ -481,6 +473,17 @@ const MainPage: React.FC = () => {
                   <div className="text-xs font-['Pretendard-Regular']">
                     {currentGame?.status === 'SCHEDULED' ? '경기 시작 후 다시 확인해주세요' : 
                      '다음 경기를 기대해주세요'}
+                  </div>
+                </div>
+              </div>
+            ) : isDataLoading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-gray-400 text-center">
+                  <div className="text-xl font-['Giants-Bold'] mb-2">
+                    데이터를 불러오는 중입니다
+                  </div>
+                  <div className="text-xs font-['Pretendard-Regular']">
+                    잠시만 기다려주세요
                   </div>
                 </div>
               </div>

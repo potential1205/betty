@@ -69,7 +69,7 @@ export interface Game {
   awayTeam: string;
   homeScore: number;
   awayScore: number;
-  inning: number;
+  inning: string | number;
   status: string;
   schedule: {
     gameId: number;

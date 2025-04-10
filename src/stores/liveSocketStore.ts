@@ -23,6 +23,7 @@ interface LiveSocketState {
   isActive: boolean;
   timeLeft: number;
   selectedAnswer: string | null;
+  isDataLoading: boolean;  // 데이터 로딩 상태 추가
   
   // 내부 상태
   stompClient: Client | null;
@@ -52,6 +53,9 @@ interface LiveSocketState {
   resetProblem: () => void;
   setSelectedAnswer: (answer: string | null) => void;
   addToHistory: (problem: Problem, userAnswer: string | null) => void;
+  
+  // 상태 초기화 함수 추가
+  resetState: () => void;
 }
 
 // API URL 가져오기
@@ -80,6 +84,7 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
     timeLeft: 0,
     selectedAnswer: null,
     stompClient: null,
+    isDataLoading: true,  // 초기 상태는 로딩 중
     
     // WebSocket URL 생성 함수
     getWebSocketUrl: (gameId: string) => {
@@ -109,6 +114,8 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
         console.log(`[LiveSocketStore] 이미 게임 ID ${gameId}에 연결 중이거나 연결되어 있습니다`);
         return;
       }
+      
+      set({ isDataLoading: true });  // 연결 시작할 때 로딩 상태 설정
       
       const token = getAccessToken();
       if (!token) {
@@ -160,11 +167,27 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
                 let currentInning = '1회 초';
                 
                 try {
-                  // score 형식이 "0:0" 형태인 경우
+                  // score 형식이 "NC 3 : 키움 1" 형태인 경우
                   if (gameInfo.score && gameInfo.score.includes(':')) {
-                    const scoreParts = gameInfo.score.split(':');
-                    homeScore = parseInt(scoreParts[0].trim(), 10) || 0;
-                    awayScore = parseInt(scoreParts[1].trim(), 10) || 0;
+                    const scoreParts = gameInfo.score.split(':').map((part: string) => part.trim());
+                    
+                    // 홈팀 점수 파싱 ("NC 3" -> "3")
+                    const homeScoreMatch = scoreParts[0].match(/\d+/);
+                    if (homeScoreMatch) {
+                      homeScore = parseInt(homeScoreMatch[0], 10) || 0;
+                    }
+                    
+                    // 원정팀 점수 파싱 ("키움 1" -> "1")
+                    const awayScoreMatch = scoreParts[1].match(/\d+/);
+                    if (awayScoreMatch) {
+                      awayScore = parseInt(awayScoreMatch[0], 10) || 0;
+                    }
+                    
+                    console.log('[LiveSocketStore] 점수 파싱 결과:', {
+                      원본: gameInfo.score,
+                      홈점수: homeScore,
+                      원정점수: awayScore
+                    });
                   }
 
                   // 이닝 정보 처리
@@ -185,10 +208,12 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
                 };
                 
                 console.log('[LiveSocketStore] 게임 상태 업데이트:', gameState);
+                set({ isDataLoading: false });  // 첫 데이터를 받으면 로딩 상태 해제
                 callbacks.onGameUpdate(gameState);
               }
             } catch (error) {
               console.error('[LiveSocketStore] 게임 데이터 파싱 오류:', error);
+              set({ isDataLoading: false });  // 에러 발생 시에도 로딩 상태 해제
             }
           });
           
@@ -226,7 +251,7 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
                 set({ 
                   currentProblem: processedProblem,
                   isActive: true,
-                  timeLeft: 10,
+                  timeLeft: 15,
                   selectedAnswer: null
                 });
                 
@@ -281,12 +306,15 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
     disconnect: () => {
       const { stompClient, isConnected } = get();
       
+      set({ isDataLoading: true });  // 연결 해제 시 로딩 상태로 설정
+      
       if (!stompClient) {
         console.log('[LiveSocketStore] 웹소켓 클라이언트가 없습니다');
         set({ 
           isConnected: false, 
           isConnecting: false,
-          currentGameId: null
+          currentGameId: null,
+          isDataLoading: false
         });
         return;
       }
@@ -397,5 +425,22 @@ export const useLiveSocketStore = create<LiveSocketState>((set, get) => {
     
     // 연결 상태 확인
     getConnectionStatus: () => ({ isConnecting: get().isConnecting, isConnected: get().isConnected }),
+    
+    // 상태 초기화 함수
+    resetState: () => {
+      get().stopTimer();
+      set({
+        isConnecting: false,
+        isConnected: false,
+        currentGameId: null,
+        currentProblem: null,
+        problemHistory: [],
+        isActive: false,
+        timeLeft: 0,
+        selectedAnswer: null,
+        stompClient: null,
+        isDataLoading: true
+      });
+    },
   };
 }); 

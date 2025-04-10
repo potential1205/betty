@@ -405,7 +405,8 @@ const Home: React.FC = () => {
         </h1>
         <div className="mt-2">
           <div className="text-xl font-['Giants-Bold'] text-white">
-            {currentGame ? `${currentGame.homeScore} : ${currentGame.awayScore}` : ''}
+            {currentGame && (currentGame.homeScore !== 0 || currentGame.awayScore !== 0) ? 
+              `${currentGame.homeScore} : ${currentGame.awayScore}` : ''}
           </div>
           <div className="text-xs mt-0.5 text-gray-200">
             {currentGame ? `${currentGame.schedule.stadium} | ${currentGame.schedule.startTime}` : ''}

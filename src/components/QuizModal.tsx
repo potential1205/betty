@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Quiz, QuizHistory } from '../constants/dummy';
 import { Problem as WebSocketProblem } from '../services/LiveVotingWebsocketService';
 
@@ -19,6 +19,11 @@ const QuizModal: React.FC<QuizModalProps> = ({
 }) => {
   // 옵션 개수에 따라 레이아웃 결정
   const isTwoOptions = problem.options.length === 2;
+
+  useEffect(() => {
+    console.log('퀴즈 페이지 진입');
+    console.log('문제 정보:', problem);
+  }, []);
 
   return (
     <div className="backdrop-blur-md bg-black/30 rounded-xl p-3 border border-white/10 mb-4">
@@ -56,7 +61,10 @@ const QuizModal: React.FC<QuizModalProps> = ({
         {problem.options.map((option) => (
           <button
             key={option}
-            onClick={() => onAnswer(option)}
+            onClick={() => {
+              console.log(`선택된 답변: ${option}`);
+              onAnswer(option);
+            }}
             disabled={!isActive || currentAnswer !== null}
             className={`w-full py-2 rounded-lg text-sm font-['Pretendard-Regular'] transition-all duration-200
               ${currentAnswer === option 

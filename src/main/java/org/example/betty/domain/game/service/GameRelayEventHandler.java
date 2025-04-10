@@ -149,10 +149,10 @@ public class GameRelayEventHandler {
             }
 
             // 오늘 자정까지 TTL 설정
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
-            Duration ttl = Duration.between(now, midnight);
-            redisTemplate2.expire(redisKey, ttl);
+//            LocalDateTime now = LocalDateTime.now();
+//            LocalDateTime midnight = now.toLocalDate().atTime(LocalTime.MAX);
+//            Duration ttl = Duration.between(now, midnight);
+//            redisTemplate2.expire(redisKey, ttl);
 
             // SSE 전송용 문제 랜덤 1개 선택
             if (!problems.isEmpty()) {

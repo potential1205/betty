@@ -191,6 +191,12 @@ public class SettlementServiceImpl implements SettlementService {
             );
 
             log.info("createMVPGame 호출");
+
+            log.info(gameId.toString());
+            log.info(playerIds.toString());
+            log.info(tokenAddresses.toString());
+            log.info(startTime.toString());
+
             TransactionReceipt receipt = contract.createMVPGame(gameId, playerIds, tokenAddresses, startTime)
                     .send();
 

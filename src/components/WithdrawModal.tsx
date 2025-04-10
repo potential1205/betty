@@ -29,19 +29,21 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       setIsLoading(true);
 
       // 1. 개인키
-      if (!web3auth.provider) throw new Error("지갑 연결이 필요합니다.");
-      const provider = new ethers.BrowserProvider(web3auth.provider);
-      const signer = await provider.getSigner();
+      const privateKey = await useWalletStore.getState().exportPrivateKey();
+      if (!privateKey) throw new Error("개인키를 가져올 수 없습니다");
+
+      const provider = new ethers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
+      const wallet = new ethers.Wallet(privateKey, provider);
 
       const betAddress = import.meta.env.VITE_BET_ADDRESS!;
-      const exchangeAddress = import.meta.env.VITE_EXCHANGE_ADDRESS!;
       const adminAddress = import.meta.env.VITE_ADMIN_ADDRESS!;
-      const betContract = new ethers.Contract(betAddress, TokenABI.abi, signer);
+      const betContract = new ethers.Contract(betAddress, TokenABI.abi, wallet);
       const amountWei = ethers.parseEther(amount);
 
       // 2. approve
-      const userAddress = await signer.getAddress();
+      const userAddress = await wallet.getAddress();
       const allowance = await betContract.allowance(userAddress, adminAddress);
+      
       if (allowance < amountWei) {
         const approveTx = await betContract.approve(adminAddress, amountWei);
         await approveTx.wait();

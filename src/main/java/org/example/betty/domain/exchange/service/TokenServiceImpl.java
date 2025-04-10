@@ -104,6 +104,6 @@ public class TokenServiceImpl implements TokenService {
         WalletBalance walletBalance = walletBalanceRepository.findByWalletIdAndTokenId(wallet.getId(), tokenId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET_BALANCE));
 
-        return TokenInfoResponse.of(walletBalance.getBalance(), token.getTokenAddress());
+        return TokenInfoResponse.of(walletBalance.getBalance(), token.getTokenAddress(), token.getTokenName());
     }
 }

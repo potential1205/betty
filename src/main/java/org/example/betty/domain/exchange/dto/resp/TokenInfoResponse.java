@@ -14,8 +14,9 @@ import java.math.BigDecimal;
 public class TokenInfoResponse {
     private BigDecimal balance;
     private String tokenAddress;
+    private String tokenName;
 
-    public static TokenInfoResponse of(BigDecimal balance, String tokenAddress) {
+    public static TokenInfoResponse of(BigDecimal balance, String tokenAddress, String tokenName) {
         return TokenInfoResponse.builder()
                 .balance(balance)
                 .tokenAddress(tokenAddress)

@@ -61,14 +61,6 @@ public class GameController {
         return ResponseEntity.ok(status);
     }
 
-//    @Operation(summary = "SSE 실시간 스트리밍 요청", description = "실시간 경기 데이터 스트리밍을 요청합니다.")
-//    @GetMapping(value = "/games/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public SseEmitter stream(
-//            @PathVariable Long gameId) {
-//
-//        return sseService.stream(gameId);
-//    }
-//
     @Operation(summary = "라이브 투표 제출", description = "유저가 실시간 중계 중 라이브 투표를 제출합니다.")
     @PostMapping("/games/{gameId}/votes/live")
     public ResponseEntity<Void> submitLiveVote(

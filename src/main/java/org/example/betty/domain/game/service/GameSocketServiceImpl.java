@@ -2,8 +2,8 @@ package org.example.betty.domain.game.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.betty.domain.game.dto.GameInfoDto;
-import org.example.betty.domain.game.dto.GameProblemDto;
+import org.example.betty.domain.game.dto.response.GameInfoDto;
+import org.example.betty.domain.game.dto.response.GameProblemDto;
 import org.example.betty.domain.game.dto.redis.live.RedisGameProblem;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;

@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.betty.domain.exchange.repository.TokenRepository;
 import org.example.betty.domain.game.async.LineupAsyncExecutor;
+import org.example.betty.domain.game.async.PreviewAsyncExecutor;
 import org.example.betty.domain.game.async.RelayAsyncExecutor;
 import org.example.betty.domain.game.dto.redis.PlayerInfo;
 import org.example.betty.domain.game.dto.redis.PreVoteAnswer;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.RedisGameSchedule;
+import org.example.betty.domain.game.dto.redis.preview.TeamComparisonDto;
 import org.example.betty.domain.game.entity.Game;
 import org.example.betty.domain.game.entity.Team;
 import org.example.betty.domain.game.repository.GameRepository;
 import org.example.betty.domain.game.repository.TeamRepository;
 import org.example.betty.exception.BusinessException;
 import org.example.betty.exception.ErrorCode;
+import org.example.betty.external.game.scraper.GamePreviewScraper;
 import org.example.betty.external.game.scraper.LineupScraper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
@@ -32,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 
@@ -52,6 +56,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     private final GameSettleService gameSettleService;
     private final TeamRepository teamRepository;
     private final TokenRepository tokenRepository;
+    private final PreviewAsyncExecutor  previewAsyncExecutor;
 
 
     public static final String REDIS_GAME_PREFIX = "games:";
@@ -64,8 +69,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
         LocalDate today = LocalDate.now();
-//        LocalDate today = LocalDate.now().minusDays(1);
-
+//    LocalDate today = LocalDate.now().minusDays(1);
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -80,8 +84,7 @@ public class GameCacheServiceImpl implements GameCacheService {
             boolean isNewEntry = !hashOps.hasKey(redisKey, "gameInfo");
 
             if (isNewEntry) {
-                
-                // 1. 당일 경기 일정 캐싱
+                // 1. 경기 일정 캐싱
                 RedisGameSchedule gameSchedule = RedisGameSchedule.builder()
                         .season(game.getSeason())
                         .gameDate(game.getGameDate().toString())
@@ -93,60 +96,57 @@ public class GameCacheServiceImpl implements GameCacheService {
                         .build();
 
                 hashOps.put(redisKey, "gameInfo", gameSchedule);
-                log.info("[캐싱 완료] 경기일정저장 - gameId: {}", gameId);
-                
-                // 2. 호출을 위한 정보 세팅
-//                Long id = gameService.resolveGameDbId(gameId);
-//                Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
-//                Long homeTeamId = teamIds.get("homeTeamId");
-//                Long awayTeamId = teamIds.get("awayTeamId");
-//                log.info("경기ID와 홈팀&원정팀ID : {} {} {}", id, homeTeamId, awayTeamId);
-//
-//                // Team 객체 가져오기 (예외처리 없이 바로 호출)
-//                Team homeTeam = teamRepository.findById(homeTeamId)
-//                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-//
-//                Team awayTeam = teamRepository.findById(awayTeamId)
-//                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
-//
-//                // Token 객체 가져오기 (예외처리 없이 바로 호출)
-//                Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
-//                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-//
-//                Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
-//                        .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
-//
-//                // 3. 승리팀 베팅 시작
-//                gameSettleService.createPreVoteTeamSettle(
-//                        id,
-//                        teamIds.get("homeTeamId"),
-//                        teamIds.get("awayTeamId"),
-//                        homeToken.getTokenAddress(),
-//                        awayToken.getTokenAddress()
-//                );
+                log.info("[캐싱 완료] 경기일정 저장 - gameId: {}", gameId);
 
+                // 2. 호출용 정보 로그
+                Long id = gameService.resolveGameDbId(gameId);
+                Map<String, Long> teamIds = gameService.resolveTeamIdsFromGameId(gameId);
+                Long homeTeamId = teamIds.get("homeTeamId");
+                Long awayTeamId = teamIds.get("awayTeamId");
+                log.info("경기ID와 홈팀/원정팀 ID: {} {} {}", id, homeTeamId, awayTeamId);
+                
+//            Team homeTeam = teamRepository.findById(homeTeamId)
+//                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+//            Team awayTeam = teamRepository.findById(awayTeamId)
+//                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
+//            Token homeToken = tokenRepository.findByTokenName(homeTeam.getTokenName())
+//                    .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+//            Token awayToken = tokenRepository.findByTokenName(awayTeam.getTokenName())
+//                    .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+//
+//           승리팀 투표 시작
+//            gameSettleService.createPreVoteTeamSettle(
+//                    id, homeTeamId, awayTeamId, homeToken.getTokenAddress(), awayToken.getTokenAddress());
             } else {
                 log.info("[캐싱 스킵] Redis에 이미 존재하는 경기 - gameId: {}", gameId);
             }
 
-            // 모든 경기 seleniumIndex 캐싱
-            hashOps.put(redisKey, "seleniumIndex", index % 5);
+            // 3. seleniumIndex 저장 (0~4 로테이션)
+            int seleniumIndex = index % 5;
+            hashOps.put(redisKey, "seleniumIndex", seleniumIndex);
             index++;
 
+            // 4. 프리뷰 크롤링 비동기 실행
+            previewAsyncExecutor.runAsync(gameId, seleniumIndex, redisKey);
+
+            // 5. 라인업 + 중계 예약
             if (isActive) {
                 if (hashOps.get(redisKey, "lineup") == null) {
-                    scheduleLineupJob(game);   // 라인업 크롤링 예약
+                    scheduleLineupJob(game);   // 라인업 예약
                 } else {
-                    log.info("[라인업 예약 스킵] 이미 캐싱됨 - gameId: {}", gameId);
+                    log.info("[라인업 예약 스킵] 이미 존재함 - gameId: {}", gameId);
                 }
-                scheduleRelayJob(game); // 중계 크롤링 예약
+
+                scheduleRelayJob(game); // 중계 예약
             }
-            // Redis 키 만료 설정
-//            LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
-//            Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
-//            redisTemplate2.expireAt(redisKey, expireDate);
+
+            // Redis TTL
+//        LocalDateTime expireTime = LocalDateTime.of(today, LocalTime.MAX);
+//        Date expireDate = Date.from(expireTime.atZone(ZoneId.systemDefault()).toInstant());
+//        redisTemplate2.expireAt(redisKey, expireDate);
         }
     }
+
 
     /**
      * 앱 재실행 시 경기 정보 캐싱
@@ -236,8 +236,6 @@ public class GameCacheServiceImpl implements GameCacheService {
 
                     // 3. 최종 호출
                     gameSettleService.createPreVoteMVPSettle(id, playerIds, tokenAddresses);
-
-
 
                 } else {
                     log.warn("[라인업 저장 실패] 라인업이 null임 - gameId: {}, time: {}", gameId, LocalDateTime.now());

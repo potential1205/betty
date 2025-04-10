@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.betty.common.util.SessionUtil;
 import org.example.betty.domain.game.dto.redis.RedisGameLineup;
 import org.example.betty.domain.game.dto.redis.live.RedisGameLiveResult;
+import org.example.betty.domain.game.dto.redis.preview.TeamComparisonDto;
 import org.example.betty.domain.game.dto.request.SubmitLiveVoteRequest;
 import org.example.betty.domain.game.dto.response.GameInfoResponse;
 import org.example.betty.domain.game.entity.Game;
@@ -54,6 +55,13 @@ public class GameServiceImpl implements GameService {
         List<GameInfoResponse> schedules = new ArrayList<>();
 
         for (Game game : games) {
+
+            String gameCode = generateGameCode(game); // ex: HHOB
+            String redisKey = REDIS_GAME_PREFIX + today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ":" + gameCode;
+
+            HashOperations<String, String, TeamComparisonDto> hashOps = redisTemplate2.opsForHash();
+            TeamComparisonDto preview = hashOps.get(redisKey, "preview");
+
             GameInfoResponse schedule = GameInfoResponse.builder()
                     .gameId(game.getId())
                     .homeTeamId(game.getHomeTeam().getId())
@@ -65,6 +73,7 @@ public class GameServiceImpl implements GameService {
                     .homeTeamName(game.getHomeTeam().getTeamName().split(" ")[0])
                     .awayTeamName(game.getAwayTeam().getTeamName().split(" ")[0])
                     .status(game.getStatus())
+                    .teamComparison(preview)
                     .build();
 
             schedules.add(schedule);
@@ -174,8 +183,9 @@ public class GameServiceImpl implements GameService {
                 .build();
 
         String redisKey = "livevote:" + request.getGameId();
-        redisTemplate2.opsForValue().set(redisKey, result);
+        redisTemplate2.opsForList().rightPush(redisKey, result);  // 리스트에 추가
     }
+
 
     @Override
     public Map<String, Long> resolveTeamIdsFromGameId(String gameId) {

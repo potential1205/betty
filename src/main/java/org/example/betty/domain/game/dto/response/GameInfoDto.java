@@ -1,4 +1,4 @@
-package org.example.betty.domain.game.dto;
+package org.example.betty.domain.game.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

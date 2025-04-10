@@ -1,6 +1,7 @@
 package org.example.betty.domain.game.dto.response;
 
 import lombok.*;
+import org.example.betty.domain.game.dto.redis.preview.TeamComparisonDto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -21,4 +22,5 @@ public class GameInfoResponse {
     private String homeTeamName;
     private String awayTeamName;
     private String status;
+    private TeamComparisonDto teamComparison;
 }

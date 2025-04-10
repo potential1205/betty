@@ -17,6 +17,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,7 +46,7 @@ public class PriceServiceImpl implements PriceService {
         updatePrice("KTW");
         updatePrice("KIA");
         updatePrice("SSL");
-        updatePrice("HWE"); // 필요 시 주석 처리 가능
+        updatePrice("HWE");
     }
 
     @Transactional
@@ -89,4 +92,39 @@ public class PriceServiceImpl implements PriceService {
             //log.error("Price Sync failed: {}", tokenName, e);
         }
     }
+
+    @Override
+    public BigDecimal getPriceByTokenName(String tokenName) {
+        // 가장 최근의 TokenPrice를 가져오기 위해 findFirstByTokenNameOrderByUpdatedAtDesc 사용
+        Optional<TokenPrice> tokenPriceOptional = tokenPriceRepository.findFirstByTokenNameOrderByUpdatedAtDesc(tokenName);
+
+        // 가격이 있으면 반환, 없으면 BigDecimal.ZERO 반환
+        return tokenPriceOptional.map(TokenPrice::getPrice).orElse(BigDecimal.ZERO);
+    }
+
+    @Override
+    public BigDecimal getPriceByTokenId(Long tokenId) {
+        // tokenId에 해당하는 Token을 DB에서 조회
+        Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
+
+        if (tokenOptional.isEmpty()) {
+            // 해당 tokenId에 맞는 Token이 없으면 BigDecimal.ZERO 반환
+            return BigDecimal.ZERO;
+        }
+
+        Token token = tokenOptional.get();
+
+        // 가장 최근의 TokenPrice를 가져오기 위해 findAllByTokenOrderByUpdatedAtDesc 사용
+        Optional<TokenPrice> tokenPriceOptional = tokenPriceRepository.findAllByTokenOrderByUpdatedAtDesc(token).stream().findFirst();
+
+        // 가격이 있으면 반환, 없으면 BigDecimal.ZERO 반환
+        return tokenPriceOptional.map(TokenPrice::getPrice).orElse(BigDecimal.ZERO);
+    }
+
+
+
+
+
+
+
 }

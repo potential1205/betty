@@ -20,6 +20,7 @@ public class TokenInfoResponse {
         return TokenInfoResponse.builder()
                 .balance(balance)
                 .tokenAddress(tokenAddress)
+                .tokenName(tokenName)
                 .build();
     }
 }

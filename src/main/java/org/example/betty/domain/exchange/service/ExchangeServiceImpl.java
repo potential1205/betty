@@ -219,7 +219,7 @@ public class ExchangeServiceImpl implements ExchangeService {
             log.info("[APPROVE SUCCESS] user={}, amount={}, txHash={}", userWalletAddress, amountBet, approveReceipt.getTransactionHash());
 
             // remove
-            TransactionReceipt removeReceipt = exchangeContract.remove(amountWei).send();
+            TransactionReceipt removeReceipt = exchangeContract.removeFrom(userWalletAddress, amountWei).send();
             log.info("[REMOVE SUCCESS] wallet={}, amount={}, txHash={}", userWalletAddress, amountBet, removeReceipt.getTransactionHash());
 
             // 트랜잭션 업데이트

@@ -193,7 +193,7 @@ public class ExchangeServiceImpl implements ExchangeService {
         try {
             BigDecimal amountBet = transaction.getAmountIn(); // BET
             BigDecimal amountKrw = amountBet.multiply(BigDecimal.valueOf(100)); // 1 BET = 100 KRW
-            BigInteger amountWei = amountBet.toBigInteger();
+            BigInteger amountWei = amountBet.multiply(BigDecimal.TEN.pow(18)).toBigIntegerExact();
 
             Web3j web3j = web3jService.getWeb3j();
             Credentials credentials = web3jService.getCredentials();
@@ -205,6 +205,7 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new RawTransactionManager(web3j, credentials, chainId),
                     new DefaultGasProvider()
             );
+
             Exchange exchangeContract = Exchange.load(
                     exchangeAddress,
                     web3j,
@@ -227,8 +228,6 @@ public class ExchangeServiceImpl implements ExchangeService {
             transactionRepository.save(transaction);
 
             // 잔고 동기화
-            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
-            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {

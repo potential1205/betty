@@ -104,6 +104,9 @@ services:
       # MVPVoting
       MVP_VOTING_ADDRESS: ${WINNING_TEAM_VOTING_ADDRESS}
 
+      # ExchangeViewAddress
+      EXCHANGE_VIEW_ADDRESS: ${EXCHANGE_VIEW_ADDRESS}
+
   selenium-chrome-1:
     image: selenium/standalone-chrome:134.0-20250323
     container_name: selenium-chrome-1

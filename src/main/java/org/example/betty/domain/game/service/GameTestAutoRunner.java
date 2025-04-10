@@ -43,6 +43,7 @@
 //        String prevName = batterNames.get((inningNum - 1 + batterNames.size()) % batterNames.size());
 //        String batterName = batterNames.get(inningNum % batterNames.size());
 //
+//
 //        RedisGameRelay relay = RedisGameRelay.builder()
 //                .inning(inningText)
 //                .teamAtBat("NC공격")

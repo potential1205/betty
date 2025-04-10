@@ -43,16 +43,21 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
       // 2. approve
       const userAddress = await wallet.getAddress();
       const allowance = await betContract.allowance(userAddress, adminAddress);
+
+      console.log(`현재 allowance: ${ethers.formatEther(allowance)} BET`);
+      console.log(`요청 금액: ${amount} BET`);
       
       if (allowance < amountWei) {
+        console.log('approve 필요, 승인 중...');
         const approveTx = await betContract.approve(adminAddress, amountWei);
-        await approveTx.wait();
-        console.log('approve 완료');
+        const approveReceipt = await approveTx.wait();
+        console.log('approve 완료!', approveReceipt.hash);
       } else {
-        console.log('이미 승인됨');
+        console.log('이미 충분한 allowance 존재');
       }
 
       // 3. 백엔드 출금 요청
+      console.log('백엔드 출금 요청 시작');
       const res = await removeBettyCoin(Number(amount));
 
       if (res.success) {

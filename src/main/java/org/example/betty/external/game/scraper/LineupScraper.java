@@ -68,7 +68,7 @@ public class LineupScraper extends BaseScraper {
 
             // 각각 parse 시도
             TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0), 1);   // away: 1~10
-            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1), 10);  // home: 11~20
+            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1), 11);  // home: 11~20
 
 
             return RedisGameLineup.builder()

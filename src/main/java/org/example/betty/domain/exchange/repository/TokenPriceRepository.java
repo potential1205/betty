@@ -15,6 +15,9 @@ public interface TokenPriceRepository extends JpaRepository<TokenPrice, Long> {
     Optional<TokenPrice> findByTokenName(String tokenName);
 
     Optional<TokenPrice> findFirstByTokenNameOrderByUpdatedAtDesc(String tokenName);
+    Optional<TokenPrice> findFirstByTokenOrderByUpdatedAtDesc(Token token);
+
+    TokenPrice findByTokenId(Long tokenId);
 
 //    // 자정 가격을 가져오는 메소드
 //    List<TokenPrice> findByTokenIdAndUpdatedAtBetween(Long tokenId, LocalDateTime startOfDay, LocalDateTime endOfDay);

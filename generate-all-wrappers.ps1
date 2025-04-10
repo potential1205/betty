@@ -1,6 +1,6 @@
 # generate-all-wrappers.ps1 (최신 web3j CLI용)
 
-$contracts = @("MVPVoting","LiquidityPool", "Exchange", "Token", "RewardPool", "ExchangeView")
+$contracts = @("MVPVoting","LiquidityPool", "Exchange", "Token", "RewardPool", "ExchangeView", "WinningTeamVoting")
 
 $abiBase = "../../BETTY/S12P21A609/"
 $output = "./src/main/java"

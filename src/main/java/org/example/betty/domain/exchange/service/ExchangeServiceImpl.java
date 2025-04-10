@@ -94,7 +94,6 @@ public class ExchangeServiceImpl implements ExchangeService {
         return new TransactionResponse(true, "충전 요청이 처리 중입니다.", transaction.getId());
     }
 
-
     // 1-2. add 블록체인 트랜잭션 처리
     private void handleAddTransaction(Transaction transaction) {
         try {
@@ -121,34 +120,27 @@ public class ExchangeServiceImpl implements ExchangeService {
                     new DefaultGasProvider()
             );
 
-//            BigInteger MAX_UINT256 = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-//
-//            TransactionReceipt resetReceipt = betToken.approve(exchangeAddress, BigInteger.ZERO).send();
-//            log.info("[APPROVE RESET] txHash={}", resetReceipt.getTransactionHash());
-
             // approve
-//            TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-//            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
-
-            // 1. approve
             TransactionReceipt approveReceipt = betToken.approve(exchangeAddress, amountWei).send();
-            log.info("[APPROVE SUCCESS] BET -> Exchange, txHash={}", approveReceipt.getTransactionHash());
+            log.info("[APPROVE SUCCESS] token={}, txHash={}", betTokenAddress, approveReceipt.getTransactionHash());
 
-            // 2. add
+            // add
             TransactionReceipt addReceipt = exchangeContract.add(amountWei).send();
-            log.info("[ADD SUCCESS] amount={}, txHash={}", amountBet, addReceipt.getTransactionHash());
+            log.info("[ADD SUCCESS] wallet={}, amount={}, txHash={}", credentials.getAddress(), amountBet, addReceipt.getTransactionHash());
 
-            // 3. 사용자 지갑으로 BET 전송
+            // 사용자 지갑으로 전송
             String userWalletAddress = transaction.getWallet().getWalletAddress();
             TransactionReceipt transferReceipt = betToken.transfer(userWalletAddress, amountWei).send();
             log.info("[TRANSFER SUCCESS] toUser={}, amount={}, txHash={}", userWalletAddress, amountBet, transferReceipt.getTransactionHash());
 
-            // 4. 트랜잭션 상태 업데이트
+            // 트랜잭션 상태 업데이트
             transaction.updateAmountOut(amountBet);
             transaction.updateStatus(TransactionStatus.SUCCESS);
             transactionRepository.save(transaction);
 
             // 온체인 기준 DB 잔고 업데이트
+            BigInteger updatedWei = betToken.balanceOf(userWalletAddress).send();
+            BigDecimal updatedBet = new BigDecimal(updatedWei);
             balanceService.syncWalletBalance(transaction.getWallet(), "BET", betTokenAddress);
 
         } catch (Exception e) {
@@ -157,7 +149,6 @@ public class ExchangeServiceImpl implements ExchangeService {
             transactionRepository.save(transaction);
         }
     }
-
 
     // 2-1. remove 요청 처리
     @Override

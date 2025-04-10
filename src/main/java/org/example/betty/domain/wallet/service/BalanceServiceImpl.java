@@ -69,7 +69,7 @@ public class BalanceServiceImpl implements BalanceService {
             org.example.betty.contract.Token contract = org.example.betty.contract.Token.load(tokenAddress, web3j, txManager, null);
 
             BigInteger rawBalance = contract.balanceOf(wallet.getWalletAddress()).send();
-            BigDecimal balance = new BigDecimal(rawBalance);
+            BigDecimal balance = new BigDecimal(rawBalance).movePointLeft(18);
 
             Optional<Token> tokenOpt = tokenRepository.findByTokenName(tokenName);
             if (tokenOpt.isEmpty()) {

@@ -28,7 +28,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
-
+//java 수정
 /**
  * <p>Auto generated code.
  * <p><strong>Do not modify!</strong>

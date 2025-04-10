@@ -148,3 +148,4 @@ public class RewardPool extends Contract {
         }
     }
 }
+//java 수정

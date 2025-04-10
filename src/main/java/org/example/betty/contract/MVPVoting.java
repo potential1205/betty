@@ -635,3 +635,4 @@ public class MVPVoting extends Contract {
         public String newOwner;
     }
 }
+//java 수정

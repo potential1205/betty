@@ -121,6 +121,26 @@ public class PriceServiceImpl implements PriceService {
         return tokenPriceOptional.map(TokenPrice::getPrice).orElse(BigDecimal.ZERO);
     }
 
+    @Override
+    public List<TokenPrice> getAllTokenPrices() {
+        // 모든 Token을 조회하고 그에 해당하는 TokenPrice를 반환
+        List<Token> tokens = tokenRepository.findAll(); // 모든 토큰을 가져옵니다.
+
+        if (tokens.isEmpty()) {
+            return List.of(); // 데이터가 없으면 빈 리스트 반환
+        }
+
+        // 각 토큰에 대해 가격을 조회하고 TokenPrice 리스트를 반환
+        return tokens.stream()
+                .map(token -> {
+                    Optional<TokenPrice> tokenPriceOptional = tokenPriceRepository
+                            .findFirstByTokenOrderByUpdatedAtDesc(token); // 가장 최근 가격 조회
+                    return tokenPriceOptional.orElse(null); // 없으면 null 반환
+                })
+                .filter(tokenPrice -> tokenPrice != null) // null인 값은 제거
+                .collect(Collectors.toList());
+    }
+
 
 
 

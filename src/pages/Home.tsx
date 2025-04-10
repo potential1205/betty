@@ -41,6 +41,54 @@ interface GameSchedule {
   homeScore: number;
   awayScore: number;
   inning: number;
+  teamComparison?: {
+    awayTeam: {
+      teamName: string;
+      rank: number;
+      wins: number;
+      draws: number;
+      losses: number;
+    };
+    homeTeam: {
+      teamName: string;
+      rank: number;
+      wins: number;
+      draws: number;
+      losses: number;
+    };
+    awayRecent: {
+      teamName: string;
+      results: string[];
+    };
+    homeRecent: {
+      teamName: string;
+      results: string[];
+    };
+    awayStat: {
+      teamName: string;
+      winRate: number;
+      avg: number;
+      era: number;
+    };
+    homeStat: {
+      teamName: string;
+      winRate: number;
+      avg: number;
+      era: number;
+    };
+    awayRecord: {
+      teamName: string;
+      wins: number;
+      draws: number;
+      losses: number;
+    };
+    homeRecord: {
+      teamName: string;
+      wins: number;
+      draws: number;
+      losses: number;
+    };
+  };
 }
 
 interface GamesData {
@@ -83,11 +131,14 @@ const Home: React.FC = () => {
         const token = getAccessToken();
         console.log('Current access token:', token);
         
+        console.log('API 요청 시작: /home/games');
         const response = await axiosInstance.get('/home/games');
-        console.log('API Response:', response);
+        console.log('API 응답 상태 코드:', response.status);
+        console.log('API 응답 헤더:', response.headers);
+        console.log('API 응답 데이터:', JSON.stringify(response.data, null, 2));
         
-        const schedules = response.data; // API 응답이 직접 배열로 옴옴
-        console.log('API 응답 전체:', schedules);
+        const schedules = response.data; // API 응답이 직접 배열로 옴
+        console.log('API 응답 전체:', JSON.stringify(schedules, null, 2));
         
         if (!schedules || schedules.length === 0) {
           console.log('No schedules found in response');
@@ -415,11 +466,11 @@ const Home: React.FC = () => {
       </div>
 
       {/* 캐러셀 */}
-      <div className="relative h-full flex items-center justify-center translate-y-[10%]">
+      <div className="relative h-full flex items-center justify-center translate-y-[5%]">
         {games.map((game, index) => (
           <motion.div
             key={game.id}
-            className="absolute w-[80%] h-[65%] rounded-2xl"
+            className="absolute w-[85%] h-[60%] rounded-2xl"
             animate={getCardStyle(index)}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
@@ -435,7 +486,226 @@ const Home: React.FC = () => {
             }}
           >
             <div className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl 
-              border border-white/20 shadow-lg">
+              border border-white/20 shadow-lg p-5 flex flex-col">
+              
+              {/* 팀 비교 정보 */}
+              {game.schedule.teamComparison && (
+                <>
+                  {/* 양 팀 이름 및 순위, 성적 */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-center w-1/3">
+                      <h3 className="text-2xl font-['Giants-Bold'] text-white drop-shadow-md">{game.schedule.homeTeamName}</h3>
+                      <p className="text-sm text-white/80 font-['Giants-Bold'] drop-shadow-sm">
+                        {game.schedule.teamComparison.homeTeam.rank}위
+                      </p>
+                      <p className="text-xs text-white/60 font-['Giants-Bold'] drop-shadow-sm">
+                        {game.schedule.teamComparison.homeTeam.wins}승 {game.schedule.teamComparison.homeTeam.draws}무 {game.schedule.teamComparison.homeTeam.losses}패
+                      </p>
+                    </div>
+                    
+                    <div className="text-3xl font-['Giants-Bold'] text-white/40 drop-shadow-md w-1/3 text-center">VS</div>
+                    
+                    <div className="text-center w-1/3">
+                      <h3 className="text-2xl font-['Giants-Bold'] text-white drop-shadow-md">{game.schedule.awayTeamName}</h3>
+                      <p className="text-sm text-white/80 font-['Giants-Bold'] drop-shadow-sm">
+                        {game.schedule.teamComparison.awayTeam.rank}위
+                      </p>
+                      <p className="text-xs text-white/60 font-['Giants-Bold'] drop-shadow-sm">
+                        {game.schedule.teamComparison.awayTeam.wins}승 {game.schedule.teamComparison.awayTeam.draws}무 {game.schedule.teamComparison.awayTeam.losses}패
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* 최근 경기 결과 */}
+                  <div className="flex justify-between items-center mb-5">
+                    <div className="flex gap-1">
+                      {game.schedule.teamComparison.homeRecent.results.slice(0, 3).map((result, idx) => (
+                        <div 
+                          key={`home-${idx}`} 
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-['Giants-Bold'] drop-shadow-sm ${
+                            result === '승' 
+                              ? 'bg-green-500 text-white' 
+                              : result === '패' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-500 text-white'
+                          }`}
+                        >
+                          {result}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <p className="text-sm font-['Giants-Bold'] text-white/80 drop-shadow-md whitespace-nowrap">최근경기</p>
+                    
+                    <div className="flex gap-1">
+                      {game.schedule.teamComparison.awayRecent.results.slice(0, 3).map((result, idx) => (
+                        <div 
+                          key={`away-${idx}`} 
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-['Giants-Bold'] drop-shadow-sm ${
+                            result === '승' 
+                              ? 'bg-green-500 text-white' 
+                              : result === '패' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-500 text-white'
+                          }`}
+                        >
+                          {result}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* 상대전적 */}
+                  <div className="mb-5">
+                    <p className="text-xs text-center font-['Giants-Bold'] text-white/70 drop-shadow-sm mb-1">상대전적</p>
+                    <div className="flex items-center h-8">
+                      <div className="w-[15%] text-xs text-center">
+                        <span className="font-['Giants-Bold'] text-white drop-shadow-sm whitespace-nowrap">
+                          {game.schedule.teamComparison.homeRecord.wins}승
+                        </span>
+                      </div>
+                      <div className="w-[70%] h-3 flex rounded-full overflow-hidden">
+                        {/* 홈팀 승리 */}
+                        <div 
+                          className="bg-red-600 flex items-center justify-center"
+                          style={{
+                            flex: game.schedule.teamComparison.homeRecord.wins || 1,
+                          }}
+                        >
+                          {game.schedule.teamComparison.homeRecord.wins > 0 && game.schedule.teamComparison.homeRecord.wins > game.schedule.teamComparison.awayRecord.wins && (
+                            <span className="text-[10px] text-white font-['Giants-Bold'] drop-shadow-sm">
+                              {game.schedule.homeTeamName}
+                            </span>
+                          )}
+                        </div>
+                        {/* 무승부 */}
+                        <div 
+                          className="bg-gray-400 flex items-center justify-center"
+                          style={{
+                            flex: game.schedule.teamComparison.homeRecord.draws || 0,
+                            display: game.schedule.teamComparison.homeRecord.draws ? 'flex' : 'none'
+                          }}
+                        >
+                          {game.schedule.teamComparison.homeRecord.draws > 0 && (
+                            <span className="text-[10px] text-white font-['Giants-Bold'] drop-shadow-sm">
+                              무
+                            </span>
+                          )}
+                        </div>
+                        {/* 원정팀 승리 */}
+                        <div 
+                          className="bg-blue-700 flex items-center justify-center"
+                          style={{
+                            flex: game.schedule.teamComparison.awayRecord.wins || 1,
+                          }}
+                        >
+                          {game.schedule.teamComparison.awayRecord.wins > 0 && game.schedule.teamComparison.awayRecord.wins >= game.schedule.teamComparison.homeRecord.wins && (
+                            <span className="text-[10px] text-white font-['Giants-Bold'] drop-shadow-sm">
+                              {game.schedule.awayTeamName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-[15%] text-xs text-center">
+                        <span className="font-['Giants-Bold'] text-white drop-shadow-sm whitespace-nowrap">
+                          {game.schedule.teamComparison.awayRecord.wins}승
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 통계 섹션 */}
+                  <div className="flex-1 space-y-3 rounded-xl p-3 mb-1 border border-white/20 shadow-inner"
+                    style={{
+                      backgroundColor: `rgba(0, 0, 0, 0.1)`
+                    }}
+                  >
+                    <p className="text-sm text-center font-['Giants-Bold'] text-white mb-5 drop-shadow-md">팀 통계</p>
+                    
+                    {/* 승률 */}
+                    <div className="flex items-center">
+                      <div className="w-[30%] text-right pr-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.homeStat.winRate.toFixed(3)}
+                        </span>
+                      </div>
+                      <div className="w-[40%] flex items-center">
+                        <div 
+                          className="h-1.5 bg-red-600 rounded-l-full"
+                          style={{width: `${game.schedule.teamComparison.homeStat.winRate * 100}%`}}
+                        ></div>
+                        <div className="px-1 text-xs text-white font-['Giants-Bold'] drop-shadow-md whitespace-nowrap">승률</div>
+                        <div 
+                          className="h-1.5 bg-blue-700 rounded-r-full"
+                          style={{width: `${game.schedule.teamComparison.awayStat.winRate * 100}%`}}
+                        ></div>
+                      </div>
+                      <div className="w-[30%] pl-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.awayStat.winRate.toFixed(3)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* 타율 */}
+                    <div className="flex items-center">
+                      <div className="w-[30%] text-right pr-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.homeStat.avg.toFixed(3)}
+                        </span>
+                      </div>
+                      <div className="w-[40%] flex items-center">
+                        <div 
+                          className="h-1.5 bg-red-600 rounded-l-full"
+                          style={{width: `${game.schedule.teamComparison.homeStat.avg * 300}%`}}
+                        ></div>
+                        <div className="px-1 text-xs text-white font-['Giants-Bold'] drop-shadow-md whitespace-nowrap">타율</div>
+                        <div 
+                          className="h-1.5 bg-blue-700 rounded-r-full"
+                          style={{width: `${game.schedule.teamComparison.awayStat.avg * 300}%`}}
+                        ></div>
+                      </div>
+                      <div className="w-[30%] pl-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.awayStat.avg.toFixed(3)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* 평균자책 */}
+                    <div className="flex items-center">
+                      <div className="w-[30%] text-right pr-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.homeStat.era.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="w-[40%] flex items-center">
+                        <div 
+                          className="h-1.5 bg-red-600 rounded-l-full"
+                          style={{width: `${Math.min(game.schedule.teamComparison.homeStat.era / 10 * 100, 50)}%`}}
+                        ></div>
+                        <div className="px-1 text-xs text-white font-['Giants-Bold'] drop-shadow-md whitespace-nowrap">평균자책</div>
+                        <div 
+                          className="h-1.5 bg-blue-700 rounded-r-full"
+                          style={{width: `${Math.min(game.schedule.teamComparison.awayStat.era / 10 * 100, 50)}%`}}
+                        ></div>
+                      </div>
+                      <div className="w-[30%] pl-2">
+                        <span className="text-sm font-['Giants-Bold'] text-white drop-shadow-md">
+                          {game.schedule.teamComparison.awayStat.era.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {/* 팀 비교 정보가 없는 경우 대체 텍스트 */}
+              {!game.schedule.teamComparison && (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-xl font-['Giants-Bold'] text-white/70 drop-shadow-md">경기 상세 정보가 없습니다</p>
+                </div>
+              )}
             </div>
           </motion.div>
         ))}

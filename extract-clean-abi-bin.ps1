@@ -1,4 +1,4 @@
-$contracts = @("LiquidityPool", "Exchange", "Token", "RewardPool")
+$contracts = @("MVPVoting","LiquidityPool", "Exchange", "Token", "RewardPool", "ExchangeView")
 foreach ($contract in $contracts) {
     Write-Host "`n▶️ Processing: $contract"
 

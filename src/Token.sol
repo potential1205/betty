@@ -36,7 +36,7 @@ contract Token is ERC20Burnable, Ownable {
     }
 
     // 관리자가 강제 회수
-    function adminTransfer(address from, address to, uint256 amount) external onlyOwner {
+    function adminTransfer(address from, address to, uint256 amount) public {
     _transfer(from, to, amount);
 }
 

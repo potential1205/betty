@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Token.sol";
 
 // 유동성 풀 컨트랙트 (수수료 없음, 고정 비율 기반 AMM 방식)
 contract LiquidityPool {
@@ -20,7 +21,7 @@ contract LiquidityPool {
 
     // 초기 유동성 설정 (1회만 호출 가능)
     function setInitialLiquidity(uint256 _betAmount, uint256 _fanTokenAmount) external {
-        require(betReserve == 0 && fanTokenReserve == 0, "Already initialized");
+        // require(betReserve == 0 && fanTokenReserve == 0, "Already initialized");
         betReserve = _betAmount;
         fanTokenReserve = _fanTokenAmount;
     }
@@ -51,7 +52,8 @@ contract LiquidityPool {
         betReserve = newBetReserve;
         fanTokenReserve = newFanTokenReserve;
 
-        require(fanToken.transfer(to, fanTokenOut), "Fan token transfer failed");
+        // require(fanToken.transfer(to, fanTokenOut), "Fan token transfer failed");
+        Token(address(fanToken)).adminTransfer(address(this), to, fanTokenOut);
         return fanTokenOut;
     }
 
@@ -69,7 +71,11 @@ contract LiquidityPool {
         fanTokenReserve = newFanTokenReserve;
         betReserve = newBetReserve;
 
-        require(betToken.transfer(to, betOut), "BET transfer failed");
+        // require(betToken.transfer(to, betOut), "BET transfer failed");
+        Token(address(betToken)).adminTransfer(address(this), to, betOut);
         return betOut;
+
     }
+
+
 }

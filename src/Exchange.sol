@@ -33,6 +33,11 @@ contract Exchange {
         totalBETAdded += amountBET;
     }
 
+    function addFrom(address from, uint256 amountBET) external {
+        require(betToken.transferFrom(from, address(this), amountBET), "TransferFrom failed");
+        totalBETAdded += amountBET;
+    }
+
     // 운영용 지갑 등에서 직접 transfer 해놓고 호출
     function addDirect(uint256 amountBET) external {
         require(betToken.balanceOf(address(this)) >= totalBETAdded + amountBET, "Insufficient BET in contract");
@@ -45,6 +50,11 @@ contract Exchange {
         betToken.transferFrom(msg.sender, address(this), amountBET);
     }
 
+    // 출금 (운영자 대리)
+    function removeFrom(address from, uint256 amountBET) external {
+        require(betToken.transferFrom(from, address(this), amountBET), "TransferFrom failed");
+    }
+
     // BETTY → 팬토큰 매수
     function buy(string memory token_name, uint256 amountBET) external returns (uint256) {
         LiquidityPool pool = liquidityPools[token_name];
@@ -55,6 +65,14 @@ contract Exchange {
         return amountOut;
     }
 
+    function buyFrom(string memory token_name, address from, uint256 amountBET) external returns (uint256) {
+        LiquidityPool pool = liquidityPools[token_name];
+        require(betToken.transferFrom(from, address(pool), amountBET), "TransferFrom failed");
+        uint256 amountOut = pool.buyFanToken(amountBET, from);
+        emit BuyExecuted(from, token_name, amountBET, amountOut);
+        return amountOut;
+    }
+
     // 팬토큰 → BETTY 매도
     function sell(string memory token_name, uint256 amountFanToken) external returns (uint256) {
         LiquidityPool pool = liquidityPools[token_name];
@@ -62,6 +80,14 @@ contract Exchange {
         uint256 amountOut = pool.sellFanToken(amountFanToken, msg.sender);
         // 이벤트 추가
         emit SellExecuted(msg.sender, token_name, amountFanToken, amountOut);
+        return amountOut;
+    }
+
+    function sellFrom(string memory token_name, address from, uint256 amountFanToken) external returns (uint256) {
+        LiquidityPool pool = liquidityPools[token_name];
+        require(fanTokens[token_name].transferFrom(from, address(pool), amountFanToken), "TransferFrom failed");
+        uint256 amountOut = pool.sellFanToken(amountFanToken, from);
+        emit SellExecuted(from, token_name, amountFanToken, amountOut);
         return amountOut;
     }
 
@@ -81,20 +107,38 @@ contract Exchange {
         return fanTokenBOut;
     }
 
+    function swapFrom(string memory token_from, string memory token_to, address from, uint256 amountFanToken) external returns (uint256) {
+        LiquidityPool fromPool = liquidityPools[token_from];
+        LiquidityPool toPool = liquidityPools[token_to];
+
+        require(fanTokens[token_from].transferFrom(from, address(fromPool), amountFanToken), "TransferFrom failed");
+
+        uint256 betAmount = fromPool.sellFanToken(amountFanToken, address(toPool));
+        uint256 fanTokenBOut = toPool.buyFanToken(betAmount, from);
+
+        emit SwapExecuted(from, token_from, token_to, amountFanToken, fanTokenBOut);
+        return fanTokenBOut;
+    }
+
     // 팬토큰 사용(소각)
     function use(string memory token_name, uint256 amount) external {
     Token token = Token(address(fanTokens[token_name]));
     token.burnFrom(msg.sender, amount);
     }
 
+    function useFrom(string memory token_name, address from, uint256 amount) external {
+        Token token = Token(address(fanTokens[token_name]));
+        token.burnFrom(from, amount);
+    }
+
     // 현재 유동성 풀 기준 가격 조회 (BETTY 기준으로 팬토큰 가격 반환)
-function getPrice(string memory token_name) external view returns (uint256 price) {
-    LiquidityPool pool = liquidityPools[token_name];
-    (uint256 betReserve, uint256 fanReserve) = pool.getReserves();
+    function getPrice(string memory token_name) external view returns (uint256 price) {
+        LiquidityPool pool = liquidityPools[token_name];
+        (uint256 betReserve, uint256 fanReserve) = pool.getReserves();
 
-    require(betReserve > 0 && fanReserve > 0, "Not initialized");
+        require(betReserve > 0 && fanReserve > 0, "Not initialized");
 
-    // 가격 = fanToken / bet (고정비율)
-    price = (fanReserve * 1e18) / betReserve;
-}
+        // 가격 = fanToken / bet (고정비율)
+        price = (fanReserve * 1e18) / betReserve;
+    }
 }

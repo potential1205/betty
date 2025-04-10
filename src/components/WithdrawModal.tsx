@@ -35,14 +35,15 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
 
       const betAddress = import.meta.env.VITE_BET_ADDRESS!;
       const exchangeAddress = import.meta.env.VITE_EXCHANGE_ADDRESS!;
+      const adminAddress = import.meta.env.VITE_ADMIN_ADDRESS!;
       const betContract = new ethers.Contract(betAddress, TokenABI.abi, signer);
       const amountWei = ethers.parseEther(amount);
 
       // 2. approve
       const userAddress = await signer.getAddress();
-      const allowance = await betContract.allowance(userAddress, exchangeAddress);
+      const allowance = await betContract.allowance(userAddress, adminAddress);
       if (allowance < amountWei) {
-        const approveTx = await betContract.approve(exchangeAddress, amountWei);
+        const approveTx = await betContract.approve(adminAddress, amountWei);
         await approveTx.wait();
         console.log('approve 완료');
       } else {

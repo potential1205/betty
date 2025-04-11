@@ -50,7 +50,7 @@ public class GameServiceImpl implements GameService {
         walletRepository.findByWalletAddress(walletAddress)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_WALLET));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(1);
         List<Game> games = gameRepository.findByGameDate(today);
         List<GameInfoResponse> schedules = new ArrayList<>();
 

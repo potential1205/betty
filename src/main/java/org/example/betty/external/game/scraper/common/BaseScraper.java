@@ -28,6 +28,7 @@ public abstract class BaseScraper {
             return new RemoteWebDriver(new URL(url), options);
         } catch (Exception e) {
             log.error("[ERROR] WebDriver 생성 실패 - {}", e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -39,6 +40,7 @@ public abstract class BaseScraper {
         try{
             return new RemoteWebDriver(new URL(seleniumUrl), options);
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("[ERROR] WebDriver 생성 실패 - {}", e.getMessage());
             return null;
         }

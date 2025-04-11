@@ -168,7 +168,7 @@ public class GameCacheServiceImpl implements GameCacheService {
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
 //        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
-        LocalDateTime executeTime = LocalDateTime.now().plusMinutes(1);
+        LocalDateTime executeTime = LocalDateTime.now();
 
 
         final Integer seleniumIndex;

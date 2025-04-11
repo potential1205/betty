@@ -68,8 +68,7 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-//        LocalDate today = LocalDate.now();
-        LocalDate today = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -127,7 +126,7 @@ public class GameCacheServiceImpl implements GameCacheService {
             index++;
 
             // 4. 프리뷰 크롤링 비동기 실행
-//            previewAsyncExecutor.runAsync(gameId, seleniumIndex, redisKey);
+            previewAsyncExecutor.runAsync(gameId, seleniumIndex, redisKey);
 
             // 5. 라인업 + 중계 예약
             if (isActive) {
@@ -137,7 +136,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                     log.info("[라인업 예약 스킵] 이미 존재함 - gameId: {}", gameId);
                 }
 
-//                scheduleRelayJob(game); // 중계 예약
+                scheduleRelayJob(game); // 중계 예약
             }
 
             // Redis TTL
@@ -161,13 +160,13 @@ public class GameCacheServiceImpl implements GameCacheService {
     }
 
     /**
-     * Lineup 크롤링 예약: 경기 시작 30분 전 또는 이미 지났으면 즉시 실행
+     * Lineup 크롤링 예약: 경기 시작 25분 전 또는 이미 지났으면 즉시 실행
      */
     private void scheduleLineupJob(Game game) {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(25);
         LocalDateTime executeTime = LocalDateTime.now();
 
 
@@ -236,6 +235,7 @@ public class GameCacheServiceImpl implements GameCacheService {
 
                     // 3. 최종 호출
 //                    gameSettleService.createPreVoteMVPSettle(id, playerIds, tokenAddresses);
+
 
                 } else {
                     log.warn("[라인업 저장 실패] 라인업이 null임 - gameId: {}, time: {}", gameId, LocalDateTime.now());

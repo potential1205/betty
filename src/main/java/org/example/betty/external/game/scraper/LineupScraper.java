@@ -57,15 +57,15 @@ public class LineupScraper extends BaseScraper {
                 return null;
             }
 
-            // ✅ 변경된 클래스 대응: 라인업 구역
+            // 변경된 클래스 대응: 라인업 구역
             List<WebElement> teamSections = lineupWrapper.findElements(By.cssSelector("div[class^='Lineup_lineup_area__']"));
             if (teamSections.size() != 2) {
                 log.warn("[{}] 팀 섹션이 2개가 아님 (크기: {})", gameId, teamSections.size());
                 return null;
             }
 
-            TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0));
-            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1));
+            TeamLineup awayLineup = parseTeamLineup(driver2, teamSections.get(0), 1);   // away: 1~10
+            TeamLineup homeLineup = parseTeamLineup(driver2, teamSections.get(1), 11);  // home: 11~20
 
             return RedisGameLineup.builder()
                     .away(awayLineup)
@@ -81,14 +81,14 @@ public class LineupScraper extends BaseScraper {
         }
     }
 
-    private TeamLineup parseTeamLineup(WebDriver kboDriver, WebElement teamElement) {
-        // ✅ 변경된 클래스 대응: 선수 리스트
+    private TeamLineup parseTeamLineup(WebDriver kboDriver, WebElement teamElement, long playerIdStart) {
         List<WebElement> playerItems = teamElement.findElements(By.cssSelector(".Lineup_lineup_item__2AXR8"));
         List<PlayerInfo> players = new ArrayList<>();
 
+        Long playerIdSeq = playerIdStart;
+
         for (WebElement item : playerItems) {
             try {
-                // ✅ 변경된 클래스 대응: 이름, 포지션
                 String name = item.findElement(By.cssSelector(".Lineup_name__Q5oDC")).getText();
                 String rawPosition = item.findElement(By.cssSelector(".Lineup_position__2fA4L")).getText();
 
@@ -100,6 +100,7 @@ public class LineupScraper extends BaseScraper {
                 String imageUrl = getImageFromKBO(kboDriver, name);
 
                 players.add(PlayerInfo.builder()
+                        .id(playerIdSeq++)
                         .name(name)
                         .position(position)
                         .handedness(handedness)

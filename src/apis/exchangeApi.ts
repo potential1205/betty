@@ -23,19 +23,46 @@ export interface TransactionResponse {
     transactionId: number;
 }
 
-export interface Transaction {
+export interface Wallet {
     id: number;
-    walletId: number;
-    tokenFrom?: Token;
-    tokenTo?: Token;
-    amountIn: number;
-    amountOut?: number;
-    transactionStatus: "PENDING" | "SUCCESS" | "FAIL";
+    nickname: string;
+    walletAddress: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Token {
     id: number;
     tokenName: string;
+    tokenAddress?: string;
+    description?: string;
+    createdAt?: string;
+}
+
+export interface Transaction {
+    id: number;
+    wallet?: Wallet;
+    tokenFrom?: Token;
+    tokenTo?: Token;
+    amountIn: number;
+    amountOut?: number;
+    transactionStatus: "PENDING" | "SUCCESS" | "FAIL";
+    createdAt: string;
+}
+
+// 토큰 가격 정보 인터페이스
+export interface TokenPrice {
+    id: number;
+    token: {
+        id: number;
+        tokenName: string;
+        tokenAddress: string;
+        description: string;
+        createdAt: string;
+    };
+    tokenName: string;
+    price: number;
+    updatedAt: string;
 }
 
 // BET 입금
@@ -77,9 +104,19 @@ export const swapFanToken = async (request: SwapRequest): Promise<TransactionRes
     return (await axiosInstance.post("/exchange/swap", request)).data;
 }
 
-// 트랜잭션 조회
+/**
+ * 현재 로그인된 사용자의 전체 트랜잭션 기록을 조회합니다.
+ * @returns 트랜잭션 배열
+ */
 export const getTransactions = async (): Promise<Transaction[]> => {
-    return (await axiosInstance.get("/exchange/transactions")).data;
+    try {
+        const response = await axiosInstance.get<Transaction[]>("/exchange/transactions");
+        console.log('[ExchangeAPI] 트랜잭션 조회 성공:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[ExchangeAPI] 트랜잭션 조회 실패:', error);
+        throw error;
+    }
 }
 
 // 스왑 예상 금액 계산
@@ -93,3 +130,18 @@ export const getSwapEstimate = async (
     });
     return response.data;
 }
+
+/**
+ * 모든 토큰의 현재 가격 정보를 조회합니다.
+ * @returns 토큰 가격 정보 배열
+ */
+export const getAllTokenPrices = async (): Promise<TokenPrice[]> => {
+    try {
+        const response = await axiosInstance.get<TokenPrice[]>('/prices/all');
+        console.log('[ExchangeAPI] 토큰 가격 조회 성공:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[ExchangeAPI] 토큰 가격 조회 실패:', error);
+        throw error;
+    }
+};

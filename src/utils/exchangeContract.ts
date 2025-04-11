@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ethers } from 'ethers';
 import Exchange from '../../abi/Exchange.json';
 import Token from '../../abi/Token.json';
@@ -23,10 +24,30 @@ export const getExchangeContract = (privateKey: string, contractAddress: string 
     const wallet = new ethers.Wallet(privateKey, provider);
     
     return new ethers.Contract(contractAddress, Exchange.abi, wallet);
+=======
+import { ethers } from "ethers";
+import ExchangeABI from "../../abi/Exchange.json";
+import { web3auth } from "./web3auth";
+
+const EXCHANGE_ADDRESS = import.meta.env.VITE_EXCHANGE_ADDRESS;
+const RPC_URL = import.meta.env.VITE_RPC_URL;
+
+export const getExchangeContract = async (): Promise<ethers.Contract> => {
+  try {
+    if (!web3auth.provider) {
+      throw new Error("Web3Auth 인증이 필요합니다");
+    }
+
+    const provider = new ethers.BrowserProvider(web3auth.provider);
+    const signer = await provider.getSigner();
+
+    return new ethers.Contract(EXCHANGE_ADDRESS, ExchangeABI, signer);
+>>>>>>> 8dbbc95d13b407e5e7a97e118c70ff4f338cbce3
   } catch (error: any) {
     console.error("Exchange 컨트랙트 연결 실패:", error);
     throw new Error(`컨트랙트 연결 실패: ${error.message || "알 수 없는 오류"}`);
   }
+<<<<<<< HEAD
 };
 
 /**
@@ -462,3 +483,6 @@ export const getAllFanTokenPrices = async (
     throw new Error(`모든 팬토큰 가격 조회 실패: ${error.message || "알 수 없는 오류"}`);
   }
 }; 
+=======
+};
+>>>>>>> 8dbbc95d13b407e5e7a97e118c70ff4f338cbce3

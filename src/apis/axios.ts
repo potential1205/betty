@@ -6,7 +6,7 @@ const ACCESS_TOKEN_KEY = 'accessToken';
 
 const axiosInstance = axios.create({
   baseURL: 'https://j12a609.p.ssafy.io/api/v1',
-  timeout: 10000,
+  timeout: 0,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

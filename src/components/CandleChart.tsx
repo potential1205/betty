@@ -9,77 +9,51 @@ import {
 type Props = {
   dailyData: CandlestickData[];
   hourlyData: CandlestickData[];
+  onPeriodChange?: (period: '1D' | '1H') => void;
+  initialPeriod?: '1D' | '1H';
 };
 
-const CandleChart: React.FC<Props> = ({ dailyData, hourlyData }) => {
+const CandleChart: React.FC<Props> = ({ dailyData, hourlyData, onPeriodChange, initialPeriod = '1D' }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
-    const [period, setPeriod] = useState<'1D' | '1H'>('1D');
+    const [period, setPeriod] = useState<'1D' | '1H'>(initialPeriod);
+
+    // 탭이 변경될 때 콜백 호출
+    const handlePeriodChange = (newPeriod: '1D' | '1H') => {
+        setPeriod(newPeriod);
+        if (onPeriodChange) {
+            onPeriodChange(newPeriod);
+        }
+    };
+
+    useEffect(() => {
+        // initialPeriod가 변경되면 period 상태 업데이트
+        setPeriod(initialPeriod);
+    }, [initialPeriod]);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
+
+        const handleResize = () => {
+            if (chartContainerRef.current) {
+                chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+            }
+        };
 
         const chart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
             height: 224,
             layout: {
-                background: { type: ColorType.Solid, color: '#ffffff' },
-                textColor: '#000',
-                fontSize: 12,
-                fontFamily: "'Pretendard', sans-serif",
+                background: { color: '#ffffff' },
+                textColor: '#333',
             },
             grid: {
-                vertLines: { color: '#f0f0f0', style: 0 },
-                horzLines: { color: '#f0f0f0', style: 0 },
+                vertLines: { color: '#f0f0f0' },
+                horzLines: { color: '#f0f0f0' },
             },
             timeScale: {
                 timeVisible: true,
                 secondsVisible: false,
-                borderColor: '#D1D4DC',
-                rightOffset: 5,
-                barSpacing: 5,
-                tickMarkFormatter: (time: Time) => {
-                    const date = new Date((time as any) * 1000);
-                    const year = date.getFullYear();
-                    const month = ('0' + (date.getMonth() + 1)).slice(-2);
-                    const day = ('0' + date.getDate()).slice(-2);
-                    return `${year}-${month}-${day}`;
-                },
-            },
-            localization: {
-                locale: 'ko-KR',
-                dateFormat: 'yyyy-MM-dd',
-            },
-            rightPriceScale: {
-                borderColor: '#D1D4DC',
-                scaleMargins: {
-                    top: 0.2,
-                    bottom: 0.15,
-                },
-            },
-            crosshair: {
-                mode: 0,
-                vertLine: {
-                    width: 1,
-                    color: '#9B9B9B',
-                    style: 1,
-                    visible: true,
-                    labelVisible: true,
-                },
-                horzLine: {
-                    color: '#9B9B9B',
-                    style: 1,
-                    visible: true,
-                    labelVisible: true,
-                },
-            },
-            handleScroll: {
-                pressedMouseMove: true,
-                mouseWheel: true,
-            },
-            handleScale: {
-                mouseWheel: true,
-                pinch: true,
             },
         });
 
@@ -148,10 +122,14 @@ const CandleChart: React.FC<Props> = ({ dailyData, hourlyData }) => {
         });
 
         const resizeObserver = new ResizeObserver(() => {
-            chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
+            if (chartContainerRef.current) {
+                handleResize();
+            }
         });
 
-        resizeObserver.observe(chartContainerRef.current);
+        if (chartContainerRef.current) {
+            resizeObserver.observe(chartContainerRef.current);
+        }
 
         return () => {
             chart.remove();
@@ -164,19 +142,29 @@ const CandleChart: React.FC<Props> = ({ dailyData, hourlyData }) => {
     
     return (
         <div style={{ position: 'relative', width: '100%' }}>
-            <div className="flex justify-end pr-2 pb-1">
-                <button
-                    className={`text-xs font-bold mr-2 ${period === '1D' ? 'text-blue-500' : 'text-gray-400'}`}
-                    onClick={() => setPeriod('1D')}
-                >
-                    1일
-                </button>
-                <button
-                    className={`text-xs font-bold ${period === '1H' ? 'text-blue-500' : 'text-gray-400'}`}
-                    onClick={() => setPeriod('1H')}
-                >
-                    1시간
-                </button>
+            <div className="flex justify-end pr-2 pb-2">
+                <div className="bg-gray-200 p-0.5 rounded-lg flex items-center">
+                    <button
+                        className={`text-xs font-['Giants-Bold'] px-3 py-1 rounded-md transition-all ${
+                            period === '1D' 
+                            ? 'bg-blue-500 text-white shadow-sm' 
+                            : 'text-gray-500 hover:bg-gray-300'
+                        }`}
+                        onClick={() => handlePeriodChange('1D')}
+                    >
+                        1일
+                    </button>
+                    <button
+                        className={`text-xs font-['Giants-Bold'] px-3 py-1 rounded-md ml-1 transition-all ${
+                            period === '1H' 
+                            ? 'bg-blue-500 text-white shadow-sm' 
+                            : 'text-gray-500 hover:bg-gray-300'
+                        }`}
+                        onClick={() => handlePeriodChange('1H')}
+                    >
+                        1시간
+                    </button>
+                </div>
             </div>
             <div
                 ref={chartContainerRef}

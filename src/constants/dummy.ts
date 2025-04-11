@@ -253,7 +253,7 @@ export const teamChartData: { [key: string]: ChartData[] } = {
 };
 
 export const teamColors = {
-  "키움": { bg: "#570514", text: "#B07F4A" },
+  "키움": { bg: "#B07F4A", text: "#570514" },
   "두산": { bg: "#1A1748", text: "#EB1D25" },
   "롯데": { bg: "#041E42", text: "#D00F31" },
   "삼성": { bg: "#074CA1", text: "#C0C0C0" },
@@ -263,6 +263,36 @@ export const teamColors = {
   "SSG": { bg: "#CE0E2D", text: "#FFB81C" },
   "NC": { bg: "#315288", text: "#AF917B" },
   "KT": { bg: "#000000", text: "#EB1C24" }
+};
+
+// 토큰 ID 기준 색상 매핑
+export const teamColorsByTokenId = {
+  "1": { bg: "#000000", text: "#FFFFFF" }, // Betty Coin (BET) - 기본값
+  "2": { bg: "#1A1748", text: "#EB1D25" }, // Doosan Bears (DSB)
+  "3": { bg: "#CE0E2D", text: "#FFB81C" }, // SSG Landers (SSG)
+  "4": { bg: "#C30452", text: "#000000" }, // LG Twins (LGT)
+  "5": { bg: "#041E42", text: "#D00F31" }, // Lotte Giants (LTG)
+  "6": { bg: "#B07F4A", text: "#570514" }, // Kiwoom Heroes (KWH)
+  "7": { bg: "#315288", text: "#AF917B" }, // NC Dinos (NCD)
+  "8": { bg: "#000000", text: "#EB1C24" }, // KT Wiz (KTW)
+  "9": { bg: "#EA0029", text: "#06141F" }, // KIA Tigers (KIA)
+  "10": { bg: "#074CA1", text: "#C0C0C0" }, // Samsung Lions (SSL)
+  "11": { bg: "#FC4E00", text: "#07111F" }  // Hanwha Eagles (HWE)
+};
+
+// 토큰 ID에서 팀 이름으로 변환
+export const tokenIdToTeamName = {
+  "1": "BET",
+  "2": "두산",
+  "3": "SSG",
+  "4": "LG",
+  "5": "롯데",
+  "6": "키움",
+  "7": "NC",
+  "8": "KT",
+  "9": "KIA",
+  "10": "삼성",
+  "11": "한화"
 };
 
 export const formatTeamName = (team: string) => {
@@ -354,4 +384,35 @@ export const todayGamesData = {
       "status": "SCHEDULED"
     }
   ]
+};
+
+// 토큰 이름 기준 색상 매핑
+export const teamColorsByTokenName = {
+  "BET": { bg: "#000000", text: "#FFFFFF" }, // Betty Coin
+  "DSB": { bg: "#1A1748", text: "#EB1D25" }, // Doosan Bears
+  "SSG": { bg: "#CE0E2D", text: "#FFB81C" }, // SSG Landers
+  "LGT": { bg: "#C30452", text: "#000000" }, // LG Twins
+  "LTG": { bg: "#041E42", text: "#D00F31" }, // Lotte Giants
+  "KWH": { bg: "#B07F4A", text: "#570514" }, // Kiwoom Heroes
+  "NCD": { bg: "#315288", text: "#AF917B" }, // NC Dinos
+  "KTW": { bg: "#000000", text: "#EB1C24" }, // KT Wiz
+  "KIA": { bg: "#EA0029", text: "#06141F" }, // KIA Tigers
+  "SSL": { bg: "#074CA1", text: "#C0C0C0" }, // Samsung Lions
+  "HHE": { bg: "#FC4E00", text: "#07111F" },  // Hanwha Eagles
+  "HWE": { bg: "#FC4E00", text: "#07111F" }  // Hanwha Eagles
+};
+
+// 토큰 이름에서 팀 이름으로 변환
+export const tokenNameToTeamName = {
+  "BET": "BET",
+  "DSB": "두산",
+  "SSG": "SSG",
+  "LGT": "LG",
+  "LTG": "롯데",
+  "KWH": "키움",
+  "NCD": "NC",
+  "KTW": "KT",
+  "KIA": "KIA",
+  "SSL": "삼성",
+  "HHE": "한화"
 };

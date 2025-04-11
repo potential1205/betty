@@ -23,8 +23,8 @@ public class GameCacheRecoveryRunner implements CommandLineRunner {
     public void run(String... args) {
         // Games 테이블에 데이터가 있을 때만 복구 작업을 진행
         if (gamesRepository.count() > 0) {
-            LocalDate today = LocalDate.now();
-//            LocalDate today = LocalDate.now().minusDays(1);
+//            LocalDate today = LocalDate.now();
+            LocalDate today = LocalDate.now().minusDays(1);
             boolean recovered = gameCacheService.recoverTodayGameSchedule(today);
 
             if (recovered) {

@@ -68,8 +68,8 @@ public class GameCacheServiceImpl implements GameCacheService {
     @Transactional
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul")
     public void cacheDailyGames() {
-        LocalDate today = LocalDate.now();
-//    LocalDate today = LocalDate.now().minusDays(1);
+//        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(1);
         List<Game> todayGames = gameRepository.findByGameDate(today);
         HashOperations<String, String, Object> hashOps = redisTemplate2.opsForHash();
 
@@ -104,7 +104,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                 Long homeTeamId = teamIds.get("homeTeamId");
                 Long awayTeamId = teamIds.get("awayTeamId");
                 log.info("경기ID와 홈팀/원정팀 ID: {} {} {}", id, homeTeamId, awayTeamId);
-                
+
 //            Team homeTeam = teamRepository.findById(homeTeamId)
 //                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_TEAM));
 //            Team awayTeam = teamRepository.findById(awayTeamId)
@@ -127,7 +127,7 @@ public class GameCacheServiceImpl implements GameCacheService {
             index++;
 
             // 4. 프리뷰 크롤링 비동기 실행
-            previewAsyncExecutor.runAsync(gameId, seleniumIndex, redisKey);
+//            previewAsyncExecutor.runAsync(gameId, seleniumIndex, redisKey);
 
             // 5. 라인업 + 중계 예약
             if (isActive) {
@@ -137,7 +137,7 @@ public class GameCacheServiceImpl implements GameCacheService {
                     log.info("[라인업 예약 스킵] 이미 존재함 - gameId: {}", gameId);
                 }
 
-                scheduleRelayJob(game); // 중계 예약
+//                scheduleRelayJob(game); // 중계 예약
             }
 
             // Redis TTL
@@ -167,8 +167,8 @@ public class GameCacheServiceImpl implements GameCacheService {
         String gameId = generateGameId(game);
         String redisKey = REDIS_GAME_PREFIX + game.getGameDate() + ":" + gameId;
         LocalDateTime gameStartDateTime = LocalDateTime.of(game.getGameDate(), game.getStartTime());
-        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
-//        LocalDateTime executeTime = LocalDateTime.now().plusMinutes(1);
+//        LocalDateTime executeTime = gameStartDateTime.minusMinutes(30);
+        LocalDateTime executeTime = LocalDateTime.now().plusMinutes(1);
 
 
         final Integer seleniumIndex;

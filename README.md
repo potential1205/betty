@@ -45,6 +45,7 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 
 ### 1. 팬 토큰 거래소 (AMM 기반)
 <img src="https://github.com/user-attachments/assets/512f4c59-c445-4c44-a14c-9e8e0ec5ddff" width=400>
+
 <br>
 **실시간 가격 변동**
 - 팬 토큰 거래소는 AMM(Automated Market Maker) 방식을 활용해 BETTY ↔ 팬토큰 간 가격이 자동으로 조정되는 탈중앙화 거래소입니다. 스마트 컨트랙트에서 모든 스왑 로직이 실행되며, Web3j와 연동된 백엔드 시스템은 거래 흐름과 상태를 실시간으로 관리합니다.
@@ -64,6 +65,9 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 - **리워드풀:** 경기 예측, DAO 투표, 퀴즈 등에서 사용자에게 팬토큰을 분배하기 위해 별도 리워드풀 컨트랙트를 구현하고, 보상 지급 트랜잭션과 연동하였습니다.
 - **거래 내역 관리:** 스마트 컨트랙트 상의 트랜잭션을 Web3j Scheduler로 0.5초 마다 반영하여 실시간으로 제공했습니다.
 - **상태 처리:** 트랜잭션 발생 직후 상태를 PENDING으로 표시하고, 성공 여부를 Web3j에서 주기적으로 확인하여 최종 결과를 업데이트합니다.
+
+
+![거래소 이미지1](https://github.com/user-attachments/assets/9d7adb90-f055-4255-b8cd-0855e33669cd)
 
 <br>
 
@@ -100,7 +104,7 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 - 팬들은 팬 토큰을 사용해 팀 운영과 관련된 안건을 제안하고, 다른 팬들의 지지를 얻기 위해 투표할 수 있습니다.
 - 집단 지성 활용: 팬들의 의견을 모아 구단 운영에 반영하는 과정이 투명하게 이루어져, 팬들이 단순 관람을 넘어 직접 구단 운영에 참여하는 경험을 제공합니다.
 
-![기능4 이미지1](https://github.com/user-attachments/assets/98404e9d-4e77-443e-ae2f-654c97c4cd63)
+![기능4 이미지1](https://github.com/user-attachments/assets/79744881-4cf3-4d49-aa31-75284e18785d)
 
 <br>
 
@@ -110,9 +114,8 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 
 **통합 활동 기록**
 - 플랫폼 내에서의 모든 활동(거래, 이벤트 참여, 팀 채널 활동 등)이 마이페이지에 기록되어, 팬들이 자신의 참여 내역과 성과를 쉽게 추적할 수 있습니다.
-
-![기능5 이미지1](https://github.com/user-attachments/assets/ce9f00e5-7ce8-49c1-ae17-a98ce413f9bd)
-![기능5 이미지2](https://github.com/user-attachments/assets/c65d9324-4db9-4d1a-91ab-693850f6e9c7)
+![기능5 이미지1](https://github.com/user-attachments/assets/a0bd490d-afe9-4c2d-98ee-affea8d29078)
+![기능5 이미지2](https://github.com/user-attachments/assets/c8f23bc3-eae5-4384-90ea-eca0277dddb2)
 
 <br>
 
@@ -120,7 +123,7 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 **Google Oauth와 Web3Auth를 활용한 지갑 로그인**
 - MetaMask 설치나 별도 지갑 생성 없이, 단 한 번의 Google 계정 인증만으로 지갑이 자동 생성·연결됩니다.
 
-![기능6 이미지1](https://github.com/user-attachments/assets/4d1a1075-8d02-4c36-becd-cbdde801770d)
+![기능6 이미지1](https://github.com/user-attachments/assets/36054363-73fc-455e-adbc-606f217be4e6)
 
 <br>
 
@@ -252,7 +255,7 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 ## 📜 프로젝트 산출물
 
 ### 시스템 아키텍처
-![시스템 아키텍처](https://github.com/user-attachments/assets/e316ee77-a489-46ef-ad0c-bdae45e6810c)
+![시스템 아키텍처](https://github.com/user-attachments/assets/aff3b03d-d53b-4f0a-8636-b65016f53de0)
 
 ### ERD
 [🔗 ERD 링크](https://www.erdcloud.com/d/f9Pkch87MAqGJRsPN)

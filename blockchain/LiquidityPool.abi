@@ -1,0 +1,181 @@
+﻿[
+    {
+        "type":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "_betToken",
+                           "type":  "address",
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "_fanToken",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "betReserve",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "betToken",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "contract IERC20"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "buyFanToken",
+        "inputs":  [
+                       {
+                           "name":  "amountBETIn",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "to",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "fanTokenOut",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "fanToken",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "contract IERC20"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "fanTokenReserve",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "getReserves",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "betAmount",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        },
+                        {
+                            "name":  "fanTokenAmount",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "isInitialized",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "bool",
+                            "internalType":  "bool"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "sellFanToken",
+        "inputs":  [
+                       {
+                           "name":  "amountFanTokenIn",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "to",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "betOut",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        }
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "setInitialLiquidity",
+        "inputs":  [
+                       {
+                           "name":  "_betAmount",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       },
+                       {
+                           "name":  "_fanTokenAmount",
+                           "type":  "uint256",
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    }
+]

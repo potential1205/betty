@@ -1,44 +1,44 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# Compiler files
+cache/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/*/14609/
+/broadcast/**/dry-run/
 
-### VS Code ###
-.vscode/
+# Docs
+docs/
 
+<<<<<<< HEAD:backend/.gitignore
 application.properties
 
 ### Wallets ###
 src/main/resources/wallet/keystore.json
 
 .env
+=======
+# Dotenv file
+.env
+
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Editor-based HTTP Client requests
+/httpRequests/
+
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+# IntelliJ IDEA 설정 파일
+.idea/
+*.iml
+
+
+# 민감한 정보가 포함된 파일
+run-*.json
+run-latest.json
+>>>>>>> dev/bc:.gitignore

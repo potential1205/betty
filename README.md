@@ -255,7 +255,7 @@ Betty는 블록체인 기반의 투명한 토큰 경제 시스템으로 팬들�
 ## 📜 프로젝트 산출물
 
 ### 시스템 아키텍처
-![시스템 아키텍처](https://github.com/user-attachments/assets/aff3b03d-d53b-4f0a-8636-b65016f53de0)
+![시스템 아키텍처](https://github.com/user-attachments/assets/372a0b11-7150-4484-88a9-839906fe9143)
 
 ### ERD
 [🔗 ERD 링크](https://www.erdcloud.com/d/f9Pkch87MAqGJRsPN)
